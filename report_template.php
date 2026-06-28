@@ -56,6 +56,14 @@ function render_bank_report(array $val): string {
     $logo2 = report_img_data(__DIR__ . '/assets/logo2.png');
     $g = fn($k) => e($val[$k] ?? '');
 
+    // Company / report details (editable in Settings).
+    $coName   = setting('company_name', 'Kennet Automobile Valuers And Assessors Ltd.');
+    $coAddr   = setting('company_address', 'Desai Road off Forest Rd, Opp Nairobi Gymkhana');
+    $coPobox  = setting('company_pobox', '1268 - 00600 NAIROBI, KENYA');
+    $coTel    = setting('company_tel', '+254 723 441 666, +254 712 730 738, +254 706 850 101');
+    $coEmail  = setting('company_email', 'info@kennetvaluers.com');
+    $coFooter = setting('report_footer', '© ' . $coName . ' | Valuation Report | Confidential Document');
+
     ob_start(); ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -95,7 +103,7 @@ function render_bank_report(array $val): string {
     <div class="header">
         <div class="header_image"><?php if ($logo2): ?><img src="<?= $logo2 ?>" height="80" width="210"><?php endif; ?></div>
         <div class="header_text">
-            <h1 style="color:black;">Kennet Automobile Valuers And Assessors Ltd.</h1>
+            <h1 style="color:black;"><?= e($coName) ?></h1>
             <h3 style="font-style:bold;">VALUATION REPORT</h3>
         </div>
     </div>
@@ -104,12 +112,12 @@ function render_bank_report(array $val): string {
         <table>
             <tr>
                 <td width="50%">
-                    <p><span>Address:</span> Desai Road off Forest Rd, Opp Nairobi Gymkhana</p>
-                    <p><span>P.O. Box:</span> 1268 - 00600 NAIROBI, KENYA</p>
+                    <p><span>Address:</span> <?= e($coAddr) ?></p>
+                    <p><span>P.O. Box:</span> <?= e($coPobox) ?></p>
                 </td>
                 <td width="50%">
-                    <p><span>Tel:</span> +254 723 441 666, +254 712 730 738, +254 706 850 101</p>
-                    <p><span>Email:</span> info@kennetvaluers.com</p>
+                    <p><span>Tel:</span> <?= e($coTel) ?></p>
+                    <p><span>Email:</span> <?= e($coEmail) ?></p>
                 </td>
             </tr>
         </table>
@@ -229,7 +237,7 @@ function render_bank_report(array $val): string {
     </div>
     <?php endif; ?>
 
-    <div class="footer"><p>&copy; <?= date('Y') ?> Kennet Automobile Valuers And Assessors Ltd. | Valuation Report | Confidential Document</p></div>
+    <div class="footer"><p><?= e($coFooter) ?></p></div>
 </div>
 </body>
 </html>

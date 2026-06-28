@@ -9,6 +9,11 @@ uploads/*
 !uploads/.htaccess
 !uploads/index.html
 
+# Runtime logs/storage (keep the folder + guards, not the logs)
+storage/*
+!storage/.htaccess
+!storage/index.html
+
 # OS / editor cruft
 .DS_Store
 Thumbs.db

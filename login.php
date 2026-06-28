@@ -4,10 +4,14 @@ if (current_user()) redirect('bank_list.php');
 
 $error = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    csrf_verify();
     $email = trim($_POST['email'] ?? '');
     $pass  = $_POST['password'] ?? '';
-    if (attempt_login($email, $pass)) redirect('bank_list.php');
-    $error = 'Invalid email or password.';
+    $res = attempt_login($email, $pass);
+    if ($res === true) redirect('dashboard.php');
+    $error = $res === 'locked'
+        ? 'Too many failed attempts. Please wait 15 minutes and try again.'
+        : 'Invalid email or password.';
 }
 ?><!doctype html>
 <html lang="en"><head>
@@ -24,6 +28,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </style></head>
 <body>
 <form class="box" method="post">
+  <?= csrf_field() ?>
   <h1><?= e(APP_NAME) ?></h1>
   <p class="sub">Automobile Valuers & Assessors</p>
   <?php if ($error): ?><div class="err"><?= e($error) ?></div><?php endif; ?>

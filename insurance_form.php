@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/layout.php';
 require_once __DIR__ . '/forms.php';
-require_login();
+require_can_edit();
 
 // All persisted columns for the insurance valuations table.
 $COLUMNS = [
@@ -35,7 +35,9 @@ $id  = $_GET['id'] ?? ($_POST['id'] ?? null);
 $row = load_row('valuations', $id);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    save_row('valuations', $COLUMNS, $_POST, $id);
+    csrf_verify();
+    $newId = save_row('valuations', $COLUMNS, $_POST, $id);
+    audit($id ? 'update' : 'create', 'valuation', $newId, $_POST['reg_no'] ?? '');
     flash($id ? 'Insurance valuation updated.' : 'Valuation added successfully.');
     redirect('insurance_list.php');
 }
@@ -79,6 +81,7 @@ $eng = [
 layout_header($id ? 'Edit Insurance Valuation' : 'New Insurance Valuation', 'insurance');
 ?>
 <form class="card" method="post">
+  <?= csrf_field() ?>
   <?php if ($id): ?><input type="hidden" name="id" value="<?= e($id) ?>"><?php endif; ?>
 
   <fieldset><legend>Vehicle & Ownership Details</legend><div class="grid">

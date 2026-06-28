@@ -14,3 +14,7 @@ deployment:
     - /bin/cp -R ./. $DEPLOYPATH/
     # Never expose the git repo or deploy config in the public web folder.
     - /bin/rm -rf $DEPLOYPATH/.git $DEPLOYPATH/.cpanel.yml $DEPLOYPATH/.gitignore
+    # Remove the insecure one-off user creator if it lingers from an old deploy.
+    - /bin/rm -f $DEPLOYPATH/create_user.php
+    # Protect the SQL/log/storage from the web (in case .htaccess rules differ).
+    - /bin/rm -f $DEPLOYPATH/schema_v2.sql.bak

@@ -5,12 +5,17 @@ require_once __DIR__ . '/lib.php';
 function layout_header(string $title, string $active = ''): void {
     $u = current_user();
     $nav = [
+        'dashboard' => ['label' => 'Dashboard',            'href' => 'dashboard.php'],
         'bank'      => ['label' => 'Bank Valuations',      'href' => 'bank_list.php'],
         'insurance' => ['label' => 'Insurance Valuations', 'href' => 'insurance_list.php'],
         'clients'   => ['label' => 'Clients',              'href' => 'clients.php'],
         'insurers'  => ['label' => 'Insurers',             'href' => 'insurers.php'],
         'types'     => ['label' => 'Valuation Types',      'href' => 'types.php'],
     ];
+    if (is_admin()) {
+        $nav['users']    = ['label' => 'Users',    'href' => 'users.php'];
+        $nav['settings'] = ['label' => 'Settings', 'href' => 'settings.php'];
+    }
     $fl = flash();
     ?><!doctype html>
 <html lang="en">
@@ -35,6 +40,8 @@ function layout_header(string $title, string $active = ''): void {
   .who{color:var(--mut);font-size:13px}
   .content{padding:24px;max-width:1200px;width:100%}
   .flash{background:#0f3d24;border:1px solid #1c7a47;color:#b8f5d0;padding:10px 14px;border-radius:8px;margin-bottom:16px}
+  .flash-err{background:#3d0f0f;border-color:#7a1c1c;color:#f5c0c0}
+  .who .role{background:#2b3340;color:#cdd5e0;font-size:11px;padding:2px 8px;border-radius:10px;margin-left:4px}
   .btn{display:inline-block;background:var(--accent);color:#fff;border:0;padding:9px 16px;border-radius:8px;font-size:14px;cursor:pointer}
   .btn:hover{filter:brightness(1.1)} .btn.sec{background:#2b3340} .btn.blue{background:var(--accent2)}
   table.list{width:100%;border-collapse:collapse;background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
@@ -86,11 +93,13 @@ function layout_header(string $title, string $active = ''): void {
     <div class="top">
       <h1><?= e($title) ?></h1>
       <div class="who">
-        <?= e($u['name'] ?? '') ?> · <a href="<?= url('logout.php') ?>" class="muted">Log out</a>
+        <a href="<?= url('profile.php') ?>" class="muted"><?= e($u['name'] ?? '') ?></a>
+        <span class="role"><?= e(ucfirst($u['role'] ?? '')) ?></span>
+        · <a href="<?= url('logout.php') ?>" class="muted">Log out</a>
       </div>
     </div>
     <div class="content">
-      <?php if ($fl): ?><div class="flash"><?= e($fl) ?></div><?php endif; ?>
+      <?php if ($fl): ?><div class="flash <?= ($fl['type'] ?? 'ok') === 'err' ? 'flash-err' : '' ?>"><?= e($fl['msg'] ?? '') ?></div><?php endif; ?>
 <?php }
 
 /**

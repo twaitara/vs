@@ -51,6 +51,8 @@ function save_row(string $table, array $columns, array $post, $id = null, array 
 
     $now = date('Y-m-d H:i:s');
     $data['updated_at'] = $now;
+    $uid = current_user()['id'] ?? null;
+    if (column_exists($table, 'updated_by')) $data['updated_by'] = $uid;
 
     if ($id) {
         $sets = implode(', ', array_map(fn($c) => "`$c` = ?", array_keys($data)));
@@ -60,6 +62,7 @@ function save_row(string $table, array $columns, array $post, $id = null, array 
         return (int)$id;
     }
     $data['created_at'] = $now;
+    if (column_exists($table, 'created_by')) $data['created_by'] = $uid;
     $cols = implode(', ', array_map(fn($c) => "`$c`", array_keys($data)));
     $ph   = implode(', ', array_fill(0, count($data), '?'));
     db()->prepare("INSERT INTO `$table` ($cols) VALUES ($ph)")->execute(array_values($data));

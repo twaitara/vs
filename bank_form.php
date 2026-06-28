@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/layout.php';
 require_once __DIR__ . '/forms.php';
-require_login();
+require_can_edit();
 
 // Columns persisted for a bank valuation (spelling matches the existing DB schema).
 $COLUMNS = [
@@ -17,8 +17,10 @@ $id  = $_GET['id'] ?? ($_POST['id'] ?? null);
 $row = load_row('bankvaluations', $id);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    csrf_verify();
     $files = handle_uploads($_POST['reg_no'] ?? '', $row);
     $newId = save_row('bankvaluations', $COLUMNS, $_POST, $id, $files);
+    audit($id ? 'update' : 'create', 'bankvaluation', $newId, $_POST['reg_no'] ?? '');
     flash($id ? 'Bank valuation updated.' : 'Bank valuation saved.');
     redirect('bank_list.php');
 }
@@ -26,6 +28,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 layout_header($id ? 'Edit Bank Valuation' : 'New Bank Valuation', 'bank');
 ?>
 <form class="card" method="post" enctype="multipart/form-data">
+  <?= csrf_field() ?>
   <?php if ($id): ?><input type="hidden" name="id" value="<?= e($id) ?>"><?php endif; ?>
 
   <fieldset><legend>Vehicle & Ownership Details</legend><div class="grid">

@@ -6,12 +6,14 @@ $q       = trim($_GET['q'] ?? '');
 $perPage = 25;
 $page    = max(1, (int)($_GET['page'] ?? 1));
 
-$where = '';
+$cond = [];
 $params = [];
+if (column_exists('valuations', 'deleted_at')) $cond[] = 'deleted_at IS NULL';
 if ($q !== '') {
-    $where = " WHERE reg_no LIKE ? OR make LIKE ? OR customer_name LIKE ?";
-    $like = "%$q%"; $params = [$like, $like, $like];
+    $cond[] = '(reg_no LIKE ? OR make LIKE ? OR customer_name LIKE ?)';
+    $like = "%$q%"; array_push($params, $like, $like, $like);
 }
+$where = $cond ? ' WHERE ' . implode(' AND ', $cond) : '';
 
 $cst = db()->prepare("SELECT COUNT(*) FROM valuations" . $where);
 $cst->execute($params);

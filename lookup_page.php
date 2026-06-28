@@ -6,6 +6,7 @@ require_login();
 function lookup_admin(string $table, string $title, string $active): void {
     // Handle actions
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        csrf_verify();
         $name = trim($_POST['name'] ?? '');
         $eid  = $_POST['id'] ?? '';
         if ($name !== '') {
@@ -36,6 +37,7 @@ function lookup_admin(string $table, string $title, string $active): void {
     layout_header($title, $active);
     ?>
     <form class="card" method="post" style="max-width:480px">
+      <?= csrf_field() ?>
       <?php if ($editRow): ?><input type="hidden" name="id" value="<?= e($editRow['id']) ?>"><?php endif; ?>
       <div class="f">
         <label class="f"><?= $editRow ? 'Edit' : 'Add' ?> name</label>
