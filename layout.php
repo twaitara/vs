@@ -5,13 +5,13 @@ require_once __DIR__ . '/lib.php';
 function layout_header(string $title, string $active = ''): void {
     $u = current_user();
     $nav = [
-        'dashboard' => ['label' => 'Dashboard',            'href' => 'dashboard.php'],
-        'bank'      => ['label' => 'Bank Valuations',      'href' => 'bank_list.php'],
-        'insurance' => ['label' => 'Insurance Valuations', 'href' => 'insurance_list.php'],
+        'dashboard' => ['label' => 'Dashboard',            'href' => 'dashboard.php',       'icon' => 'layout-dashboard'],
+        'bank'      => ['label' => 'Bank Valuations',      'href' => 'bank_list.php',       'icon' => 'landmark'],
+        'insurance' => ['label' => 'Insurance Valuations', 'href' => 'insurance_list.php',  'icon' => 'shield-check'],
     ];
-    if (is_admin()) $nav['analytics'] = ['label' => 'Analytics', 'href' => 'analytics.php'];
+    if (is_admin()) $nav['analytics'] = ['label' => 'Analytics', 'href' => 'analytics.php', 'icon' => 'bar-chart-3'];
     // Everything else lives under the Settings hub.
-    if (can_edit()) $nav['settings'] = ['label' => 'Settings', 'href' => is_admin() ? 'settings.php' : 'clients.php'];
+    if (can_edit()) $nav['settings'] = ['label' => 'Settings', 'href' => is_admin() ? 'settings.php' : 'clients.php', 'icon' => 'settings'];
     $fl = flash();
     ?><!doctype html>
 <html lang="en">
@@ -37,9 +37,13 @@ function layout_header(string $title, string $active = ''): void {
   .brand{padding:0 20px 16px;border-bottom:1px solid var(--line);margin-bottom:10px}
   .brand-logo{max-width:180px;width:100%;height:auto;display:block;background:#fff;padding:8px;border-radius:8px}
   .brand small{display:block;color:var(--mut);font-weight:400;font-size:11px;margin-top:8px}
-  .nav a{display:block;padding:11px 20px;color:var(--mut);font-size:14px;border-left:3px solid transparent}
-  .nav a:hover{background:#1e242c;color:var(--txt)}
-  .nav a.on{color:#fff;border-left-color:var(--accent);background:#1e242c}
+  .nav a{display:flex;align-items:center;gap:11px;padding:11px 20px;color:var(--mut);font-size:14px;border-left:3px solid transparent;transition:background .18s,color .18s,transform .18s,padding .18s;opacity:0;animation:navIn .4s ease forwards}
+  .nav a i{width:18px;height:18px;flex:0 0 18px;transition:transform .18s}
+  .nav a:hover{background:#1e242c;color:var(--txt);padding-left:24px}
+  .nav a:hover i{transform:scale(1.15)}
+  .nav a.on{color:#fff;border-left-color:var(--accent);background:linear-gradient(90deg,rgba(212,29,29,.16),transparent)}
+  .nav a.on i{color:var(--accent)}
+  @keyframes navIn{from{opacity:0;transform:translateX(-10px)}to{opacity:1;transform:none}}
   .main{flex:1;display:flex;flex-direction:column;min-width:0}
   .top{display:flex;justify-content:space-between;align-items:center;padding:14px 24px;border-bottom:1px solid var(--line);background:var(--panel)}
   .top h1{font-size:17px;margin:0}
@@ -56,9 +60,29 @@ function layout_header(string $title, string $active = ''): void {
   #spinner .sp{width:42px;height:42px;border:4px solid rgba(255,255,255,.25);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite}
   @keyframes spin{to{transform:rotate(360deg)}}
   .themebtn{background:#2b3340;color:#cdd5e0;border:0;border-radius:6px;width:28px;height:24px;cursor:pointer;font-size:13px;margin-right:6px}
-  .who .role{background:#2b3340;color:#cdd5e0;font-size:11px;padding:2px 8px;border-radius:10px;margin-left:4px}
+  .who{display:flex;align-items:center;gap:10px}
+  .who .whoami{display:flex;align-items:center;gap:6px;color:var(--mut);font-size:13px;transition:color .15s}
+  .who .whoami:hover{color:var(--txt)} .who .whoami i{width:16px;height:16px}
+  .who .logout{display:inline-flex;color:var(--mut);transition:color .15s,transform .15s} .who .logout:hover{color:var(--accent);transform:translateX(2px)} .who .logout i{width:18px;height:18px}
+  .who .role{background:#2b3340;color:#cdd5e0;font-size:11px;padding:2px 8px;border-radius:10px}
+  /* ---- global motion + icon polish ---- */
+  .content{animation:fadeUp .45s cubic-bezier(.2,.7,.2,1)}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  .btn{transition:transform .15s,filter .15s,box-shadow .15s} .btn:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(212,29,29,.25)}
+  .btn:active{transform:translateY(0)}
+  .btn.sec:hover,.btn.blue:hover{box-shadow:0 6px 18px rgba(0,0,0,.25)}
+  .btn i,.rbtn i{width:15px;height:15px;vertical-align:-3px;margin-right:5px}
+  table.list tr{transition:background .12s}
+  .rbtn{transition:background .15s,transform .15s} .rbtn:hover{transform:translateY(-1px)}
+  .themebtn{display:inline-flex;align-items:center;justify-content:center} .themebtn i{width:15px;height:15px}
+  .card,.kpi,.panel{transition:transform .2s,box-shadow .2s,border-color .2s}
+  .kpi:hover,.panel:hover{transform:translateY(-3px);box-shadow:0 10px 30px rgba(0,0,0,.28);border-color:#33404e}
+  .badge{transition:transform .15s}.badge:hover{transform:scale(1.05)}
+  a,button{ -webkit-tap-highlight-color:transparent }
+  ::-webkit-scrollbar{width:10px;height:10px}::-webkit-scrollbar-thumb{background:#2b3340;border-radius:6px}::-webkit-scrollbar-track{background:transparent}
   .subnav{display:flex;flex-wrap:wrap;gap:4px;border-bottom:1px solid var(--line);margin-bottom:20px}
-  .subnav a{padding:9px 14px;color:var(--mut);font-size:13px;border-bottom:2px solid transparent}
+  .subnav a{display:inline-flex;align-items:center;gap:7px;padding:9px 14px;color:var(--mut);font-size:13px;border-bottom:2px solid transparent;transition:color .15s,border-color .15s}
+  .subnav a i{width:16px;height:16px}
   .subnav a:hover{color:var(--txt)}
   .subnav a.on{color:#fff;border-bottom-color:var(--accent)}
   .btn{display:inline-block;background:var(--accent);color:#fff;border:0;padding:9px 16px;border-radius:8px;font-size:14px;cursor:pointer}
@@ -123,7 +147,9 @@ function layout_header(string $title, string $active = ''): void {
     </div>
     <nav class="nav">
       <?php foreach ($nav as $k => $item): ?>
-        <a href="<?= url($item['href']) ?>" class="<?= $active===$k?'on':'' ?>"><?= e($item['label']) ?></a>
+        <a href="<?= url($item['href']) ?>" class="<?= $active===$k?'on':'' ?>" style="animation-delay:<?= (0.04 * array_search($k, array_keys($nav))) ?>s">
+          <i data-lucide="<?= e($item['icon']) ?>"></i><span><?= e($item['label']) ?></span>
+        </a>
       <?php endforeach; ?>
     </nav>
   </aside>
@@ -131,10 +157,10 @@ function layout_header(string $title, string $active = ''): void {
     <div class="top">
       <h1><?= e($title) ?></h1>
       <div class="who">
-        <button type="button" id="themeBtn" class="themebtn" title="Toggle light/dark">◐</button>
-        <a href="<?= url('profile.php') ?>" class="muted"><?= e($u['name'] ?? '') ?></a>
+        <button type="button" id="themeBtn" class="themebtn" title="Toggle light/dark"><i data-lucide="sun-moon"></i></button>
+        <a href="<?= url('profile.php') ?>" class="whoami"><i data-lucide="user-round"></i><span><?= e($u['name'] ?? '') ?></span></a>
         <span class="role"><?= e(ucfirst($u['role'] ?? '')) ?></span>
-        · <a href="<?= url('logout.php') ?>" class="muted">Log out</a>
+        <a href="<?= url('logout.php') ?>" class="muted logout" title="Log out"><i data-lucide="log-out"></i></a>
       </div>
     </div>
     <div id="toasts"></div>
@@ -146,15 +172,15 @@ function layout_header(string $title, string $active = ''): void {
 /** Sub-navigation for the Settings hub. $active = section key. */
 function settings_nav(string $active): void {
     $tabs = [];
-    if (is_admin()) $tabs['general'] = ['Company', 'settings.php'];
-    $tabs['clients']  = ['Clients', 'clients.php'];
-    $tabs['insurers'] = ['Insurers', 'insurers.php'];
-    $tabs['types']    = ['Valuation Types', 'types.php'];
-    if (is_admin()) { $tabs['users'] = ['Users', 'users.php']; $tabs['audit'] = ['Audit Log', 'audit.php']; }
-    $tabs['recycle']  = ['Recycle Bin', 'recycle.php'];
+    if (is_admin()) $tabs['general'] = ['Company', 'settings.php', 'building-2'];
+    $tabs['clients']  = ['Clients', 'clients.php', 'users'];
+    $tabs['insurers'] = ['Insurers', 'insurers.php', 'shield'];
+    $tabs['types']    = ['Valuation Types', 'types.php', 'tags'];
+    if (is_admin()) { $tabs['users'] = ['Users', 'users.php', 'user-cog']; $tabs['audit'] = ['Audit Log', 'audit.php', 'scroll-text']; }
+    $tabs['recycle']  = ['Recycle Bin', 'recycle.php', 'trash-2'];
     echo '<div class="subnav">';
     foreach ($tabs as $k => $t) {
-        echo '<a class="' . ($k === $active ? 'on' : '') . '" href="' . url($t[1]) . '">' . e($t[0]) . '</a>';
+        echo '<a class="' . ($k === $active ? 'on' : '') . '" href="' . url($t[1]) . '"><i data-lucide="' . $t[2] . '"></i>' . e($t[0]) . '</a>';
     }
     echo '</div>';
 }
@@ -427,7 +453,14 @@ function layout_footer(): void { ?>
     </div>
   </div>
 </div>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 <script>
+(function(){
+  // Render all Lucide icons.
+  function icons(){ if(window.lucide) lucide.createIcons(); }
+  icons(); document.addEventListener('DOMContentLoaded', icons);
+  window.refreshIcons = icons;
+})();
 (function(){
   // ---- Toasts ----
   window.toast = function(msg, type){

@@ -162,9 +162,9 @@ layout_header($id ? 'Edit Insurance Valuation' : 'New Insurance Valuation', 'ins
     <?= f_text('ammends','Ammendments',$row) ?>
   </div></fieldset>
 
-  <button class="btn" type="submit">Save</button>
-  <a class="btn sec" href="<?= url('insurance_list.php') ?>">Cancel</a>
-  <?php if ($id): ?><a class="btn sec" href="<?= url('duplicate.php?type=insurance&id=' . (int)$id) ?>" onclick="return confirm('Create a duplicate of this valuation?')">Duplicate</a><?php endif; ?>
+  <button class="btn" type="submit"><i data-lucide="save"></i>Save</button>
+  <a class="btn sec" href="<?= url('insurance_list.php') ?>"><i data-lucide="x"></i>Cancel</a>
+  <?php if ($id): ?><a class="btn sec" href="<?= url('duplicate.php?type=insurance&id=' . (int)$id) ?>" onclick="return confirm('Create a duplicate of this valuation?')"><i data-lucide="copy"></i>Duplicate</a><?php endif; ?>
 </form>
 <?php form_assets(); ?>
 <?php layout_footer();

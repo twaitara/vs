@@ -38,10 +38,10 @@ $cur = setting('currency', CURRENCY);
 layout_header('Dashboard', 'dashboard');
 ?>
 <div class="kpis">
-  <div class="kpi"><div class="kpi-label">Bank Valuations</div><div class="kpi-num"><?= number_format($bankTotal) ?></div></div>
-  <div class="kpi"><div class="kpi-label">Insurance Valuations</div><div class="kpi-num"><?= number_format($insTotal) ?></div></div>
-  <div class="kpi"><div class="kpi-label">New This Month</div><div class="kpi-num"><?= number_format($bankMonth) ?></div></div>
-  <div class="kpi"><div class="kpi-label">Total Market Value (<?= e($cur) ?>)</div><div class="kpi-num sm"><?= number_format($totalValue) ?></div></div>
+  <div class="kpi"><div class="kpi-ic ic-blue"><i data-lucide="landmark"></i></div><div><div class="kpi-label">Bank Valuations</div><div class="kpi-num" data-count="<?= (int)$bankTotal ?>">0</div></div></div>
+  <div class="kpi"><div class="kpi-ic ic-green"><i data-lucide="shield-check"></i></div><div><div class="kpi-label">Insurance Valuations</div><div class="kpi-num" data-count="<?= (int)$insTotal ?>">0</div></div></div>
+  <div class="kpi"><div class="kpi-ic ic-amber"><i data-lucide="calendar-plus"></i></div><div><div class="kpi-label">New This Month</div><div class="kpi-num" data-count="<?= (int)$bankMonth ?>">0</div></div></div>
+  <div class="kpi"><div class="kpi-ic ic-red"><i data-lucide="coins"></i></div><div><div class="kpi-label">Total Value (<?= e($cur) ?>)</div><div class="kpi-num sm" data-count="<?= (int)$totalValue ?>">0</div></div></div>
 </div>
 
 <div class="dash-grid">
@@ -88,10 +88,14 @@ layout_header('Dashboard', 'dashboard');
 </div>
 
 <style>
-  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:22px}
-  .kpi{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px}
-  .kpi-label{color:var(--mut);font-size:13px;margin-bottom:8px}
-  .kpi-num{font-size:30px;font-weight:700} .kpi-num.sm{font-size:22px}
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-bottom:22px}
+  .kpi{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px;display:flex;align-items:center;gap:14px}
+  .kpi-ic{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex:0 0 48px}
+  .kpi-ic i{width:24px;height:24px}
+  .ic-blue{background:rgba(37,99,235,.15);color:#5b9bff}.ic-green{background:rgba(28,122,71,.18);color:#3ddc84}
+  .ic-amber{background:rgba(122,92,28,.2);color:#f5d79a}.ic-red{background:rgba(212,29,29,.16);color:#ff6b6b}
+  .kpi-label{color:var(--mut);font-size:13px;margin-bottom:4px}
+  .kpi-num{font-size:28px;font-weight:800;letter-spacing:-.02em} .kpi-num.sm{font-size:20px}
   .dash-grid{display:grid;grid-template-columns:2fr 1fr;gap:18px}
   @media(max-width:900px){.dash-grid{grid-template-columns:1fr}}
   .panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px}
@@ -131,6 +135,13 @@ layout_header('Dashboard', 'dashboard');
   if (s) s.addEventListener('input', function(){ page = 1; render(); });
   render();
 })();
+// Animated count-up for KPI numbers
+document.querySelectorAll('.kpi-num[data-count]').forEach(function(el){
+  var target = +el.dataset.count || 0, dur = 900, t0 = null;
+  function step(ts){ if(!t0) t0 = ts; var p = Math.min((ts - t0)/dur, 1);
+    el.textContent = Math.floor(p*target).toLocaleString(); if(p<1) requestAnimationFrame(step); }
+  requestAnimationFrame(step);
+});
 </script>
 <style>
   .recent-pager{display:flex;gap:5px;justify-content:center;flex-wrap:wrap;margin-top:12px}

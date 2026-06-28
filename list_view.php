@@ -96,9 +96,9 @@ function render_list(array $cfg): void {
         <input type="search" name="q" id="quickSearch" placeholder="Quick search reg no, make, customer…" value="<?= e($q) ?>" autocomplete="off">
       </form>
       <div style="display:flex;gap:8px">
-        <button type="button" class="btn sec" onclick="document.getElementById('filterBar').classList.toggle('open')">⛃ Filters<?= $hasFilters ? ' •' : '' ?></button>
-        <a class="btn sec" href="<?= url('export.php?type=' . $cfg['nav'] . '&' . http_build_query($keep)) ?>">⬇ CSV</a>
-        <?php if (can_edit()): ?><a class="btn" href="<?= url($cfg['form_page']) ?>">+ New</a><?php endif; ?>
+        <button type="button" class="btn sec" onclick="document.getElementById('filterBar').classList.toggle('open')"><i data-lucide="sliders-horizontal"></i>Filters<?= $hasFilters ? ' •' : '' ?></button>
+        <a class="btn sec" href="<?= url('export.php?type=' . $cfg['nav'] . '&' . http_build_query($keep)) ?>"><i data-lucide="download"></i>CSV</a>
+        <?php if (can_edit()): ?><a class="btn" href="<?= url($cfg['form_page']) ?>"><i data-lucide="plus"></i>New</a><?php endif; ?>
       </div>
     </div>
 
@@ -124,7 +124,7 @@ function render_list(array $cfg): void {
       <?php if (can_edit()): ?>
       <div class="bulkbar">
         <label><input type="checkbox" id="selAll"> Select all</label>
-        <button class="btn" type="submit" onclick="return confirmBulk()" style="background:#d41d1d">Delete selected</button>
+        <button class="btn" type="submit" onclick="return confirmBulk()" style="background:#d41d1d"><i data-lucide="trash-2"></i>Delete selected</button>
         <span class="muted" id="selCount"></span>
       </div>
       <?php endif; ?>
@@ -157,11 +157,11 @@ function render_list(array $cfg): void {
             <td class="muted"><?= e(ddate($r['created_at'])) ?></td>
             <td class="actions">
               <?php if (can_edit()): ?>
-                <a class="rbtn" href="<?= url($cfg['form_page'].'?id='.$r['id']) ?>">Edit</a>
-                <a class="rbtn" href="<?= url('duplicate.php?type='.$cfg['nav'].'&id='.$r['id']) ?>" onclick="return confirm('Duplicate this valuation?')">Dup</a>
+                <a class="rbtn" href="<?= url($cfg['form_page'].'?id='.$r['id']) ?>"><i data-lucide="pencil"></i>Edit</a>
+                <a class="rbtn" href="<?= url('duplicate.php?type='.$cfg['nav'].'&id='.$r['id']) ?>" onclick="return confirm('Duplicate this valuation?')"><i data-lucide="copy"></i>Dup</a>
               <?php endif; ?>
-              <a class="rbtn" href="#" onclick="openPreview(<?= (int)$r['id'] ?>,'<?= e($cfg['nav']) ?>');return false;">Preview</a>
-              <a class="rbtn" href="<?= url('print.php?type='.$cfg['nav'].'&id='.$r['id']) ?>">Print</a>
+              <a class="rbtn" href="#" onclick="openPreview(<?= (int)$r['id'] ?>,'<?= e($cfg['nav']) ?>');return false;"><i data-lucide="eye"></i>Preview</a>
+              <a class="rbtn" href="<?= url('print.php?type='.$cfg['nav'].'&id='.$r['id']) ?>"><i data-lucide="printer"></i>Print</a>
             </td>
           </tr>
         <?php endforeach; endif; ?>
