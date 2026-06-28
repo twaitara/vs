@@ -91,6 +91,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   <button class="btn" type="submit" id="loginBtn"><span class="lbl">Sign in</span><i data-lucide="arrow-right"></i></button>
 
   <div class="foot">© <?= date('Y') ?> <?= e(APP_NAME) ?> · Secure access</div>
+  <div class="foot" style="margin-top:6px"><a href="<?= url('portal_login.php') ?>" style="color:#9aa4b2;text-decoration:underline">Client portal →</a></div>
 </form>
 
 <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>

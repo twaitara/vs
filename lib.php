@@ -147,6 +147,32 @@ function logout(): void {
     $_SESSION = []; session_destroy();
 }
 
+// ---------------- Client portal auth (separate from staff) ----------------
+function current_client(): ?array { return $_SESSION['client_user'] ?? null; }
+function require_client(): void { if (!current_client()) redirect('portal_login.php'); }
+
+function attempt_client_login(string $email, string $password) {
+    $ip = $_SERVER['REMOTE_ADDR'] ?? '';
+    if (recent_failed_logins($email, $ip) >= 8) return 'locked';
+    $st = db()->prepare('SELECT * FROM client_users WHERE email = ? LIMIT 1');
+    $st->execute([$email]);
+    $u = $st->fetch();
+    $ok = $u && password_verify($password, $u['password']) && (int)($u['active'] ?? 1) === 1;
+    record_login_attempt($email, $ip, (bool)$ok);
+    if ($ok) {
+        unset($u['password']);
+        session_regenerate_id(true);
+        $_SESSION['client_user'] = $u;
+        audit('portal_login', 'client_user', $u['id'], $email);
+        return true;
+    }
+    return false;
+}
+function client_logout(): void {
+    if ($c = current_client()) audit('portal_logout', 'client_user', $c['id']);
+    unset($_SESSION['client_user']);
+}
+
 // ---------------- Settings ----------------
 function settings_all(): array {
     static $cache = null;

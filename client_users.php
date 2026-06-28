@@ -1,0 +1,111 @@
+<?php
+require_once __DIR__ . '/layout.php';
+require_admin();
+
+$clients = lookup('clients'); // id => name
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    csrf_verify();
+    $action = $_POST['action'] ?? '';
+    $name   = trim($_POST['name'] ?? '');
+    $email  = trim($_POST['email'] ?? '');
+    $cid    = (int)($_POST['client_id'] ?? 0);
+    $uid    = (int)($_POST['id'] ?? 0);
+    $errors = [];
+
+    if ($action === 'create') {
+        $pass = $_POST['password'] ?? '';
+        if (!$cid || !isset($clients[$cid])) $errors[] = 'Choose a client.';
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) $errors[] = 'Valid email required.';
+        if (strlen($pass) < 6) $errors[] = 'Password must be at least 6 characters.';
+        if (!$errors) {
+            $dup = db()->prepare('SELECT COUNT(*) FROM client_users WHERE email = ?'); $dup->execute([$email]);
+            if ($dup->fetchColumn() > 0) $errors[] = 'That email already has a portal login.';
+        }
+        if (!$errors) {
+            $st = db()->prepare('INSERT INTO client_users (client_id,name,email,password,active,created_at,updated_at) VALUES (?,?,?,?,1,NOW(),NOW())');
+            $st->execute([$cid, $name, $email, password_hash($pass, PASSWORD_BCRYPT)]);
+            audit('create', 'client_user', db()->lastInsertId(), $email);
+            flash('Portal login created.'); redirect('client_users.php');
+        }
+    } elseif ($action === 'update' && $uid) {
+        if (!$cid || !isset($clients[$cid])) $errors[] = 'Choose a client.';
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) $errors[] = 'Valid email required.';
+        if (!$errors) {
+            $st = db()->prepare('UPDATE client_users SET client_id=?, name=?, email=?, updated_at=NOW() WHERE id=?');
+            $st->execute([$cid, $name, $email, $uid]);
+            audit('update', 'client_user', $uid, $email);
+            flash('Portal login updated.'); redirect('client_users.php');
+        }
+    } elseif ($action === 'toggle' && $uid) {
+        db()->prepare('UPDATE client_users SET active = 1 - active, updated_at=NOW() WHERE id=?')->execute([$uid]);
+        audit('toggle_active', 'client_user', $uid); flash('Status changed.'); redirect('client_users.php');
+    } elseif ($action === 'resetpw' && $uid) {
+        $pass = $_POST['password'] ?? '';
+        if (strlen($pass) < 6) { flash('Password too short.', 'err'); redirect('client_users.php'); }
+        db()->prepare('UPDATE client_users SET password=?, updated_at=NOW() WHERE id=?')->execute([password_hash($pass, PASSWORD_BCRYPT), $uid]);
+        audit('reset_password', 'client_user', $uid); flash('Password reset.'); redirect('client_users.php');
+    } elseif ($action === 'delete' && $uid) {
+        db()->prepare('DELETE FROM client_users WHERE id=?')->execute([$uid]);
+        audit('delete', 'client_user', $uid); flash('Portal login deleted.'); redirect('client_users.php');
+    }
+    if ($errors) flash(implode(' ', $errors), 'err');
+}
+
+$editId = (int)($_GET['edit'] ?? 0);
+$edit = null;
+if ($editId) { $st = db()->prepare('SELECT * FROM client_users WHERE id=?'); $st->execute([$editId]); $edit = $st->fetch() ?: null; }
+
+$rows = db()->query('SELECT * FROM client_users ORDER BY name')->fetchAll();
+
+layout_header('Portal Users', 'settings');
+settings_nav('portal');
+?>
+<p class="muted" style="margin-top:-8px">Give a client (e.g. a bank) a login to the customer portal. They will only see valuations belonging to their company.</p>
+<div style="display:grid;grid-template-columns:1fr 1.5fr;gap:18px">
+  <form class="card" method="post">
+    <?= csrf_field() ?>
+    <input type="hidden" name="action" value="<?= $edit ? 'update' : 'create' ?>">
+    <?php if ($edit): ?><input type="hidden" name="id" value="<?= (int)$edit['id'] ?>"><?php endif; ?>
+    <h3 style="margin-top:0"><?= $edit ? 'Edit Portal Login' : 'Add Portal Login' ?></h3>
+    <div class="f"><label class="f">Client (company)</label><select name="client_id">
+      <option value="">-- select --</option>
+      <?php foreach ($clients as $id => $nm): ?><option value="<?= $id ?>" <?= (int)($edit['client_id'] ?? 0) === $id ? 'selected' : '' ?>><?= e($nm) ?></option><?php endforeach; ?>
+    </select></div>
+    <div class="f"><label class="f">Contact Name</label><input name="name" value="<?= e($edit['name'] ?? '') ?>"></div>
+    <div class="f"><label class="f">Email (login)</label><input type="email" name="email" required value="<?= e($edit['email'] ?? '') ?>"></div>
+    <?php if (!$edit): ?><div class="f"><label class="f">Password</label><input type="password" name="password" required minlength="6"></div><?php endif; ?>
+    <div style="margin-top:12px">
+      <button class="btn" type="submit"><i data-lucide="save"></i><?= $edit ? 'Save' : 'Create' ?></button>
+      <?php if ($edit): ?><a class="btn sec" href="<?= url('client_users.php') ?>">Cancel</a><?php endif; ?>
+    </div>
+  </form>
+
+  <div class="card">
+    <h3 style="margin-top:0">Portal Logins</h3>
+    <table class="list">
+      <thead><tr><th>Client</th><th>Contact</th><th>Email</th><th>Status</th><th>Actions</th></tr></thead>
+      <tbody>
+      <?php if (!$rows): ?><tr><td colspan="5" class="muted">No portal logins yet.</td></tr>
+      <?php else: foreach ($rows as $r): ?>
+        <tr>
+          <td><?= e($clients[$r['client_id']] ?? ('#' . $r['client_id'])) ?></td>
+          <td><?= e($r['name']) ?></td>
+          <td><?= e($r['email']) ?></td>
+          <td><?= ((int)$r['active'] === 1) ? '<span style="color:#36a35f">Active</span>' : '<span style="color:#d41d1d">Disabled</span>' ?></td>
+          <td class="actions">
+            <a class="rbtn" href="?edit=<?= (int)$r['id'] ?>">Edit</a>
+            <form method="post" style="display:inline"><?= csrf_field() ?><input type="hidden" name="action" value="toggle"><input type="hidden" name="id" value="<?= (int)$r['id'] ?>"><button class="rbtn" type="submit"><?= (int)$r['active'] === 1 ? 'Disable' : 'Enable' ?></button></form>
+            <button class="rbtn" type="button" onclick="cuReset(<?= (int)$r['id'] ?>,'<?= e($r['email']) ?>')">Reset PW</button>
+          </td>
+        </tr>
+      <?php endforeach; endif; ?>
+      </tbody>
+    </table>
+  </div>
+</div>
+<form method="post" id="cuResetForm" style="display:none"><?= csrf_field() ?><input type="hidden" name="action" value="resetpw"><input type="hidden" name="id" id="cuId"><input type="hidden" name="password" id="cuPw"></form>
+<script>
+function cuReset(id,email){var p=prompt('New portal password for '+email+' (min 6):');if(p===null)return;if(p.length<6){alert('Too short');return;}document.getElementById('cuId').value=id;document.getElementById('cuPw').value=p;document.getElementById('cuResetForm').submit();}
+</script>
+<?php layout_footer();
