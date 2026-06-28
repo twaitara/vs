@@ -48,6 +48,9 @@ function portal_header(string $title): void {
   .rbtn{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line);color:var(--txt);padding:5px 11px;border-radius:6px;font-size:12px;background:var(--chip);margin-right:6px;transition:transform .15s}
   .rbtn:hover{transform:translateY(-1px)} .rbtn i{width:14px;height:14px}
   .rbtn .lucide-eye{color:#22c55e}.rbtn .lucide-printer{color:#7c8896}
+  .ppager{display:flex;gap:5px;justify-content:center;flex-wrap:wrap;margin-top:14px}
+  .ppager .pgb{background:var(--panel);border:1px solid var(--line);color:var(--txt);padding:6px 11px;border-radius:6px;font-size:12px;cursor:pointer}
+  .ppager .pgb:hover:not(:disabled){background:var(--hover)} .ppager .pgb.cur{background:var(--accent);border-color:var(--accent);color:#fff} .ppager .pgb:disabled{opacity:.4;cursor:default}
   .muted{color:var(--mut)} .badge{display:inline-block;font-size:11px;padding:2px 7px;border-radius:10px}
   .b-red{background:#3d0f0f;color:#f5a3a3}.b-amber{background:#3d2f0f;color:#f5d79a}.b-green{background:#0f3d24;color:#b8f5d0}.b-grey{background:#2b3340;color:#cdd5e0}
   /* preview modal */

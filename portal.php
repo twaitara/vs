@@ -66,6 +66,7 @@ portal_header('My Valuations');
   <?php endforeach; endif; ?>
   </tbody>
 </table>
+<div id="ppager" class="ppager"></div>
 
 <div class="modal-bg" id="pModal" onclick="if(event.target===this)pClose()">
   <div class="modal">
@@ -80,7 +81,28 @@ var TAB='<?= $tab ?>';
 function pOpen(id){document.getElementById('pFrame').src='<?= url('portal_view.php') ?>?type='+TAB+'&id='+id;document.getElementById('pPdf').href='<?= url('portal_pdf.php') ?>?type='+TAB+'&id='+id;document.getElementById('pModal').classList.add('open');document.body.style.overflow='hidden';}
 function pClose(){document.getElementById('pModal').classList.remove('open');document.getElementById('pFrame').src='about:blank';document.body.style.overflow='';}
 document.addEventListener('keydown',function(e){if(e.key==='Escape')pClose();});
-(function(){var s=document.getElementById('psearch'),tb=document.querySelector('#ptable tbody');if(!s)return;
- s.addEventListener('input',function(){var q=s.value.toLowerCase();tb.querySelectorAll('tr').forEach(function(tr){tr.style.display=tr.textContent.toLowerCase().indexOf(q)>=0?'':'none';});});})();
+(function(){
+  var PER=25, s=document.getElementById('psearch'), tb=document.querySelector('#ptable tbody'), pager=document.getElementById('ppager');
+  if(!tb||!pager) return;
+  var all=Array.prototype.slice.call(tb.querySelectorAll('tr')).filter(function(tr){return !tr.querySelector('td.muted');});
+  var page=1;
+  function render(){
+    var q=(s?s.value:'').toLowerCase();
+    var matched=all.filter(function(tr){return tr.textContent.toLowerCase().indexOf(q)>=0;});
+    var pages=Math.max(1,Math.ceil(matched.length/PER));
+    if(page>pages)page=pages;
+    all.forEach(function(tr){tr.style.display='none';});
+    matched.slice((page-1)*PER,page*PER).forEach(function(tr){tr.style.display='';});
+    pager.innerHTML='';
+    if(pages>1){
+      var mk=function(label,p,dis,cur){var b=document.createElement('button');b.textContent=label;b.className='pgb'+(cur?' cur':'');if(dis)b.disabled=true;else b.onclick=function(){page=p;render();};pager.appendChild(b);};
+      mk('‹',page-1,page===1,false);
+      for(var i=1;i<=pages;i++)mk(i,i,false,i===page);
+      mk('›',page+1,page===pages,false);
+    }
+  }
+  if(s)s.addEventListener('input',function(){page=1;render();});
+  render();
+})();
 </script>
 <?php portal_footer();
