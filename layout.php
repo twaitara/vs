@@ -499,8 +499,17 @@ function layout_footer(): void { ?>
 <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 <script>
 (function(){
-  // Render all Lucide icons.
-  function icons(){ if(window.lucide) lucide.createIcons(); }
+  var LABELS={'layout-dashboard':'Dashboard','landmark':'Bank Valuations','shield-check':'Insurance Valuations','bar-chart-3':'Analytics','settings':'Settings','sun-moon':'Toggle light / dark','user-round':'My profile','log-out':'Log out','sliders-horizontal':'Filters','download':'Download CSV','plus':'Add new','trash-2':'Delete','pencil':'Edit','copy':'Duplicate','eye':'Preview report','printer':'Print / PDF','save':'Save','x':'Cancel','mail':'Email','building-2':'Company settings','users':'Clients','shield':'Insurers','tags':'Valuation types','user-cog':'Users','scroll-text':'Audit log','key-round':'Portal users'};
+  function tips(){
+    document.querySelectorAll('.lucide').forEach(function(svg){
+      var name=''; svg.classList.forEach(function(c){ if(c.indexOf('lucide-')===0) name=c.slice(7); });
+      var el=svg.closest('a,button'); if(!el) return;
+      if(el.getAttribute('title')) return;
+      var txt=(el.textContent||'').trim();
+      el.setAttribute('title', txt || LABELS[name] || name.replace(/-/g,' '));
+    });
+  }
+  function icons(){ if(window.lucide) lucide.createIcons(); tips(); }
   icons(); document.addEventListener('DOMContentLoaded', icons);
   window.refreshIcons = icons;
 })();

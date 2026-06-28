@@ -76,6 +76,10 @@ function portal_header(string $title): void {
 function portal_footer(): void { ?>
 </div>
 <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
-<script>if(window.lucide)lucide.createIcons();</script>
+<script>
+if(window.lucide)lucide.createIcons();
+(function(){var L={'log-out':'Log out','eye':'View report','printer':'Download PDF','landmark':'Bank Valuations','shield-check':'Insurance Valuations','mail':'Email','lock':'Password','arrow-right':'Sign in'};
+ document.querySelectorAll('.lucide').forEach(function(svg){var n='';svg.classList.forEach(function(c){if(c.indexOf('lucide-')===0)n=c.slice(7);});var el=svg.closest('a,button');if(!el||el.getAttribute('title'))return;var t=(el.textContent||'').trim();el.setAttribute('title',t||L[n]||n.replace(/-/g,' '));});})();
+</script>
 </body></html>
 <?php }
