@@ -60,7 +60,7 @@ layout_header('Dashboard', 'dashboard');
 </div>
 
 <div class="dash-grid">
-  <div class="panel">
+  <div class="panel hide-mobile">
     <div class="panel-h">Recent Bank Valuations <span class="muted" style="font-weight:400;font-size:12px">(last 30 days)</span> <a href="<?= url('bank_list.php') ?>" class="lnk">View all →</a></div>
     <input type="search" id="recentSearch" placeholder="Quick search these…" autocomplete="off"
            style="width:100%;background:var(--input);border:1px solid var(--line);color:var(--txt);padding:8px 10px;border-radius:7px;font-size:13px;margin-bottom:12px">
@@ -119,6 +119,7 @@ layout_header('Dashboard', 'dashboard');
   .kpi-num{font-size:28px;font-weight:800;letter-spacing:-.02em} .kpi-num.sm{font-size:20px}
   .dash-grid{display:grid;grid-template-columns:2fr 1fr;gap:18px}
   @media(max-width:900px){.dash-grid{grid-template-columns:1fr}}
+  @media(max-width:860px){.hide-mobile{display:none!important}}
   .panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px}
   .panel-h{display:flex;justify-content:space-between;align-items:center;font-weight:600;margin-bottom:12px}
   .panel-h .lnk{font-size:13px;color:var(--accent2)}
