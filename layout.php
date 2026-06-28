@@ -44,7 +44,6 @@ function layout_header(string $title, string $active = ''): void {
   .nav a:hover{background:var(--rowh);color:var(--txt);padding-left:24px}
   .nav a:hover i{transform:scale(1.15)}
   .nav a.on{color:var(--txt);border-left-color:var(--accent);background:linear-gradient(90deg,rgba(212,29,29,.16),transparent)}
-  .nav a.on i{color:var(--accent)}
   @keyframes navIn{from{opacity:0;transform:translateX(-10px)}to{opacity:1;transform:none}}
   .main{flex:1;display:flex;flex-direction:column;min-width:0}
   .top{display:flex;justify-content:space-between;align-items:center;padding:14px 24px;border-bottom:1px solid var(--line);background:var(--panel)}
@@ -167,6 +166,19 @@ function layout_header(string $title, string $active = ''): void {
   .btn.blue{background:linear-gradient(135deg,#2563eb,#4f8bff)!important}
   table.list th{background:linear-gradient(180deg,var(--th),var(--panel))}
   table.list tbody tr:hover td{background:var(--rowh)}
+  /* === coloured icons === */
+  .nav .lucide-layout-dashboard{color:#5b9bff}
+  .nav .lucide-landmark{color:#ff6b6b}
+  .nav .lucide-shield-check{color:#22c55e}
+  .nav .lucide-bar-chart-3{color:#b18cff}
+  .nav .lucide-settings{color:#f5b14a}
+  .subnav .lucide-building-2{color:#5b9bff}.subnav .lucide-users{color:#22c55e}.subnav .lucide-shield{color:#5b9bff}
+  .subnav .lucide-tags{color:#f5b14a}.subnav .lucide-user-cog{color:#b18cff}.subnav .lucide-scroll-text{color:#5b9bff}.subnav .lucide-trash-2{color:#ff6b6b}
+  .rbtn .lucide-pencil{color:#5b9bff}.rbtn .lucide-copy{color:#b18cff}.rbtn .lucide-eye{color:#22c55e}.rbtn .lucide-printer{color:#7c8896}
+  .who .lucide-sun-moon{color:#f5b14a}.who .lucide-user-round{color:#5b9bff}.who .lucide-log-out{color:#ff6b6b}
+  /* keep icons readable inside solid/gradient buttons */
+  .btn:not(.sec) .lucide{color:#fff}
+  .btn.sec .lucide{color:var(--accent2)}
 </style>
 </head>
 <body>
