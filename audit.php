@@ -4,7 +4,7 @@ require_admin();
 
 $q       = trim($_GET['q'] ?? '');
 $action  = $_GET['action'] ?? '';
-$perPage = 50;
+$perPage = 25;
 $page    = max(1, (int)($_GET['page'] ?? 1));
 
 $cond = []; $params = [];
