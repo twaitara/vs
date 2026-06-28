@@ -136,7 +136,6 @@ layout_header($id ? 'Edit Bank Valuation' : 'New Bank Valuation', 'bank');
 
   <button class="btn" type="submit"><i data-lucide="save"></i>Save</button>
   <a class="btn sec" href="<?= url('bank_list.php') ?>"><i data-lucide="x"></i>Cancel</a>
-  <?php if ($id): ?><a class="btn sec" href="<?= url('duplicate.php?type=bank&id=' . (int)$id) ?>" onclick="return confirm('Create a duplicate of this valuation?')"><i data-lucide="copy"></i>Duplicate</a><?php endif; ?>
 </form>
 <?php form_assets(); ?>
 <?php layout_footer();

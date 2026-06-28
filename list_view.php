@@ -158,7 +158,6 @@ function render_list(array $cfg): void {
             <td class="actions">
               <?php if (can_edit()): ?>
                 <a class="rbtn" href="<?= url($cfg['form_page'].'?id='.$r['id']) ?>"><i data-lucide="pencil"></i>Edit</a>
-                <a class="rbtn" href="<?= url('duplicate.php?type='.$cfg['nav'].'&id='.$r['id']) ?>" onclick="return confirm('Duplicate this valuation?')"><i data-lucide="copy"></i>Dup</a>
               <?php endif; ?>
               <a class="rbtn" href="#" onclick="openPreview(<?= (int)$r['id'] ?>,'<?= e($cfg['nav']) ?>');return false;"><i data-lucide="eye"></i>Preview</a>
               <a class="rbtn" href="<?= url('print.php?type='.$cfg['nav'].'&id='.$r['id']) ?>"><i data-lucide="printer"></i>Print</a>

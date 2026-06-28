@@ -21,7 +21,7 @@ function layout_header(string $title, string $active = ''): void {
 <title><?= e($title) ?> · <?= e(APP_NAME) ?></title>
 <link rel="icon" type="image/png" href="<?= url('assets/logo.png') ?>">
 <link rel="apple-touch-icon" href="<?= url('assets/logo.png') ?>">
-<script>(function(){try{var t=localStorage.getItem('theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+<script>(function(){try{var t=localStorage.getItem('theme')||'dark';document.documentElement.setAttribute('data-theme',t);}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
