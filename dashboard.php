@@ -16,11 +16,12 @@ $monthCond = "YEAR(created_at)=YEAR(CURDATE()) AND MONTH(created_at)=MONTH(CURDA
 $bankMonth = (int)dash_scalar("SELECT COUNT(*) FROM bankvaluations" . ($bankWhere ? $bankWhere . " AND " : " WHERE ") . $monthCond);
 $totalValue = (float)dash_scalar("SELECT COALESCE(SUM(market_value),0) FROM bankvaluations" . $bankWhere);
 
-// Recent valuations (bank).
+// Recent valuations (bank) — last 30 days.
 $recent = [];
 try {
+    $rw = ($bankWhere ? $bankWhere . " AND" : " WHERE") . " created_at >= (NOW() - INTERVAL 30 DAY)";
     $st = db()->query("SELECT id, reg_no, make, customer_name, market_value, created_at
-                       FROM bankvaluations" . $bankWhere . " ORDER BY id DESC LIMIT 8");
+                       FROM bankvaluations" . $rw . " ORDER BY id DESC LIMIT 200");
     $recent = $st->fetchAll();
 } catch (Throwable $e) {}
 
@@ -45,11 +46,13 @@ layout_header('Dashboard', 'dashboard');
 
 <div class="dash-grid">
   <div class="panel">
-    <div class="panel-h">Recent Bank Valuations <a href="<?= url('bank_list.php') ?>" class="lnk">View all →</a></div>
-    <table class="list">
+    <div class="panel-h">Recent Bank Valuations <span class="muted" style="font-weight:400;font-size:12px">(last 30 days)</span> <a href="<?= url('bank_list.php') ?>" class="lnk">View all →</a></div>
+    <input type="search" id="recentSearch" placeholder="Quick search these…" autocomplete="off"
+           style="width:100%;background:#0f1419;border:1px solid var(--line);color:var(--txt);padding:8px 10px;border-radius:7px;font-size:13px;margin-bottom:12px">
+    <table class="list" id="recentTable">
       <thead><tr><th>Reg No.</th><th>Make/Model</th><th>Customer</th><th>Value</th><th></th></tr></thead>
       <tbody>
-      <?php if (!$recent): ?><tr><td colspan="5" class="muted">No valuations yet.</td></tr>
+      <?php if (!$recent): ?><tr><td colspan="5" class="muted">No valuations in the last 30 days.</td></tr>
       <?php else: foreach ($recent as $r): ?>
         <tr>
           <td><?= e($r['reg_no']) ?></td>
@@ -96,4 +99,17 @@ layout_header('Dashboard', 'dashboard');
   .quick{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}
 </style>
 <?php preview_modal(); ?>
+<script>
+(function(){
+  var s = document.getElementById('recentSearch');
+  var tb = document.querySelector('#recentTable tbody');
+  if(!s || !tb) return;
+  s.addEventListener('input', function(){
+    var q = s.value.toLowerCase();
+    tb.querySelectorAll('tr').forEach(function(tr){
+      tr.style.display = tr.textContent.toLowerCase().indexOf(q) >= 0 ? '' : 'none';
+    });
+  });
+})();
+</script>
 <?php layout_footer();
