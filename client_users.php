@@ -12,6 +12,27 @@ if (!column_exists('client_users', 'id')) {
     exit;
 }
 
+/** Email portal credentials to a client contact. Returns true if accepted by the mailer. */
+function portal_email(string $to, ?string $name, string $password): bool {
+    $company = setting('company_name', 'Kennet Automobile Valuers');
+    $from    = setting('company_email', 'no-reply@' . ($_SERVER['SERVER_NAME'] ?? 'localhost'));
+    $scheme  = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+    $host    = $_SERVER['HTTP_HOST'] ?? $_SERVER['SERVER_NAME'] ?? '';
+    $portal  = $scheme . '://' . $host . url('portal_login.php');
+    $hi  = $name ? 'Dear ' . $name . ',' : 'Hello,';
+    $subject = 'Your ' . $company . ' Client Portal Login';
+    $body = '<div style="font-family:Arial,sans-serif;font-size:14px;color:#222;line-height:1.6">'
+        . '<p>' . htmlspecialchars($hi) . '</p>'
+        . '<p>A client portal account has been created for you to view the vehicle valuations carried out for your company by ' . htmlspecialchars($company) . '.</p>'
+        . '<table cellpadding="0" cellspacing="0" style="margin:14px 0"><tr><td style="padding:4px 0"><b>Portal&nbsp;link:</b></td><td style="padding:4px 0 4px 12px"><a href="' . $portal . '">' . $portal . '</a></td></tr>'
+        . '<tr><td style="padding:4px 0"><b>Username:</b></td><td style="padding:4px 0 4px 12px">' . htmlspecialchars($to) . '</td></tr>'
+        . '<tr><td style="padding:4px 0"><b>Password:</b></td><td style="padding:4px 0 4px 12px">' . htmlspecialchars($password) . '</td></tr></table>'
+        . '<p>Please keep these details secure. You can sign in any time using the link above.</p>'
+        . '<p>Regards,<br>' . htmlspecialchars($company) . '</p></div>';
+    $headers = "From: $company <$from>\r\nReply-To: $from\r\nMIME-Version: 1.0\r\nContent-Type: text/html; charset=UTF-8\r\n";
+    return @mail($to, $subject, $body, $headers);
+}
+
 $clients = lookup('clients'); // id => name
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -36,7 +57,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $st = db()->prepare('INSERT INTO client_users (client_id,name,email,password,active,created_at,updated_at) VALUES (?,?,?,?,1,NOW(),NOW())');
             $st->execute([$cid, $name, $email, password_hash($pass, PASSWORD_BCRYPT)]);
             audit('create', 'client_user', db()->lastInsertId(), $email);
-            flash('Portal login created.'); redirect('client_users.php');
+            $msg = 'Portal login created.';
+            if (!empty($_POST['sendmail'])) {
+                $msg .= portal_email($email, $name, $pass) ? ' Credentials emailed to ' . $email . '.' : ' (Email could not be sent — check mail settings.)';
+            }
+            flash($msg); redirect('client_users.php');
         }
     } elseif ($action === 'update' && $uid) {
         if (!$cid || !isset($clients[$cid])) $errors[] = 'Choose a client.';
@@ -55,6 +80,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (strlen($pass) < 6) { flash('Password too short.', 'err'); redirect('client_users.php'); }
         db()->prepare('UPDATE client_users SET password=?, updated_at=NOW() WHERE id=?')->execute([password_hash($pass, PASSWORD_BCRYPT), $uid]);
         audit('reset_password', 'client_user', $uid); flash('Password reset.'); redirect('client_users.php');
+    } elseif ($action === 'emaillogin' && $uid) {
+        $st = db()->prepare('SELECT * FROM client_users WHERE id=?'); $st->execute([$uid]); $cu = $st->fetch();
+        if ($cu) {
+            $new = bin2hex(random_bytes(4)); // fresh 8-char password (old one is unrecoverable)
+            db()->prepare('UPDATE client_users SET password=?, updated_at=NOW() WHERE id=?')->execute([password_hash($new, PASSWORD_BCRYPT), $uid]);
+            $ok = portal_email($cu['email'], $cu['name'], $new);
+            audit('email_login', 'client_user', $uid, $cu['email']);
+            flash($ok ? ('New password generated and emailed to ' . $cu['email'] . '.') : 'Password was reset but the email failed to send.', $ok ? 'ok' : 'err');
+        }
+        redirect('client_users.php');
     } elseif ($action === 'delete' && $uid) {
         db()->prepare('DELETE FROM client_users WHERE id=?')->execute([$uid]);
         audit('delete', 'client_user', $uid); flash('Portal login deleted.'); redirect('client_users.php');
@@ -84,7 +119,10 @@ settings_nav('portal');
     </select></div>
     <div class="f"><label class="f">Contact Name</label><input name="name" value="<?= e($edit['name'] ?? '') ?>"></div>
     <div class="f"><label class="f">Email (login)</label><input type="email" name="email" required value="<?= e($edit['email'] ?? '') ?>"></div>
-    <?php if (!$edit): ?><div class="f"><label class="f">Password</label><input type="password" name="password" required minlength="6"></div><?php endif; ?>
+    <?php if (!$edit): ?>
+      <div class="f"><label class="f">Password</label><input type="password" name="password" required minlength="6"></div>
+      <label style="display:flex;gap:8px;align-items:center;font-size:13px;color:var(--mut);margin-top:4px"><input type="checkbox" name="sendmail" value="1" checked> Email these login details to the address above</label>
+    <?php endif; ?>
     <div style="margin-top:12px">
       <button class="btn" type="submit"><i data-lucide="save"></i><?= $edit ? 'Save' : 'Create' ?></button>
       <?php if ($edit): ?><a class="btn sec" href="<?= url('client_users.php') ?>">Cancel</a><?php endif; ?>
@@ -107,6 +145,7 @@ settings_nav('portal');
             <a class="rbtn" href="?edit=<?= (int)$r['id'] ?>">Edit</a>
             <form method="post" style="display:inline"><?= csrf_field() ?><input type="hidden" name="action" value="toggle"><input type="hidden" name="id" value="<?= (int)$r['id'] ?>"><button class="rbtn" type="submit"><?= (int)$r['active'] === 1 ? 'Disable' : 'Enable' ?></button></form>
             <button class="rbtn" type="button" onclick="cuReset(<?= (int)$r['id'] ?>,'<?= e($r['email']) ?>')">Reset PW</button>
+            <form method="post" style="display:inline" onsubmit="return confirm('Generate a new password and email the login to <?= e($r['email']) ?>?')"><?= csrf_field() ?><input type="hidden" name="action" value="emaillogin"><input type="hidden" name="id" value="<?= (int)$r['id'] ?>"><button class="rbtn" type="submit"><i data-lucide="mail"></i>Email login</button></form>
           </td>
         </tr>
       <?php endforeach; endif; ?>
