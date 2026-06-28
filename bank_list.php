@@ -34,8 +34,9 @@ layout_header('Bank Valuations', 'bank');
       <td><?= e(lookup_name('clients', $r['client'])) ?></td>
       <td class="muted"><?= e(ddate($r['created_at'])) ?></td>
       <td class="actions">
-        <a href="<?= url('bank_form.php?id=' . $r['id']) ?>">Edit</a>
-        <a href="<?= url('report.php?id=' . $r['id']) ?>" target="_blank">Report</a>
+        <a class="rbtn" href="<?= url('bank_form.php?id=' . $r['id']) ?>">Edit</a>
+        <a class="rbtn" href="<?= url('preview.php?id=' . $r['id']) ?>" target="_blank">Preview</a>
+        <a class="rbtn" href="<?= url('print.php?id=' . $r['id']) ?>">Print</a>
       </td>
     </tr>
   <?php endforeach; endif; ?>

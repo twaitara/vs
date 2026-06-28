@@ -1,0 +1,16 @@
+# Normalise text files to LF (PHP runs on a Linux server).
+* text=auto eol=lf
+
+# Treat font/image/binary assets as binary so git never applies EOL conversion
+# (CRLF conversion would corrupt the Dompdf font files).
+*.ttf  binary
+*.otf  binary
+*.ufm  binary
+*.afm  binary
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.pdf  binary
+*.z    binary
+*.bin  binary

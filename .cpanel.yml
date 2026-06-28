@@ -8,7 +8,9 @@ deployment:
     #   /home/tonykett/nineonetwo.online/vs
     - export DEPLOYPATH=/home4/tonyketter/vs
     - /bin/mkdir -p $DEPLOYPATH
-    # Copy the app files into the deploy folder.
-    # config.php is NOT in the repo (gitignored), so your server credentials
-    # and BASE_URL are preserved on every deploy.
-    - /bin/cp -R index.php login.php logout.php bank_list.php bank_form.php insurance_list.php insurance_form.php clients.php insurers.php types.php report.php lib.php layout.php forms.php lookup_page.php config.sample.php schema_patch.sql .htaccess $DEPLOYPATH/
+    # Copy ALL app files + folders (lib_dompdf, assets, uploads) into the live folder.
+    # config.php and valuation.sql are NOT in the repo (gitignored), so your
+    # server credentials, BASE_URL and data are preserved on every deploy.
+    - /bin/cp -R ./. $DEPLOYPATH/
+    # Never expose the git repo or deploy config in the public web folder.
+    - /bin/rm -rf $DEPLOYPATH/.git $DEPLOYPATH/.cpanel.yml $DEPLOYPATH/.gitignore

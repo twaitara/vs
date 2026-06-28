@@ -53,6 +53,8 @@ function layout_header(string $title, string $active = ''): void {
   .yn{display:flex;gap:14px;font-size:13px;align-items:center}
   .yn label{display:flex;gap:5px;align-items:center;color:var(--txt)}
   .actions a{margin-right:8px;font-size:13px;color:var(--accent2)}
+  .actions a.rbtn{display:inline-block;border:1px solid var(--line);color:var(--txt);padding:4px 12px;border-radius:6px;background:#1b212a}
+  .actions a.rbtn:hover{background:#2b3340}
   .muted{color:var(--mut)}
 </style>
 </head>
