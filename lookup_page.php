@@ -3,7 +3,7 @@ require_once __DIR__ . '/layout.php';
 require_login();
 
 /** Render a simple add/edit/delete admin page for a lookup table (id, name). */
-function lookup_admin(string $table, string $title, string $active): void {
+function lookup_admin(string $table, string $title, string $subkey): void {
     // Handle actions
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         csrf_verify();
@@ -34,7 +34,8 @@ function lookup_admin(string $table, string $title, string $active): void {
     $editRow = $editId ? load_row_simple($table, $editId) : [];
     $rows = db()->query("SELECT * FROM `$table` ORDER BY name")->fetchAll();
 
-    layout_header($title, $active);
+    layout_header($title, 'settings');
+    settings_nav($subkey);
     ?>
     <form class="card" method="post" style="max-width:480px">
       <?= csrf_field() ?>

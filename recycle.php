@@ -32,7 +32,8 @@ function deleted_rows(string $table): array {
     } catch (Throwable $e) { return []; }
 }
 
-layout_header('Recycle Bin', '');
+layout_header('Recycle Bin', 'settings');
+settings_nav('recycle');
 ?>
 <p class="muted">Deleted valuations are kept here. Restore them, or (admins) delete permanently.</p>
 <?php foreach (['bank' => 'Bank Valuations', 'insurance' => 'Insurance Valuations'] as $type => $label):

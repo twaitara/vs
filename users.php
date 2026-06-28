@@ -68,7 +68,8 @@ if ($editId) { $st = db()->prepare('SELECT * FROM users WHERE id=?'); $st->execu
 
 $users = db()->query('SELECT * FROM users ORDER BY name')->fetchAll();
 
-layout_header('Users', 'users');
+layout_header('Users', 'settings');
+settings_nav('users');
 ?>
 <div class="dash-grid" style="display:grid;grid-template-columns:1fr 1.4fr;gap:18px">
   <!-- Add / Edit form -->

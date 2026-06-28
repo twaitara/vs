@@ -34,6 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 layout_header('Settings', 'settings');
+settings_nav('general');
 ?>
 <form class="card" method="post" enctype="multipart/form-data" style="max-width:680px">
   <?= csrf_field() ?>

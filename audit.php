@@ -23,7 +23,8 @@ try {
     $actions = db()->query("SELECT DISTINCT action FROM audit_log ORDER BY action")->fetchAll(PDO::FETCH_COLUMN);
 } catch (Throwable $e) { $pages = 1; }
 
-layout_header('Audit Log', '');
+layout_header('Audit Log', 'settings');
+settings_nav('audit');
 ?>
 <div class="toolbar">
   <form method="get" style="margin:0;display:flex;gap:8px">

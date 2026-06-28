@@ -8,17 +8,10 @@ function layout_header(string $title, string $active = ''): void {
         'dashboard' => ['label' => 'Dashboard',            'href' => 'dashboard.php'],
         'bank'      => ['label' => 'Bank Valuations',      'href' => 'bank_list.php'],
         'insurance' => ['label' => 'Insurance Valuations', 'href' => 'insurance_list.php'],
-        'clients'   => ['label' => 'Clients',              'href' => 'clients.php'],
-        'insurers'  => ['label' => 'Insurers',             'href' => 'insurers.php'],
-        'types'     => ['label' => 'Valuation Types',      'href' => 'types.php'],
     ];
-    if (can_edit()) $nav['recycle'] = ['label' => 'Recycle Bin', 'href' => 'recycle.php'];
-    if (is_admin()) {
-        $nav['analytics'] = ['label' => 'Analytics', 'href' => 'analytics.php'];
-        $nav['users']     = ['label' => 'Users',     'href' => 'users.php'];
-        $nav['audit']     = ['label' => 'Audit Log', 'href' => 'audit.php'];
-        $nav['settings']  = ['label' => 'Settings',  'href' => 'settings.php'];
-    }
+    if (is_admin()) $nav['analytics'] = ['label' => 'Analytics', 'href' => 'analytics.php'];
+    // Everything else lives under the Settings hub.
+    if (can_edit()) $nav['settings'] = ['label' => 'Settings', 'href' => is_admin() ? 'settings.php' : 'clients.php'];
     $fl = flash();
     ?><!doctype html>
 <html lang="en">
@@ -56,6 +49,10 @@ function layout_header(string $title, string $active = ''): void {
   @keyframes spin{to{transform:rotate(360deg)}}
   .themebtn{background:#2b3340;color:#cdd5e0;border:0;border-radius:6px;width:28px;height:24px;cursor:pointer;font-size:13px;margin-right:6px}
   .who .role{background:#2b3340;color:#cdd5e0;font-size:11px;padding:2px 8px;border-radius:10px;margin-left:4px}
+  .subnav{display:flex;flex-wrap:wrap;gap:4px;border-bottom:1px solid var(--line);margin-bottom:20px}
+  .subnav a{padding:9px 14px;color:var(--mut);font-size:13px;border-bottom:2px solid transparent}
+  .subnav a:hover{color:var(--txt)}
+  .subnav a.on{color:#fff;border-bottom-color:var(--accent)}
   .btn{display:inline-block;background:var(--accent);color:#fff;border:0;padding:9px 16px;border-radius:8px;font-size:14px;cursor:pointer}
   .btn:hover{filter:brightness(1.1)} .btn.sec{background:#2b3340} .btn.blue{background:var(--accent2)}
   table.list{width:100%;border-collapse:collapse;background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
@@ -134,6 +131,22 @@ function layout_header(string $title, string $active = ''): void {
     <div class="content">
       <?php if ($fl): ?><script>window.__flash = <?= json_encode($fl) ?>;</script><?php endif; ?>
 <?php }
+
+/** Sub-navigation for the Settings hub. $active = section key. */
+function settings_nav(string $active): void {
+    $tabs = [];
+    if (is_admin()) $tabs['general'] = ['Company', 'settings.php'];
+    $tabs['clients']  = ['Clients', 'clients.php'];
+    $tabs['insurers'] = ['Insurers', 'insurers.php'];
+    $tabs['types']    = ['Valuation Types', 'types.php'];
+    if (is_admin()) { $tabs['users'] = ['Users', 'users.php']; $tabs['audit'] = ['Audit Log', 'audit.php']; }
+    $tabs['recycle']  = ['Recycle Bin', 'recycle.php'];
+    echo '<div class="subnav">';
+    foreach ($tabs as $k => $t) {
+        echo '<a class="' . ($k === $active ? 'on' : '') . '" href="' . url($t[1]) . '">' . e($t[0]) . '</a>';
+    }
+    echo '</div>';
+}
 
 /**
  * Render a pagination bar. $base is the page filename; $params are extra query
