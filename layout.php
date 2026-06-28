@@ -56,10 +56,28 @@ function layout_header(string $title, string $active = ''): void {
   .toast{background:#171c22;border:1px solid #1c7a47;color:#b8f5d0;padding:11px 16px;border-radius:8px;font-size:13px;box-shadow:0 6px 24px rgba(0,0,0,.35);max-width:320px;animation:tin .25s ease}
   .toast.err{border-color:#7a1c1c;color:#f5c0c0}
   @keyframes tin{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:none}}
-  #spinner{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:4000;align-items:center;justify-content:center}
-  #spinner.on{display:flex}
-  #spinner .sp{width:42px;height:42px;border:4px solid rgba(255,255,255,.25);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite}
+  /* top progress bar */
+  #topbar{position:fixed;top:0;left:0;right:0;height:5px;z-index:6000;background:transparent;pointer-events:none;opacity:0;transition:opacity .25s}
+  #topbar.on{opacity:1}
+  #topbar .topbar-fill{height:100%;width:0;border-radius:0 4px 4px 0;
+       background:linear-gradient(90deg,#2563eb,#7a4dd1,#d41d1d,#ff8a3c);
+       background-size:300% 100%;animation:tbflow 2s linear infinite;
+       box-shadow:0 0 14px rgba(212,29,29,.85),0 0 8px rgba(37,99,235,.8);transition:width .25s ease}
+  @keyframes tbflow{to{background-position:300% 0}}
+  /* processing overlay card */
+  #spinner{display:none;position:fixed;inset:0;background:rgba(6,9,13,.62);backdrop-filter:blur(3px);z-index:4000;align-items:center;justify-content:center}
+  #spinner.on{display:flex;animation:fadein .2s ease}
+  @keyframes fadein{from{opacity:0}to{opacity:1}}
+  #spinner .sp-card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:26px 30px;width:300px;text-align:center;box-shadow:0 24px 70px rgba(0,0,0,.55);animation:pop .3s cubic-bezier(.2,.8,.2,1)}
+  @keyframes pop{from{opacity:0;transform:translateY(14px) scale(.96)}to{opacity:1;transform:none}}
+  #spinner .sp-ring{width:46px;height:46px;margin:0 auto 16px;border:4px solid var(--line);border-top-color:var(--accent);border-right-color:#ff8a3c;border-radius:50%;animation:spin .8s linear infinite}
   @keyframes spin{to{transform:rotate(360deg)}}
+  #spinner .sp-bar{height:8px;border-radius:6px;background:var(--input);overflow:hidden;position:relative}
+  #spinner .sp-bar span{position:absolute;left:-45%;width:45%;height:100%;border-radius:6px;
+       background:linear-gradient(90deg,#2563eb,#d41d1d,#ff8a3c);animation:slide 1.1s ease-in-out infinite}
+  @keyframes slide{0%{left:-45%}100%{left:100%}}
+  #spinner .sp-msg{margin-top:15px;color:var(--txt);font-weight:700;font-size:15px}
+  #spinner .sp-sub{color:var(--mut);font-size:12px;margin-top:3px}
   .themebtn{background:var(--chip);color:var(--mut);border:0;border-radius:6px;width:28px;height:24px;cursor:pointer;font-size:13px;margin-right:6px}
   .who{display:flex;align-items:center;gap:10px}
   .who .whoami{display:flex;align-items:center;gap:6px;color:var(--mut);font-size:13px;transition:color .15s}
@@ -236,8 +254,14 @@ function layout_header(string $title, string $active = ''): void {
         <a href="<?= url('logout.php') ?>" class="muted logout" title="Log out"><i data-lucide="log-out"></i></a>
       </div>
     </div>
+    <div id="topbar"><div class="topbar-fill"></div></div>
     <div id="toasts"></div>
-    <div id="spinner"><div class="sp"></div></div>
+    <div id="spinner"><div class="sp-card">
+      <div class="sp-ring"></div>
+      <div class="sp-bar"><span></span></div>
+      <div class="sp-msg">Processing…</div>
+      <div class="sp-sub">Please wait a moment</div>
+    </div></div>
     <div class="content">
       <?php if ($fl): ?><script>window.__flash = <?= json_encode($fl) ?>;</script><?php endif; ?>
 <?php }
@@ -574,18 +598,35 @@ function layout_footer(): void { ?>
   };
   if (window.__flash) toast(window.__flash.msg, window.__flash.type);
 
-  // ---- Loading spinner on POST submit + PDF actions ----
+  // ---- Top progress bar ----
+  var TB=document.getElementById('topbar'), TBF=TB?TB.querySelector('.topbar-fill'):null, tbT, tbV=0;
+  function tbStart(){ if(!TB)return; TB.classList.add('on'); tbV=10; TBF.style.width='10%'; clearInterval(tbT);
+    tbT=setInterval(function(){ tbV+=Math.max(0.4,(92-tbV)*0.07); if(tbV>92)tbV=92; TBF.style.width=tbV+'%'; },180); }
+  function tbDone(){ if(!TB)return; clearInterval(tbT); TBF.style.width='100%'; setTimeout(function(){ TB.classList.remove('on'); TBF.style.width='0'; },400); }
+
+  // ---- Processing overlay ----
   var sp = document.getElementById('spinner');
-  function showSpinner(){ if(sp) sp.classList.add('on'); }
+  function showSpinner(msg){ if(!sp)return; if(msg){var m=sp.querySelector('.sp-msg'); if(m)m.textContent=msg;} sp.classList.add('on'); }
+  function hideSpinner(){ if(sp) sp.classList.remove('on'); }
+
+  // POST forms: bar + overlay (saving)
   document.querySelectorAll('form').forEach(function(f){
     if ((f.getAttribute('method')||'get').toLowerCase()==='post'){
-      f.addEventListener('submit', function(){ setTimeout(showSpinner, 50); });
+      f.addEventListener('submit', function(){ tbStart(); setTimeout(function(){ showSpinner('Saving…'); }, 60); });
     }
   });
-  document.querySelectorAll('a[href*="print.php"]').forEach(function(a){
-    a.addEventListener('click', function(){ showSpinner(); setTimeout(function(){ if(sp) sp.classList.remove('on'); }, 4000); });
+  // PDF / print: bar + overlay
+  document.querySelectorAll('a[href*="print.php"],a[href*="export.php"],a[href*="backup.php"]').forEach(function(a){
+    a.addEventListener('click', function(){ tbStart(); showSpinner('Generating…'); setTimeout(function(){ hideSpinner(); tbDone(); }, 5000); });
   });
-  window.addEventListener('pageshow', function(){ if(sp) sp.classList.remove('on'); });
+  // Internal navigation links: just the top bar
+  document.querySelectorAll('a[href]').forEach(function(a){
+    var href=a.getAttribute('href')||'';
+    if(a.target==='_blank' || href.charAt(0)==='#' || href.indexOf('javascript:')===0 || a.onclick) return;
+    a.addEventListener('click', function(e){ if(e.metaKey||e.ctrlKey)return; tbStart(); });
+  });
+  window.addEventListener('pageshow', function(){ hideSpinner(); tbDone(); });
+  window.addEventListener('beforeunload', function(){ tbStart(); });
 
   // ---- Theme toggle ----
   var btn = document.getElementById('themeBtn');

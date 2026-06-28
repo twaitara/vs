@@ -67,8 +67,13 @@ function portal_header(string $title): void {
     table.list{display:block;overflow-x:auto;white-space:nowrap;-webkit-overflow-scrolling:touch}
     .modal{width:96%;height:94vh}
   }
+  #topbar{position:fixed;top:0;left:0;right:0;height:5px;z-index:6000;opacity:0;transition:opacity .25s;pointer-events:none}
+  #topbar.on{opacity:1}
+  #topbar .topbar-fill{height:100%;width:0;border-radius:0 4px 4px 0;background:linear-gradient(90deg,#2563eb,#7a4dd1,#d41d1d,#ff8a3c);background-size:300% 100%;animation:tbflow 2s linear infinite;box-shadow:0 0 14px rgba(212,29,29,.85),0 0 8px rgba(37,99,235,.8);transition:width .25s ease}
+  @keyframes tbflow{to{background-position:300% 0}}
 </style></head>
 <body>
+<div id="topbar"><div class="topbar-fill"></div></div>
 <div class="pbar">
   <div class="brand">
     <img src="<?= url('assets/logo2.png') ?>" alt="Kennet">
@@ -87,6 +92,14 @@ function portal_footer(): void { ?>
 if(window.lucide)lucide.createIcons();
 (function(){var L={'log-out':'Log out','eye':'View report','printer':'Download PDF','landmark':'Bank Valuations','shield-check':'Insurance Valuations','mail':'Email','lock':'Password','arrow-right':'Sign in'};
  document.querySelectorAll('.lucide').forEach(function(svg){var n='';svg.classList.forEach(function(c){if(c.indexOf('lucide-')===0)n=c.slice(7);});var el=svg.closest('a,button');if(!el||el.getAttribute('title'))return;var t=(el.textContent||'').trim();el.setAttribute('title',t||L[n]||n.replace(/-/g,' '));});})();
+(function(){
+  var TB=document.getElementById('topbar'),TBF=TB?TB.querySelector('.topbar-fill'):null,t,v=0;
+  function start(){if(!TB)return;TB.classList.add('on');v=10;TBF.style.width='10%';clearInterval(t);t=setInterval(function(){v+=Math.max(.4,(92-v)*.07);if(v>92)v=92;TBF.style.width=v+'%';},180);}
+  function done(){if(!TB)return;clearInterval(t);TBF.style.width='100%';setTimeout(function(){TB.classList.remove('on');TBF.style.width='0';},400);}
+  document.querySelectorAll('a[href]').forEach(function(a){var h=a.getAttribute('href')||'';if(a.target==='_blank'||h.charAt(0)==='#'||h.indexOf('javascript:')===0||a.onclick)return;a.addEventListener('click',function(e){if(e.metaKey||e.ctrlKey)return;start();});});
+  document.querySelectorAll('a[href*="portal_pdf.php"]').forEach(function(a){a.addEventListener('click',function(){start();setTimeout(done,5000);});});
+  window.addEventListener('pageshow',done); window.addEventListener('beforeunload',start);
+})();
 </script>
 </body></html>
 <?php }
