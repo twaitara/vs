@@ -34,6 +34,7 @@ function render_list(array $cfg): void {
     $client = $_GET['client'] ?? '';
     $vtype  = $_GET['vtype'] ?? '';
     $status = $_GET['status'] ?? '';
+    $ins    = $_GET['ins'] ?? '';
     $hasStatus = column_exists($table, 'status');
     $dfrom  = $_GET['dfrom'] ?? '';
     $dto    = $_GET['dto'] ?? '';
@@ -57,6 +58,9 @@ function render_list(array $cfg): void {
     if ($client !== '') { $cond[] = 'client = ?';         $params[] = $client; }
     if ($vtype !== '')  { $cond[] = 'valuation_type = ?'; $params[] = $vtype; }
     if ($status !== '' && $hasStatus) { $cond[] = 'status = ?'; $params[] = $status; }
+    if ($ins === 'expired')   $cond[] = "insurance_exp IS NOT NULL AND insurance_exp <> '0000-00-00' AND insurance_exp < CURDATE()";
+    elseif ($ins === 'soon')  $cond[] = "insurance_exp >= CURDATE() AND insurance_exp <= (CURDATE() + INTERVAL 30 DAY)";
+    elseif ($ins === 'valid') $cond[] = "insurance_exp > (CURDATE() + INTERVAL 30 DAY)";
     if ($dfrom !== '')  { $cond[] = 'created_at >= ?';    $params[] = $dfrom . ' 00:00:00'; }
     if ($dto !== '')    { $cond[] = 'created_at <= ?';    $params[] = $dto . ' 23:59:59'; }
     if ($vmin !== '')   { $cond[] = "$vf >= ?";           $params[] = (float)$vmin; }
@@ -77,7 +81,7 @@ function render_list(array $cfg): void {
 
     // Params to preserve across sort/pagination links.
     $base = $cfg['nav'] === 'bank' ? 'bank_list.php' : 'insurance_list.php';
-    $keep = array_filter(['q'=>$q,'client'=>$client,'vtype'=>$vtype,'status'=>$status,'dfrom'=>$dfrom,'dto'=>$dto,'vmin'=>$vmin,'vmax'=>$vmax,'pp'=>$pp,'sort'=>$sort,'dir'=>$dir], fn($v)=>$v!=='' && $v!==null);
+    $keep = array_filter(['q'=>$q,'client'=>$client,'vtype'=>$vtype,'status'=>$status,'ins'=>$ins,'dfrom'=>$dfrom,'dto'=>$dto,'vmin'=>$vmin,'vmax'=>$vmax,'pp'=>$pp,'sort'=>$sort,'dir'=>$dir], fn($v)=>$v!=='' && $v!==null);
 
     // Sortable header link.
     $sortHeader = function(string $key, string $label) use ($sort,$dir,$base,$keep) {
@@ -88,11 +92,11 @@ function render_list(array $cfg): void {
     };
 
     layout_header($cfg['title'], $cfg['nav']);
-    $hasFilters = ($client||$vtype||$status||$dfrom||$dto||$vmin!==''||$vmax!=='');
+    $hasFilters = ($client||$vtype||$status||$ins||$dfrom||$dto||$vmin!==''||$vmax!=='');
     ?>
     <div class="toolbar">
       <form method="get" style="margin:0" id="searchForm">
-        <?php foreach (['client','vtype','status','dfrom','dto','vmin','vmax','pp','sort','dir'] as $k) if (($keep[$k] ?? '')!=='') echo '<input type="hidden" name="'.$k.'" value="'.e($keep[$k]).'">'; ?>
+        <?php foreach (['client','vtype','status','ins','dfrom','dto','vmin','vmax','pp','sort','dir'] as $k) if (($keep[$k] ?? '')!=='') echo '<input type="hidden" name="'.$k.'" value="'.e($keep[$k]).'">'; ?>
         <input type="search" name="q" id="quickSearch" placeholder="Quick search reg no, make, customer…" value="<?= e($q) ?>" autocomplete="off">
       </form>
       <div style="display:flex;gap:8px">
@@ -108,6 +112,12 @@ function render_list(array $cfg): void {
         <label>Client<select name="client"><?= options('clients', $client) ?></select></label>
         <label>Type<select name="vtype"><?= options('types', $vtype) ?></select></label>
         <?php if ($hasStatus): ?><label>Status<select name="status"><option value="">-- any --</option><?php foreach (valuation_statuses() as $sk=>$sl): ?><option value="<?= $sk ?>" <?= $status===$sk?'selected':'' ?>><?= e($sl) ?></option><?php endforeach; ?></select></label><?php endif; ?>
+        <label>Insurance<select name="ins">
+          <option value="">-- any --</option>
+          <option value="expired" <?= $ins==='expired'?'selected':'' ?>>Expired</option>
+          <option value="soon" <?= $ins==='soon'?'selected':'' ?>>Expiring soon (30d)</option>
+          <option value="valid" <?= $ins==='valid'?'selected':'' ?>>Valid</option>
+        </select></label>
         <label>From<input type="date" name="dfrom" value="<?= e($dfrom) ?>"></label>
         <label>To<input type="date" name="dto" value="<?= e($dto) ?>"></label>
         <label>Min value<input type="number" name="vmin" value="<?= e($vmin) ?>" step="0.01"></label>
