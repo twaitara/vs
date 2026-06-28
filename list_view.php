@@ -154,12 +154,8 @@ function render_list(array $cfg): void {
                 <a class="rbtn" href="<?= url($cfg['form_page'].'?id='.$r['id']) ?>">Edit</a>
                 <a class="rbtn" href="<?= url('duplicate.php?type='.$cfg['nav'].'&id='.$r['id']) ?>" onclick="return confirm('Duplicate this valuation?')">Dup</a>
               <?php endif; ?>
-              <?php if ($cfg['can_preview']): ?>
-                <a class="rbtn" href="#" onclick="openPreview(<?= (int)$r['id'] ?>);return false;">Preview</a>
-                <a class="rbtn" href="<?= url('print.php?id='.$r['id']) ?>">Print</a>
-              <?php else: ?>
-                <a class="rbtn" href="<?= url('report.php?type=insurance&id='.$r['id']) ?>" target="_blank">Report</a>
-              <?php endif; ?>
+              <a class="rbtn" href="#" onclick="openPreview(<?= (int)$r['id'] ?>,'<?= e($cfg['nav']) ?>');return false;">Preview</a>
+              <a class="rbtn" href="<?= url('print.php?type='.$cfg['nav'].'&id='.$r['id']) ?>">Print</a>
             </td>
           </tr>
         <?php endforeach; endif; ?>
@@ -177,7 +173,7 @@ function render_list(array $cfg): void {
     </div>
     <?php pagination_bar($page, $pages, $base, $keep); ?>
 
-    <?php if ($cfg['can_preview']) preview_modal(); ?>
+    <?php preview_modal(); ?>
     <script>
       // bulk select
       var selAll=document.getElementById('selAll');

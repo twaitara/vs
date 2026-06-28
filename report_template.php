@@ -251,3 +251,128 @@ function load_bank_valuation($id): ?array {
     $st->execute([$id]);
     return $st->fetch() ?: null;
 }
+
+/** Load an insurance valuation row by id, or null. */
+function load_insurance_valuation($id): ?array {
+    $st = db()->prepare('SELECT * FROM valuations WHERE id = ? LIMIT 1');
+    $st->execute([$id]);
+    return $st->fetch() ?: null;
+}
+
+/** Build the full insurance valuation report HTML for one row. */
+function render_insurance_report(array $val): string {
+    $client   = lookup_name('clients', $val['client'] ?? null);
+    $fuel     = lookup_name('fuels', $val['fuel_type'] ?? null);
+    $valWords = report_words($val['assessed_value'] ?? 0);
+    $logo  = report_img_data(__DIR__ . '/assets/logo.png');
+    $logo2 = report_img_data(__DIR__ . '/assets/logo2.png');
+    $g = fn($k) => e($val[$k] ?? '');
+
+    $coName   = setting('company_name', 'Kennet Automobile Valuers And Assessors Ltd.');
+    $coAddr   = setting('company_address', 'Desai Road off Forest Rd, Opp Nairobi Gymkhana');
+    $coPobox  = setting('company_pobox', '1268 - 00600 NAIROBI, KENYA');
+    $coTel    = setting('company_tel', '+254 723 441 666, +254 712 730 738, +254 706 850 101');
+    $coEmail  = setting('company_email', 'info@kennetvaluers.com');
+    $coFooter = setting('report_footer', '© ' . $coName . ' | Valuation Report | Confidential Document');
+
+    // Checklist groups (field => question). Values stored as "1"/"0".
+    $groups = [
+        'Body Work' => ['scratches_cracks'=>'Paint Scratched/Cracked','paint_work'=>'Paint Faded/Repainted','accident_repairs'=>'Accident Repairs','bumper_damage'=>'Wings & Bumpers Dented','door_rubbers_damage'=>'Door Rubbers Torn','upholstery_damage'=>'Upholstery Damaged','chasis_damage'=>'Chasis/Subframe Damage'],
+        'Steering & Braking' => ['rubber_boot_damage'=>'Steering Boots Torn','tie_rods_damage'=>'Tie-Rod Ends Worn','rack_damage'=>'Steering Box/Rack Knocks','steering_alignment_ok'=>'Self-aligns Properly','tilt_telescopic_ok'=>'Tilt Telescopic OK','power_steering_ok'=>'Power Steering OK','vibrations'=>'Vibrations','brakes_ok'=>'Brakes Effective','fluid_leaks'=>'Fluid Leaks'],
+        'Electrical' => ['charging_state'=>'Charging OK','battery_state'=>'Battery Secured','wiring_damage'=>'Wires Hang Dangerously','headlights'=>'Headlights OK','brake_lights'=>'Brake/Turn Signals OK','dash_cluster'=>'Panel Lights OK'],
+        'Transmission' => ['gb_mounts_damage'=>'Gearbox Mounts Worn','gb_cv_damage'=>'CV Joints Worn','gb_auto_gswith'=>'Auto Gearbox Smooth','gb_tc_spin'=>'Torque Converter Spin','gb_gear_damage'=>'Gear Jumps','gb_cluth_slip'=>'Clutch Slip','gb_propeller_damage'=>'Propeller Shaft Damage','diff_damage'=>'Noisy Differential'],
+        'Suspension' => ['ball_joint_damage'=>'Ball Joints Worn','shocks_damage'=>'Shock Absorbers Worn','center_bolt_damage'=>'Center Bolt Worn','coil_springs_damage'=>'Coil Springs Broken','leaf_springs_damage'=>'Leaf Springs Weak','anchor_damage'=>'Anchor Points Damaged'],
+        'Engine, Cooling & AC' => ['idling'=>'Starts & Idles OK','eng_mounts_damage'=>'Mountings/Belts Worn','oil_leaks'=>'Oil/Coolant Leaks','water_pump_ok'=>'Water Pump OK','radiator_damage'=>'Radiator Damage','air_con_damage'=>'AC Operates Well'],
+    ];
+
+    ob_start(); ?>
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>Insurance Valuation Report</title>
+<style>
+    @page { margin: 10px 40px 10px 0px; }
+    #watermark { opacity:0.1; position:fixed; transform:rotate(45deg); bottom:13cm; left:5.5cm; width:8cm; height:8cm; z-index:-1000; }
+    body { font-family:Arial, sans-serif; font-size:12px; line-height:1.4; color:#333; margin:0; padding:20px; }
+    .container { width:100%; max-width:1000px; margin:0 auto; border:1px solid #ddd; padding:10px; box-sizing:border-box; }
+    .header { display:flex; align-items:center; justify-content:center; }
+    .header_image { max-width:35%; float:left; }
+    .header_text { text-align:center; color:red; }
+    .header .header_text h1 { margin:0; font-size:18px; color:red; }
+    .company-info { border-bottom:1px solid #ddd; }
+    .company-info p span { color:#d41d1dff; }
+    table { width:100%; border-collapse:collapse; margin-bottom:14px; font-weight:bold; }
+    th, td { border:1px solid #ddd; padding:7px; text-align:left; }
+    th, td span { color:#080bc0ff; }
+    th { background-color:#d5d2d282; color:#080bc0ff; }
+    .chk td { font-weight:normal; }
+    .chk td.a { font-weight:bold; text-align:center; width:60px; }
+    .grp { background:#f0f0f0; font-weight:bold; }
+    .value-highlight { font-weight:bold; color:#d41d1dff; font-size:18px; }
+    .card { border:1px solid #ddd; margin-bottom:15px; border-radius:4px; }
+    .card-header { background-color:#d5d2d282; padding:8px 12px; font-weight:bold; border-bottom:1px solid #ddd; }
+    .card-body { padding:12px; } .note { font-style:italic; color:#666; font-size:11px; }
+    .footer { margin-top:20px; padding-top:12px; border-top:1px solid #ddd; text-align:center; font-size:11px; color:#666; }
+    .text-center{text-align:center;}
+</style></head>
+<?php if ($logo): ?><div id="watermark"><img src="<?= $logo ?>" height="120%" width="200%"></div><?php endif; ?>
+<body><div class="container">
+    <div class="header">
+        <div class="header_image"><?php if ($logo2): ?><img src="<?= $logo2 ?>" height="80" width="210"><?php endif; ?></div>
+        <div class="header_text"><h1 style="color:black;"><?= e($coName) ?></h1><h3>INSURANCE VALUATION REPORT</h3></div>
+    </div>
+    <div class="company-info"><table><tr>
+        <td width="50%"><p><span>Address:</span> <?= e($coAddr) ?></p><p><span>P.O. Box:</span> <?= e($coPobox) ?></p></td>
+        <td width="50%"><p><span>Tel:</span> <?= e($coTel) ?></p><p><span>Email:</span> <?= e($coEmail) ?></p></td>
+    </tr></table></div>
+
+    <table>
+        <tr><th width="50%">Report Information</th><th width="50%">Client Information</th></tr>
+        <tr>
+            <td><p><span>Corporate Ref No:</span> <?= $g('corporate_ref_no') ?></p><p><span>Inspection Date:</span> <?= $g('inspection_date') ?></p><p><span>Inspection Officer:</span> <?= $g('inspection_officer') ?></p></td>
+            <td><p><span>Client Name:</span> <?= $g('customer_name') ?></p><p><span>Phone:</span> <?= $g('phone_no') ?></p><p><span>Policy No:</span> <?= $g('insurance_pol_no') ?></p><p><span>Policy Expiry:</span> <?= $g('insurance_exp') ?></p></td>
+        </tr>
+    </table>
+
+    <table>
+        <tr><th width="25%">Registration No</th><th width="25%">Make</th><th width="25%">YOM</th><th width="25%">Colour</th></tr>
+        <tr><td><?= $g('reg_no') ?></td><td><?= $g('make') ?></td><td><?= $g('manufacture_year') ?></td><td><?= $g('colour') ?></td></tr>
+        <tr><th>Engine No</th><th>Chassis No</th><th>Engine Rating</th><th>Fuel</th></tr>
+        <tr><td><?= $g('engine_no') ?></td><td><?= $g('chasis_no') ?></td><td><?= $g('engine_capacity') ?></td><td><?= e($fuel) ?></td></tr>
+        <tr><th>Odometer</th><th>Country of Origin</th><th>No. of Airbags</th><th>Inspection Location</th></tr>
+        <tr><td><?= $g('mileage') ?></td><td><?= $g('country_of_origin') ?></td><td><?= $g('air_bags_no') ?></td><td><?= $g('inspection_location') ?></td></tr>
+    </table>
+
+    <?php foreach ($groups as $gname => $items): ?>
+      <table class="chk"><tr><td class="grp" colspan="4"><?= e($gname) ?></td></tr>
+      <?php $cells = []; foreach ($items as $f => $lbl) { $v=$val[$f]??''; $disp=$v==='1'?'Yes':($v==='0'?'No':'—'); $cells[]='<td>'.e($lbl).'</td><td class="a">'.$disp.'</td>'; }
+      // two question/answer pairs per row
+      for ($i=0;$i<count($cells);$i+=2) { echo '<tr>'.$cells[$i].($cells[$i+1]??'<td></td><td></td>').'</tr>'; } ?>
+      </table>
+    <?php endforeach; ?>
+
+    <table>
+        <tr><th width="50%" class="text-center">Assessed Value</th><th width="50%">Notes</th></tr>
+        <tr>
+            <td class="text-center"><p class="value-highlight"><?= number_format((float)($val['assessed_value'] ?? 0), 2) ?></p><p><?= e($valWords) ?></p></td>
+            <td><?= $g('notes') ?></td>
+        </tr>
+    </table>
+
+    <table>
+        <tr><th width="25%">Remarks</th><th width="25%">Remedy</th><th width="25%">Pending</th><th width="25%">Ammendments</th></tr>
+        <tr style="font-weight:normal"><td><?= $g('remarks') ?></td><td><?= $g('remedy') ?></td><td><?= $g('pending') ?></td><td><?= $g('ammends') ?></td></tr>
+    </table>
+
+    <div class="card"><div class="card-header">Disclaimer</div><div class="card-body">
+        <p class="note">For and on behalf of <?= e($coName) ?>, this report reflects the assessed value and condition of the subject vehicle as presented for inspection on the stated date.</p>
+        <p class="note">Kennet Valuers Identifier: <strong>KENINSVL-<?= $g('id') ?></strong></p>
+    </div></div>
+
+    <table><tr>
+        <td width="50%"><p><span>Authorizing Signature:</span></p><div style="height:50px;border-bottom:1px solid #ccc;"></div><p class="note">Name & Stamp</p></td>
+        <td width="50%"><p><span>Date:</span></p><div style="height:50px;border-bottom:1px solid #ccc;"></div></td>
+    </tr></table>
+
+    <div class="footer"><p><?= e($coFooter) ?></p></div>
+</div></body></html>
+<?php
+    return ob_get_clean();
+}

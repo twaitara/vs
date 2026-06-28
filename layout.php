@@ -23,8 +23,10 @@ function layout_header(string $title, string $active = ''): void {
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title><?= e($title) ?> · <?= e(APP_NAME) ?></title>
+<script>(function(){try{var t=localStorage.getItem('theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
 <style>
   :root{--bg:#0f1216;--panel:#171c22;--line:#262d36;--txt:#e6e9ee;--mut:#9aa4b2;--accent:#d41d1d;--accent2:#2563eb;}
+  html[data-theme="light"]{--bg:#eef1f5;--panel:#ffffff;--line:#dce1e8;--txt:#1a2330;--mut:#5b6573;--accent:#d41d1d;--accent2:#2563eb;}
   *{box-sizing:border-box} body{margin:0;font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--txt)}
   a{color:inherit;text-decoration:none}
   .wrap{display:flex;min-height:100vh}
@@ -41,6 +43,15 @@ function layout_header(string $title, string $active = ''): void {
   .content{padding:24px;max-width:1200px;width:100%}
   .flash{background:#0f3d24;border:1px solid #1c7a47;color:#b8f5d0;padding:10px 14px;border-radius:8px;margin-bottom:16px}
   .flash-err{background:#3d0f0f;border-color:#7a1c1c;color:#f5c0c0}
+  #toasts{position:fixed;top:16px;right:16px;z-index:3000;display:flex;flex-direction:column;gap:8px}
+  .toast{background:#171c22;border:1px solid #1c7a47;color:#b8f5d0;padding:11px 16px;border-radius:8px;font-size:13px;box-shadow:0 6px 24px rgba(0,0,0,.35);max-width:320px;animation:tin .25s ease}
+  .toast.err{border-color:#7a1c1c;color:#f5c0c0}
+  @keyframes tin{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:none}}
+  #spinner{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:4000;align-items:center;justify-content:center}
+  #spinner.on{display:flex}
+  #spinner .sp{width:42px;height:42px;border:4px solid rgba(255,255,255,.25);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .themebtn{background:#2b3340;color:#cdd5e0;border:0;border-radius:6px;width:28px;height:24px;cursor:pointer;font-size:13px;margin-right:6px}
   .who .role{background:#2b3340;color:#cdd5e0;font-size:11px;padding:2px 8px;border-radius:10px;margin-left:4px}
   .btn{display:inline-block;background:var(--accent);color:#fff;border:0;padding:9px 16px;border-radius:8px;font-size:14px;cursor:pointer}
   .btn:hover{filter:brightness(1.1)} .btn.sec{background:#2b3340} .btn.blue{background:var(--accent2)}
@@ -108,13 +119,16 @@ function layout_header(string $title, string $active = ''): void {
     <div class="top">
       <h1><?= e($title) ?></h1>
       <div class="who">
+        <button type="button" id="themeBtn" class="themebtn" title="Toggle light/dark">◐</button>
         <a href="<?= url('profile.php') ?>" class="muted"><?= e($u['name'] ?? '') ?></a>
         <span class="role"><?= e(ucfirst($u['role'] ?? '')) ?></span>
         · <a href="<?= url('logout.php') ?>" class="muted">Log out</a>
       </div>
     </div>
+    <div id="toasts"></div>
+    <div id="spinner"><div class="sp"></div></div>
     <div class="content">
-      <?php if ($fl): ?><div class="flash <?= ($fl['type'] ?? 'ok') === 'err' ? 'flash-err' : '' ?>"><?= e($fl['msg'] ?? '') ?></div><?php endif; ?>
+      <?php if ($fl): ?><script>window.__flash = <?= json_encode($fl) ?>;</script><?php endif; ?>
 <?php }
 
 /**
@@ -180,6 +194,7 @@ function preview_modal(): void { ?>
       <span class="title">Valuation Report Preview</span>
       <span class="acts">
         <a id="previewPdf" href="#" target="_blank">⬇ Download PDF</a>
+        <?php if (can_edit()): ?><button id="previewEmail" type="button">✉ Email</button><?php endif; ?>
         <button class="close" onclick="closePreview()">✕ Close</button>
       </span>
     </div>
@@ -187,9 +202,11 @@ function preview_modal(): void { ?>
   </div>
 </div>
 <script>
-function openPreview(id){
-  document.getElementById('previewFrame').src = '<?= url('preview.php') ?>?bare=1&id=' + id;
-  document.getElementById('previewPdf').href = '<?= url('print.php') ?>?id=' + id;
+function openPreview(id, type){
+  type = type || 'bank';
+  document.getElementById('previewFrame').src = '<?= url('preview.php') ?>?bare=1&type=' + type + '&id=' + id;
+  document.getElementById('previewPdf').href = '<?= url('print.php') ?>?type=' + type + '&id=' + id;
+  var em = document.getElementById('previewEmail'); if(em) em.onclick = function(){ emailReport(id, type); };
   document.getElementById('previewModal').classList.add('open');
   document.body.style.overflow = 'hidden';
 }
@@ -199,6 +216,15 @@ function closePreview(){
   document.body.style.overflow = '';
 }
 document.addEventListener('keydown', function(e){ if(e.key === 'Escape') closePreview(); });
+function emailReport(id, type){
+  var to = prompt('Email this report (PDF attachment) to:');
+  if(!to) return;
+  var fd = new FormData(); fd.append('id', id); fd.append('type', type||'bank'); fd.append('to', to); fd.append('_csrf','<?= e(csrf_token()) ?>');
+  fetch('<?= url('send_report.php') ?>', {method:'POST', body:fd})
+    .then(function(r){return r.json();})
+    .then(function(d){ toast(d && d.ok ? ('Report emailed to '+to) : ('Email failed: '+((d&&d.error)||'unknown')), d&&d.ok?'ok':'err'); })
+    .catch(function(){ toast('Network error sending email','err'); });
+}
 </script>
 <?php }
 
@@ -373,6 +399,39 @@ function layout_footer(): void { ?>
     </div>
   </div>
 </div>
+<script>
+(function(){
+  // ---- Toasts ----
+  window.toast = function(msg, type){
+    var box = document.getElementById('toasts'); if(!box) return alert(msg);
+    var t = document.createElement('div'); t.className = 'toast' + (type==='err'?' err':''); t.textContent = msg;
+    box.appendChild(t);
+    setTimeout(function(){ t.style.opacity='0'; t.style.transition='opacity .4s'; setTimeout(function(){t.remove();},400); }, 4000);
+  };
+  if (window.__flash) toast(window.__flash.msg, window.__flash.type);
+
+  // ---- Loading spinner on POST submit + PDF actions ----
+  var sp = document.getElementById('spinner');
+  function showSpinner(){ if(sp) sp.classList.add('on'); }
+  document.querySelectorAll('form').forEach(function(f){
+    if ((f.getAttribute('method')||'get').toLowerCase()==='post'){
+      f.addEventListener('submit', function(){ setTimeout(showSpinner, 50); });
+    }
+  });
+  document.querySelectorAll('a[href*="print.php"]').forEach(function(a){
+    a.addEventListener('click', function(){ showSpinner(); setTimeout(function(){ if(sp) sp.classList.remove('on'); }, 4000); });
+  });
+  window.addEventListener('pageshow', function(){ if(sp) sp.classList.remove('on'); });
+
+  // ---- Theme toggle ----
+  var btn = document.getElementById('themeBtn');
+  if (btn) btn.addEventListener('click', function(){
+    var cur = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-theme', cur);
+    try { localStorage.setItem('theme', cur); } catch(e){}
+  });
+})();
+</script>
 </body>
 </html>
 <?php }
