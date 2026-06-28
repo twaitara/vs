@@ -64,6 +64,7 @@ layout_header('Dashboard', 'dashboard');
       <?php endforeach; endif; ?>
       </tbody>
     </table>
+    <div id="recentPager" class="recent-pager"></div>
   </div>
 
   <div class="panel">
@@ -101,15 +102,41 @@ layout_header('Dashboard', 'dashboard');
 <?php preview_modal(); ?>
 <script>
 (function(){
+  var PER = 10;
   var s = document.getElementById('recentSearch');
   var tb = document.querySelector('#recentTable tbody');
-  if(!s || !tb) return;
-  s.addEventListener('input', function(){
-    var q = s.value.toLowerCase();
-    tb.querySelectorAll('tr').forEach(function(tr){
-      tr.style.display = tr.textContent.toLowerCase().indexOf(q) >= 0 ? '' : 'none';
-    });
-  });
+  var pager = document.getElementById('recentPager');
+  if(!tb || !pager) return;
+  var all = Array.prototype.slice.call(tb.querySelectorAll('tr')).filter(function(tr){ return !tr.querySelector('td.muted'); });
+  var page = 1;
+  function render(){
+    var q = (s ? s.value : '').toLowerCase();
+    var matched = all.filter(function(tr){ return tr.textContent.toLowerCase().indexOf(q) >= 0; });
+    var pages = Math.max(1, Math.ceil(matched.length / PER));
+    if (page > pages) page = pages;
+    all.forEach(function(tr){ tr.style.display = 'none'; });
+    matched.slice((page-1)*PER, page*PER).forEach(function(tr){ tr.style.display = ''; });
+    pager.innerHTML = '';
+    if (pages > 1){
+      var mk = function(label, p, dis, cur){
+        var b = document.createElement('button'); b.textContent = label; b.className = 'pgb'+(cur?' cur':'');
+        if(dis) b.disabled = true; else b.onclick = function(){ page = p; render(); };
+        pager.appendChild(b);
+      };
+      mk('‹', page-1, page===1, false);
+      for (var i=1;i<=pages;i++) mk(i, i, false, i===page);
+      mk('›', page+1, page===pages, false);
+    }
+  }
+  if (s) s.addEventListener('input', function(){ page = 1; render(); });
+  render();
 })();
 </script>
+<style>
+  .recent-pager{display:flex;gap:5px;justify-content:center;flex-wrap:wrap;margin-top:12px}
+  .recent-pager .pgb{background:var(--panel);border:1px solid var(--line);color:var(--txt);padding:5px 10px;border-radius:6px;font-size:12px;cursor:pointer}
+  .recent-pager .pgb:hover:not(:disabled){background:#2b3340}
+  .recent-pager .pgb.cur{background:var(--accent);border-color:var(--accent);color:#fff}
+  .recent-pager .pgb:disabled{opacity:.4;cursor:default}
+</style>
 <?php layout_footer();
