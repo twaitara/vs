@@ -2,6 +2,16 @@
 require_once __DIR__ . '/layout.php';
 require_admin();
 
+// Graceful guard: the portal needs schema_v4.sql to have been run.
+if (!column_exists('client_users', 'id')) {
+    layout_header('Portal Users', 'settings');
+    settings_nav('portal');
+    echo '<div class="card" style="max-width:640px"><h3 style="margin-top:0">One step needed</h3>'
+       . '<p class="muted">The client portal table hasn\'t been created yet. In phpMyAdmin, open your database, go to the <b>SQL</b> tab, and run the contents of <code>schema_v4.sql</code>. Then reload this page.</p></div>';
+    layout_footer();
+    exit;
+}
+
 $clients = lookup('clients'); // id => name
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
