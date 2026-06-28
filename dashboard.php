@@ -56,7 +56,7 @@ layout_header('Dashboard', 'dashboard');
           <td><?= e($r['make']) ?></td>
           <td><?= e($r['customer_name']) ?></td>
           <td><?= number_format((float)$r['market_value']) ?></td>
-          <td class="actions"><a class="rbtn" href="<?= url('preview.php?id=' . $r['id']) ?>" target="_blank">Preview</a></td>
+          <td class="actions"><a class="rbtn" href="#" onclick="openPreview(<?= (int)$r['id'] ?>);return false;">Preview</a></td>
         </tr>
       <?php endforeach; endif; ?>
       </tbody>
@@ -95,4 +95,5 @@ layout_header('Dashboard', 'dashboard');
   .panel-h .lnk{font-size:13px;color:var(--accent2)}
   .quick{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}
 </style>
+<?php preview_modal(); ?>
 <?php layout_footer();
