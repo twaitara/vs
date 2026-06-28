@@ -150,7 +150,10 @@ function render_list(array $cfg): void {
             <td><?= $r['val'] !== null ? number_format((float)$r['val']) : '' ?></td>
             <td class="muted"><?= e(ddate($r['created_at'])) ?></td>
             <td class="actions">
-              <?php if (can_edit()): ?><a class="rbtn" href="<?= url($cfg['form_page'].'?id='.$r['id']) ?>">Edit</a><?php endif; ?>
+              <?php if (can_edit()): ?>
+                <a class="rbtn" href="<?= url($cfg['form_page'].'?id='.$r['id']) ?>">Edit</a>
+                <a class="rbtn" href="<?= url('duplicate.php?type='.$cfg['nav'].'&id='.$r['id']) ?>" onclick="return confirm('Duplicate this valuation?')">Dup</a>
+              <?php endif; ?>
               <?php if ($cfg['can_preview']): ?>
                 <a class="rbtn" href="#" onclick="openPreview(<?= (int)$r['id'] ?>);return false;">Preview</a>
                 <a class="rbtn" href="<?= url('print.php?id='.$r['id']) ?>">Print</a>

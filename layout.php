@@ -202,6 +202,173 @@ document.addEventListener('keydown', function(e){ if(e.key === 'Escape') closePr
 </script>
 <?php }
 
+/**
+ * Form enhancements (progressive — the plain form still works if JS fails):
+ * tabbed wizard, live money formatting + value-in-words, auto-uppercase,
+ * auto-save draft, image dropzone/thumbnails, and inline quick-add for lookups.
+ */
+function form_assets(): void { ?>
+<style>
+  .wizard.tabbed > fieldset{display:none}
+  .wizard.tabbed > fieldset.active{display:block}
+  .tabs{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:16px;border-bottom:1px solid var(--line)}
+  .tabbtn{background:transparent;border:0;border-bottom:2px solid transparent;color:var(--mut);padding:9px 14px;cursor:pointer;font-size:13px}
+  .tabbtn.active{color:#fff;border-bottom-color:var(--accent)}
+  .tabbtn.has-invalid{color:#f5a3a3}
+  .wizard-nav{display:flex;justify-content:space-between;margin:10px 0 0}
+  .f.has-err input,.f.has-err select,.f.has-err textarea{border-color:#d41d1d}
+  .field-err{color:#f5a3a3;font-size:11px;margin-top:3px;display:block}
+  .words-preview{display:block;margin-top:4px;font-style:italic}
+  .draft-bar{background:#3d2f0f;border:1px solid #7a5c1c;color:#f5d79a;padding:8px 12px;border-radius:8px;margin-bottom:14px;font-size:13px}
+  .draft-bar a{color:#fff;text-decoration:underline;cursor:pointer;margin-left:8px}
+  .quick-add{margin-left:8px;font-size:12px;color:var(--accent2);cursor:pointer}
+  .dropzone{border:2px dashed var(--line);border-radius:10px;padding:16px;text-align:center;color:var(--mut);cursor:pointer;font-size:13px}
+  .dropzone.drag{border-color:var(--accent);color:var(--txt)}
+  .thumbs{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px}
+  .thumb{position:relative;width:92px;height:70px;border:1px solid var(--line);border-radius:6px;overflow:hidden;background:#0f1419}
+  .thumb img{width:100%;height:100%;object-fit:cover}
+  .thumb .rm{position:absolute;top:2px;right:2px;background:rgba(0,0,0,.65);color:#fff;border:0;border-radius:4px;cursor:pointer;font-size:11px;padding:0 5px;line-height:16px}
+  .thumb.removing{opacity:.35}
+</style>
+<script>
+(function(){
+  var CSRF = '<?= e(csrf_token()) ?>';
+  var QADD = '<?= url('quick_add.php') ?>';
+
+  // ---------- value in words (preview only) ----------
+  function words(n){
+    n=Math.floor(Math.abs(+n||0));
+    if(n===0) return 'Zero Shillings';
+    var o=['','One','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten','Eleven','Twelve','Thirteen','Fourteen','Fifteen','Sixteen','Seventeen','Eighteen','Nineteen'];
+    var t=['','','Twenty','Thirty','Forty','Fifty','Sixty','Seventy','Eighty','Ninety'];
+    var sc=['','Thousand','Million','Billion','Trillion'];
+    function g(x){var s='';if(x>=100){s+=o[Math.floor(x/100)]+' hundred ';x%=100;}if(x>=20){s+=t[Math.floor(x/10)]+' ';x%=10;}if(x>0)s+=o[x]+' ';return s.trim();}
+    var parts=[],i=0;while(n>0){var c=n%1000;if(c)parts.unshift(g(c)+(sc[i]?' '+sc[i]:''));n=Math.floor(n/1000);i++;}
+    return parts.join(' ').trim()+' Shillings';
+  }
+  function fmt(v){v=(''+v).replace(/,/g,'');var p=v.split('.');p[0]=p[0].replace(/\B(?=(\d{3})+(?!\d))/g,',');return p.join('.');}
+
+  // ---------- money fields ----------
+  document.querySelectorAll('input.money').forEach(function(inp){
+    function run(){
+      var caretEnd = inp.selectionStart===inp.value.length;
+      inp.value = fmt(inp.value);
+      if(caretEnd) inp.selectionStart=inp.selectionEnd=inp.value.length;
+      if(inp.dataset.words){
+        var pv=inp.parentNode.querySelector('.words-preview');
+        if(pv) pv.textContent = inp.value ? words(inp.value.replace(/,/g,'')) : '';
+      }
+    }
+    inp.addEventListener('input',run); run();
+  });
+  // strip commas before submit
+  document.querySelectorAll('form').forEach(function(f){
+    f.addEventListener('submit',function(){ f.querySelectorAll('input.money').forEach(function(m){ m.value=m.value.replace(/,/g,''); }); });
+  });
+
+  // ---------- auto-uppercase ----------
+  ['reg_no','chasis_no'].forEach(function(nm){
+    document.querySelectorAll('input[name="'+nm+'"]').forEach(function(i){
+      i.addEventListener('input',function(){var p=i.selectionStart;i.value=i.value.toUpperCase();i.selectionStart=i.selectionEnd=p;});
+    });
+  });
+
+  // ---------- wizard tabs ----------
+  document.querySelectorAll('form.wizard').forEach(function(form){
+    var fs=Array.prototype.slice.call(form.children).filter(function(c){return c.tagName==='FIELDSET';});
+    if(fs.length<2) return;
+    var tabs=document.createElement('div'); tabs.className='tabs';
+    fs.forEach(function(f,i){
+      var lg=f.querySelector('legend'); var name=lg?lg.textContent:('Step '+(i+1));
+      var b=document.createElement('button'); b.type='button'; b.className='tabbtn'+(i===0?' active':''); b.textContent=name;
+      b.onclick=function(){show(i);}; tabs.appendChild(b);
+    });
+    form.insertBefore(tabs, fs[0]);
+    var nav=document.createElement('div'); nav.className='wizard-nav';
+    var prev=document.createElement('button'); prev.type='button'; prev.className='btn sec'; prev.textContent='← Back';
+    var next=document.createElement('button'); next.type='button'; next.className='btn'; next.textContent='Next →';
+    nav.appendChild(prev); nav.appendChild(next); fs[fs.length-1].after(nav);
+    var cur=0;
+    function show(i){cur=i;fs.forEach(function(f,j){f.classList.toggle('active',j===i);});
+      tabs.querySelectorAll('.tabbtn').forEach(function(b,j){b.classList.toggle('active',j===i);});
+      prev.style.visibility=i===0?'hidden':'visible'; next.style.visibility=i===fs.length-1?'hidden':'visible';
+      window.scrollTo(0,0);}
+    prev.onclick=function(){show(Math.max(0,cur-1));};
+    next.onclick=function(){show(Math.min(fs.length-1,cur+1));};
+    form.classList.add('tabbed'); show(0);
+    // Reveal the tab holding the first invalid field (fires even when hidden).
+    var revealing=false;
+    form.addEventListener('invalid',function(e){
+      var fsEl=e.target.closest('fieldset'); if(!fsEl) return;
+      var idx=fs.indexOf(fsEl); if(idx<0) return;
+      if(!revealing){ revealing=true; show(idx); setTimeout(function(){revealing=false;},0); }
+    }, true);
+  });
+
+  // ---------- inline quick-add for lookups ----------
+  document.querySelectorAll('.quick-add').forEach(function(el){
+    el.addEventListener('click',function(){
+      var sel=document.querySelector('select[name="'+el.dataset.target+'"]'); if(!sel) return;
+      var name=prompt('Add new '+el.dataset.label+':'); if(!name) return;
+      var fd=new FormData(); fd.append('type',el.dataset.type); fd.append('name',name); fd.append('_csrf',CSRF);
+      fetch(QADD,{method:'POST',body:fd}).then(function(r){return r.json();}).then(function(d){
+        if(d&&d.ok){var o=document.createElement('option');o.value=d.id;o.textContent=d.name;o.selected=true;sel.appendChild(o);}
+        else alert((d&&d.error)||'Could not add.');
+      }).catch(function(){alert('Network error.');});
+    });
+  });
+
+  // ---------- image dropzone + thumbnails ----------
+  var fileInput=document.querySelector('input[type=file][name="images[]"]');
+  if(fileInput){
+    var dz=document.createElement('div'); dz.className='dropzone'; dz.textContent='Drag & drop photos here, or click to choose';
+    var thumbs=document.createElement('div'); thumbs.className='thumbs';
+    fileInput.style.display='none';
+    fileInput.parentNode.insertBefore(dz, fileInput.nextSibling);
+    fileInput.parentNode.insertBefore(thumbs, dz.nextSibling);
+    dz.addEventListener('click',function(){fileInput.click();});
+    ['dragover','dragenter'].forEach(function(ev){dz.addEventListener(ev,function(e){e.preventDefault();dz.classList.add('drag');});});
+    ['dragleave','drop'].forEach(function(ev){dz.addEventListener(ev,function(e){e.preventDefault();dz.classList.remove('drag');});});
+    dz.addEventListener('drop',function(e){ fileInput.files=e.dataTransfer.files; render(); });
+    fileInput.addEventListener('change',render);
+    function render(){
+      thumbs.querySelectorAll('.thumb.new').forEach(function(n){n.remove();});
+      Array.prototype.slice.call(fileInput.files).forEach(function(file){
+        var d=document.createElement('div'); d.className='thumb new';
+        var img=document.createElement('img'); img.src=URL.createObjectURL(file); d.appendChild(img); thumbs.appendChild(d);
+      });
+    }
+  }
+  // existing-image remove toggles
+  document.querySelectorAll('.thumb .rm').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var t=btn.closest('.thumb'); var cb=t.querySelector('input[type=checkbox]');
+      cb.checked=!cb.checked; t.classList.toggle('removing',cb.checked); btn.textContent=cb.checked?'↺':'✕';
+    });
+  });
+
+  // ---------- auto-save draft (new forms only) ----------
+  var df=document.querySelector('form[data-draft]');
+  if(df && window.localStorage){
+    var key='draft_'+df.dataset.draft;
+    var fields=function(){return df.querySelectorAll('input[name]:not([type=file]):not([type=hidden]),select[name],textarea[name]');};
+    var saved=localStorage.getItem(key);
+    if(saved){
+      var bar=document.createElement('div'); bar.className='draft-bar';
+      bar.innerHTML='You have an unsaved draft. <a id="dRestore">Restore</a> <a id="dDiscard">Discard</a>';
+      df.parentNode.insertBefore(bar, df);
+      bar.querySelector('#dRestore').onclick=function(){try{var o=JSON.parse(saved);fields().forEach(function(el){if(o[el.name]!=null){if(el.type==='radio'){el.checked=(el.value===o[el.name]);}else el.value=o[el.name];}});}catch(e){} bar.remove();};
+      bar.querySelector('#dDiscard').onclick=function(){localStorage.removeItem(key);bar.remove();};
+    }
+    var t; df.addEventListener('input',function(){clearTimeout(t);t=setTimeout(function(){
+      var o={}; fields().forEach(function(el){if(el.type==='radio'){if(el.checked)o[el.name]=el.value;}else o[el.name]=el.value;}); localStorage.setItem(key,JSON.stringify(o));
+    },500);});
+    df.addEventListener('submit',function(){localStorage.removeItem(key);});
+  }
+})();
+</script>
+<?php }
+
 function layout_footer(): void { ?>
     </div>
   </div>

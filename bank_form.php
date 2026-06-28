@@ -16,18 +16,27 @@ $COLUMNS = [
 $id  = $_GET['id'] ?? ($_POST['id'] ?? null);
 $row = load_row('bankvaluations', $id);
 
+$errors = [];
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     csrf_verify();
-    $files = handle_uploads($_POST['reg_no'] ?? '', $row);
-    $newId = save_row('bankvaluations', $COLUMNS, $_POST, $id, $files);
-    audit($id ? 'update' : 'create', 'bankvaluation', $newId, $_POST['reg_no'] ?? '');
-    flash($id ? 'Bank valuation updated.' : 'Bank valuation saved.');
-    redirect('bank_list.php');
+    foreach (['market_value', 'forced_value'] as $m) if (isset($_POST[$m])) $_POST[$m] = str_replace(',', '', $_POST[$m]);
+    $required = ['reg_no' => 'Reg Number', 'make' => 'Make/Model', 'customer_name' => 'Customer Name', 'market_value' => 'Market Value'];
+    foreach ($required as $f => $lbl) if (trim((string)($_POST[$f] ?? '')) === '') $errors[$f] = 'Required';
+    if (!$errors) {
+        $files = handle_uploads($_POST['reg_no'] ?? '', $row);
+        $newId = save_row('bankvaluations', $COLUMNS, $_POST, $id, $files);
+        audit($id ? 'update' : 'create', 'bankvaluation', $newId, $_POST['reg_no'] ?? '');
+        flash($id ? 'Bank valuation updated.' : 'Bank valuation saved.');
+        redirect('bank_list.php');
+    }
+    set_form_errors($errors);
+    flash('Please fix the highlighted fields.', 'err');
+    $row = array_merge($row, $_POST); // repopulate entered values
 }
 
 layout_header($id ? 'Edit Bank Valuation' : 'New Bank Valuation', 'bank');
 ?>
-<form class="card" method="post" enctype="multipart/form-data">
+<form class="card wizard" method="post" enctype="multipart/form-data"<?= $id ? '' : ' data-draft="banknew"' ?>>
   <?= csrf_field() ?>
   <?php if ($id): ?><input type="hidden" name="id" value="<?= e($id) ?>"><?php endif; ?>
 
@@ -41,15 +50,15 @@ layout_header($id ? 'Edit Bank Valuation' : 'New Bank Valuation', 'bank');
     <?= f_input('customer_name','Customer Name',$row,'text',true) ?>
     <?= f_input('phone_no','Phone Number',$row) ?>
     <?= f_input('inspection_location','Inspection Location',$row) ?>
-    <?= f_select('valuation_type','Valuation Type','types',$row) ?>
-    <?= f_select('client','Client','clients',$row) ?>
+    <?= f_select('valuation_type','Valuation Type','types',$row,true) ?>
+    <?= f_select('client','Client','clients',$row,true) ?>
     <?= f_input('corporate_ref_no','Corporate Ref No',$row) ?>
   </div></fieldset>
 
   <fieldset><legend>Registration & Insurance</legend><div class="grid">
     <?= f_input('registration_date','Reg Date',$row,'date') ?>
     <?= f_input('manufacture_year','YOM',$row) ?>
-    <?= f_select('insurer','Insurer','insurers',$row) ?>
+    <?= f_select('insurer','Insurer','insurers',$row,true) ?>
     <?= f_input('insurance_pol_no','Insurance Pol No.',$row) ?>
     <?= f_input('insurance_exp','Insurance Exp Date',$row,'date') ?>
   </div></fieldset>
@@ -72,8 +81,8 @@ layout_header($id ? 'Edit Bank Valuation' : 'New Bank Valuation', 'bank');
   </div></fieldset>
 
   <fieldset><legend>Vehicle Valuation</legend><div class="grid">
-    <?= f_input('market_value','Market Value',$row,'number',true,'step="0.01"') ?>
-    <?= f_input('forced_value','Forced Value',$row,'number',false,'step="0.01"') ?>
+    <?= f_money('market_value','Market Value',$row,true,true) ?>
+    <?= f_money('forced_value','Forced Value',$row,false) ?>
     <?= f_text('note_value','Note Value',$row,'W/S value estimated at 00000/= R/CD/TV value estimated at 00000/= REMARKS:') ?>
     <?= f_text('notes','N.B.',$row) ?>
     <?= f_text('extras','Extras',$row) ?>
@@ -96,9 +105,27 @@ layout_header($id ? 'Edit Bank Valuation' : 'New Bank Valuation', 'bank');
   <div class="grid" style="margin-top:14px">
     <div class="f"><label class="f">Logbook (image)</label><input type="file" name="logbook" accept="image/*"></div>
     <div class="f"><label class="f">Photos (multiple)</label><input type="file" name="images[]" accept="image/*" multiple></div>
-  </div></fieldset>
+  </div>
+  <?php $existingImgs = !empty($row['images']) ? (json_decode($row['images'], true) ?: []) : []; ?>
+  <?php if ($existingImgs): ?>
+    <div style="margin-top:14px">
+      <label class="f">Existing photos — click ✕ to remove on save</label>
+      <div class="thumbs">
+        <?php foreach ($existingImgs as $p): ?>
+          <div class="thumb">
+            <img src="<?= e(UPLOAD_URL . '/' . ltrim($p, '/')) ?>" alt="">
+            <input type="checkbox" name="removed_images[]" value="<?= e($p) ?>" style="display:none">
+            <button type="button" class="rm">✕</button>
+          </div>
+        <?php endforeach; ?>
+      </div>
+    </div>
+  <?php endif; ?>
+  </fieldset>
 
   <button class="btn" type="submit">Save</button>
   <a class="btn sec" href="<?= url('bank_list.php') ?>">Cancel</a>
+  <?php if ($id): ?><a class="btn sec" href="<?= url('duplicate.php?type=bank&id=' . (int)$id) ?>" onclick="return confirm('Create a duplicate of this valuation?')">Duplicate</a><?php endif; ?>
 </form>
+<?php form_assets(); ?>
 <?php layout_footer();

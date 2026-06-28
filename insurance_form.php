@@ -34,12 +34,21 @@ $COLUMNS = [
 $id  = $_GET['id'] ?? ($_POST['id'] ?? null);
 $row = load_row('valuations', $id);
 
+$errors = [];
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     csrf_verify();
-    $newId = save_row('valuations', $COLUMNS, $_POST, $id);
-    audit($id ? 'update' : 'create', 'valuation', $newId, $_POST['reg_no'] ?? '');
-    flash($id ? 'Insurance valuation updated.' : 'Valuation added successfully.');
-    redirect('insurance_list.php');
+    if (isset($_POST['assessed_value'])) $_POST['assessed_value'] = str_replace(',', '', $_POST['assessed_value']);
+    $required = ['reg_no' => 'Reg Number', 'make' => 'Make/Model', 'customer_name' => 'Customer Name', 'assessed_value' => 'Assessed Value'];
+    foreach ($required as $f => $lbl) if (trim((string)($_POST[$f] ?? '')) === '') $errors[$f] = 'Required';
+    if (!$errors) {
+        $newId = save_row('valuations', $COLUMNS, $_POST, $id);
+        audit($id ? 'update' : 'create', 'valuation', $newId, $_POST['reg_no'] ?? '');
+        flash($id ? 'Insurance valuation updated.' : 'Valuation added successfully.');
+        redirect('insurance_list.php');
+    }
+    set_form_errors($errors);
+    flash('Please fix the highlighted fields.', 'err');
+    $row = array_merge($row, $_POST);
 }
 
 // Checklist groups: [field => question label]
@@ -80,7 +89,7 @@ $eng = [
 
 layout_header($id ? 'Edit Insurance Valuation' : 'New Insurance Valuation', 'insurance');
 ?>
-<form class="card" method="post">
+<form class="card wizard" method="post"<?= $id ? '' : ' data-draft="insnew"' ?>>
   <?= csrf_field() ?>
   <?php if ($id): ?><input type="hidden" name="id" value="<?= e($id) ?>"><?php endif; ?>
 
@@ -93,15 +102,15 @@ layout_header($id ? 'Edit Insurance Valuation' : 'New Insurance Valuation', 'ins
     <?= f_input('customer_name','Customer Name',$row,'text',true) ?>
     <?= f_input('phone_no','Phone Number',$row) ?>
     <?= f_input('inspection_location','Inspection Location',$row) ?>
-    <?= f_select('client','Client','clients',$row) ?>
+    <?= f_select('client','Client','clients',$row,true) ?>
     <?= f_input('corporate_ref_no','Corporate Ref No',$row) ?>
-    <?= f_select('valuation_type','Valuation Type','types',$row) ?>
+    <?= f_select('valuation_type','Valuation Type','types',$row,true) ?>
   </div></fieldset>
 
   <fieldset><legend>Registration & Insurance</legend><div class="grid">
     <?= f_input('registration_date','Reg Date',$row,'date') ?>
     <?= f_input('manufacture_year','YOM',$row) ?>
-    <?= f_select('insurer','Insurer','insurers',$row) ?>
+    <?= f_select('insurer','Insurer','insurers',$row,true) ?>
     <?= f_input('insurance_pol_no','Insurance Pol No.',$row) ?>
     <?= f_input('insurance_exp','Insurance Exp Date',$row,'date') ?>
   </div></fieldset>
@@ -133,7 +142,7 @@ layout_header($id ? 'Edit Insurance Valuation' : 'New Insurance Valuation', 'ins
   <?php endforeach; ?>
 
   <fieldset><legend>Vehicle Valuation</legend><div class="grid">
-    <?= f_input('assessed_value','Assessed Value',$row,'number',true,'step="0.01"') ?>
+    <?= f_money('assessed_value','Assessed Value',$row,true,true) ?>
     <?= f_input('inspection_date','Inspection Date',$row,'date') ?>
     <?= f_input('inspection_officer','Inspection Officer',$row) ?>
     <?= f_text('note_value','Note Value',$row,'W/S value estimated at 00000/= R/CD/TV value estimated at 00000/= REMARKS:') ?>
@@ -151,5 +160,7 @@ layout_header($id ? 'Edit Insurance Valuation' : 'New Insurance Valuation', 'ins
 
   <button class="btn" type="submit">Save</button>
   <a class="btn sec" href="<?= url('insurance_list.php') ?>">Cancel</a>
+  <?php if ($id): ?><a class="btn sec" href="<?= url('duplicate.php?type=insurance&id=' . (int)$id) ?>" onclick="return confirm('Create a duplicate of this valuation?')">Duplicate</a><?php endif; ?>
 </form>
+<?php form_assets(); ?>
 <?php layout_footer();

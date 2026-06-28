@@ -4,25 +4,55 @@
  */
 require_once __DIR__ . '/lib.php';
 
+/** Per-field validation errors (set by the form handler before re-render). */
+$GLOBALS['__form_errors'] = [];
+function set_form_errors(array $errs): void { $GLOBALS['__form_errors'] = $errs; }
+function field_err(string $name): string {
+    $e = $GLOBALS['__form_errors'][$name] ?? '';
+    return $e ? '<small class="field-err">' . e($e) . '</small>' : '';
+}
+function err_class(string $name): string {
+    return isset($GLOBALS['__form_errors'][$name]) ? ' has-err' : '';
+}
+
 /** A labelled text/number/date input. */
 function f_input(string $name, string $label, array $row, string $type = 'text', bool $req = false, string $attr = ''): string {
     $v = e($row[$name] ?? '');
     $r = $req ? ' required' : '';
-    return '<div class="f"><label class="f">' . e($label) . '</label>'
-        . '<input type="' . $type . '" name="' . e($name) . '" value="' . $v . '"' . $r . ' ' . $attr . '></div>';
+    return '<div class="f' . err_class($name) . '"><label class="f">' . e($label) . '</label>'
+        . '<input type="' . $type . '" name="' . e($name) . '" value="' . $v . '"' . $r . ' ' . $attr . '>'
+        . field_err($name) . '</div>';
+}
+
+/** A money input (text + class so JS can add live thousands separators). */
+function f_money(string $name, string $label, array $row, bool $req = false, bool $words = false): string {
+    $v = e($row[$name] ?? '');
+    $r = $req ? ' required' : '';
+    $w = $words ? ' data-words="1"' : '';
+    return '<div class="f' . err_class($name) . '"><label class="f">' . e($label) . '</label>'
+        . '<input type="text" class="money" inputmode="decimal" name="' . e($name) . '" value="' . $v . '"' . $r . $w . '>'
+        . ($words ? '<small class="words-preview muted"></small>' : '') . field_err($name) . '</div>';
 }
 
 /** A labelled textarea. */
 function f_text(string $name, string $label, array $row, string $ph = ''): string {
     $v = e($row[$name] ?? '');
-    return '<div class="f"><label class="f">' . e($label) . '</label>'
-        . '<textarea name="' . e($name) . '" placeholder="' . e($ph) . '">' . $v . '</textarea></div>';
+    return '<div class="f' . err_class($name) . '"><label class="f">' . e($label) . '</label>'
+        . '<textarea name="' . e($name) . '" placeholder="' . e($ph) . '">' . $v . '</textarea>'
+        . field_err($name) . '</div>';
 }
 
-/** A labelled select fed from a lookup table. */
-function f_select(string $name, string $label, string $table, array $row): string {
-    return '<div class="f"><label class="f">' . e($label) . '</label>'
-        . '<select name="' . e($name) . '">' . options($table, $row[$name] ?? null) . '</select></div>';
+/** A labelled select fed from a lookup table. $quickAdd shows an inline "+ Add new". */
+function f_select(string $name, string $label, string $table, array $row, bool $quickAdd = false): string {
+    $qa = '';
+    if ($quickAdd && function_exists('can_edit') && can_edit()) {
+        $single = rtrim($table, 's');
+        $qa = '<span class="quick-add" data-type="' . e($table) . '" data-target="' . e($name)
+            . '" data-label="' . e($single) . '">+ Add new</span>';
+    }
+    return '<div class="f' . err_class($name) . '"><label class="f">' . e($label) . $qa . '</label>'
+        . '<select name="' . e($name) . '">' . options($table, $row[$name] ?? null) . '</select>'
+        . field_err($name) . '</div>';
 }
 
 /** A Yes/No (1/0) radio pair for the insurance checklist. */
@@ -98,7 +128,15 @@ function handle_uploads(string $regNo, array $row): array {
         $out['logbook'] = $row['logbook'];
     }
 
-    // images (multiple)
+    // images (multiple): start from existing, drop any removed, add new uploads
+    $existing = !empty($row['images']) ? (json_decode($row['images'], true) ?: []) : [];
+    $removed  = (array)($_POST['removed_images'] ?? []);
+    if ($removed) {
+        foreach ($existing as $p) {
+            if (in_array($p, $removed, true)) { @unlink(UPLOAD_DIR . '/' . ltrim($p, '/')); }
+        }
+        $existing = array_values(array_filter($existing, fn($p) => !in_array($p, $removed, true)));
+    }
     $paths = [];
     if (!empty($_FILES['images']['name'][0])) {
         @mkdir("$base/images", 0775, true);
@@ -110,11 +148,7 @@ function handle_uploads(string $regNo, array $row): array {
             }
         }
     }
-    if ($paths) {
-        $existing = !empty($row['images']) ? (json_decode($row['images'], true) ?: []) : [];
-        $out['images'] = json_encode(array_merge($existing, $paths));
-    } elseif (!empty($row['images'])) {
-        $out['images'] = $row['images'];
-    }
+    $all = array_merge($existing, $paths);
+    $out['images'] = $all ? json_encode($all) : null;
     return $out;
 }
