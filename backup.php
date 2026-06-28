@@ -16,7 +16,8 @@ if (!$validToken) require_admin();
 $pdo = db();
 $tables = $pdo->query('SHOW TABLES')->fetchAll(PDO::FETCH_COLUMN);
 
-$fname = DB_NAME . '-backup-' . date('Ymd-His') . '.sql';
+$slug  = strtoupper(preg_replace('/[^A-Za-z0-9]/', '', setting('company_name', 'COMPANY')));
+$fname = ($slug !== '' ? $slug : 'COMPANY') . '_BACKUP.sql';
 header('Content-Type: application/sql');
 header('Content-Disposition: attachment; filename="' . $fname . '"');
 
