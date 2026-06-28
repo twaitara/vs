@@ -48,7 +48,7 @@ layout_header('Bank Valuations', 'bank');
       <td class="muted"><?= e(ddate($r['created_at'])) ?></td>
       <td class="actions">
         <a class="rbtn" href="<?= url('bank_form.php?id=' . $r['id']) ?>">Edit</a>
-        <a class="rbtn" href="<?= url('preview.php?id=' . $r['id']) ?>" target="_blank">Preview</a>
+        <a class="rbtn" href="#" onclick="openPreview(<?= (int)$r['id'] ?>);return false;">Preview</a>
         <a class="rbtn" href="<?= url('print.php?id=' . $r['id']) ?>">Print</a>
       </td>
     </tr>
@@ -57,5 +57,31 @@ layout_header('Bank Valuations', 'bank');
 </table>
 <?php pagination_bar($page, $pages, 'bank_list.php', $q !== '' ? ['q' => $q] : []); ?>
 <div class="count"><?= number_format($total) ?> record<?= $total === 1 ? '' : 's' ?><?= $q !== '' ? ' matching “' . e($q) . '”' : '' ?> · page <?= $page ?> of <?= $pages ?></div>
+<div class="modal-bg" id="previewModal" onclick="if(event.target===this)closePreview()">
+  <div class="modal">
+    <div class="modal-head">
+      <span class="title">Valuation Report Preview</span>
+      <span class="acts">
+        <a id="previewPdf" href="#" target="_blank">⬇ Download PDF</a>
+        <button class="close" onclick="closePreview()">✕ Close</button>
+      </span>
+    </div>
+    <iframe id="previewFrame" src="about:blank"></iframe>
+  </div>
+</div>
+<script>
+function openPreview(id){
+  document.getElementById('previewFrame').src = '<?= url('preview.php') ?>?bare=1&id=' + id;
+  document.getElementById('previewPdf').href = '<?= url('print.php') ?>?id=' + id;
+  document.getElementById('previewModal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closePreview(){
+  document.getElementById('previewModal').classList.remove('open');
+  document.getElementById('previewFrame').src = 'about:blank';
+  document.body.style.overflow = '';
+}
+document.addEventListener('keydown', function(e){ if(e.key === 'Escape') closePreview(); });
+</script>
 <?php quick_search_script(); ?>
 <?php layout_footer();

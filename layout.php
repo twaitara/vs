@@ -61,6 +61,14 @@ function layout_header(string $title, string $active = ''): void {
   .pager .cur{background:var(--accent);border-color:var(--accent);color:#fff}
   .pager .dis,.pager .gap{color:var(--mut);border-color:transparent;background:transparent}
   .count{color:var(--mut);font-size:12px;margin-top:10px;text-align:center}
+  .modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:1000;align-items:center;justify-content:center}
+  .modal-bg.open{display:flex}
+  .modal{background:#fff;width:90%;max-width:900px;height:90vh;border-radius:10px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 10px 40px rgba(0,0,0,.5)}
+  .modal-head{display:flex;justify-content:space-between;align-items:center;background:#171c22;color:#fff;padding:10px 16px}
+  .modal-head .title{font-size:14px;font-weight:600}
+  .modal-head .acts a,.modal-head .acts button{background:#d41d1d;color:#fff;border:0;padding:7px 14px;border-radius:6px;font-size:13px;text-decoration:none;cursor:pointer;margin-left:8px}
+  .modal-head .acts .close{background:#2b3340}
+  .modal iframe{flex:1;width:100%;border:0;background:#fff}
   .muted{color:var(--mut)}
 </style>
 </head>
