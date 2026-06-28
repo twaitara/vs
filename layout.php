@@ -166,6 +166,35 @@ function layout_header(string $title, string $active = ''): void {
   .btn.blue{background:linear-gradient(135deg,#2563eb,#4f8bff)!important}
   table.list th{background:linear-gradient(180deg,var(--th),var(--panel))}
   table.list tbody tr:hover td{background:var(--rowh)}
+  /* === mobile / responsive === */
+  .menu-toggle{display:none;background:var(--chip);color:var(--txt);border:0;border-radius:8px;width:36px;height:34px;align-items:center;justify-content:center;cursor:pointer;margin-right:10px}
+  .menu-toggle i{width:20px;height:20px}
+  .top-l{display:flex;align-items:center;min-width:0}
+  .top-l h1{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .overlay{display:none}
+  .fab{display:none}
+  @media(max-width:860px){
+    .side{position:fixed;left:0;top:0;height:100vh;z-index:200;transform:translateX(-100%);transition:transform .25s ease;box-shadow:0 0 50px rgba(0,0,0,.55)}
+    .side.open{transform:none}
+    .overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:150}
+    .overlay.show{display:block}
+    .menu-toggle{display:inline-flex}
+    .content{padding:16px}
+    .top{padding:12px 14px}
+    .top h1{font-size:16px}
+    .who{gap:6px} .who .whoami span,.who .role{display:none}
+    table.list{display:block;overflow-x:auto;white-space:nowrap;-webkit-overflow-scrolling:touch}
+    .toolbar{flex-direction:column;align-items:stretch}
+    .toolbar > div{display:flex;gap:8px;flex-wrap:wrap}
+    .toolbar input[type=search]{width:100%}
+    .fb-grid{grid-template-columns:1fr 1fr}
+    .fab{display:inline-flex}
+  }
+  /* floating quick-action button */
+  .fab{position:fixed;right:18px;bottom:18px;z-index:120;align-items:center;gap:8px;
+       background:linear-gradient(135deg,var(--accent),#ff5a3c);color:#fff;padding:14px 18px;border-radius:30px;
+       font-weight:700;font-size:14px;box-shadow:0 10px 30px rgba(212,29,29,.45);transition:transform .15s}
+  .fab:hover{transform:translateY(-2px)} .fab i{width:20px;height:20px}
   /* === coloured icons === */
   .nav .lucide-layout-dashboard{color:#5b9bff}
   .nav .lucide-landmark{color:#ff6b6b}
@@ -183,7 +212,7 @@ function layout_header(string $title, string $active = ''): void {
 </head>
 <body>
 <div class="wrap">
-  <aside class="side">
+  <aside class="side" id="sidebar">
     <div class="brand">
       <a href="<?= url('dashboard.php') ?>"><img src="<?= url('assets/logo2.png') ?>" alt="<?= e(APP_NAME) ?>" class="brand-logo"></a>
       <small>Automobile Valuers</small>
@@ -196,9 +225,10 @@ function layout_header(string $title, string $active = ''): void {
       <?php endforeach; ?>
     </nav>
   </aside>
+  <div class="overlay" id="navOverlay"></div>
   <div class="main">
     <div class="top">
-      <h1><?= e($title) ?></h1>
+      <div class="top-l"><button class="menu-toggle" id="menuToggle" title="Menu"><i data-lucide="menu"></i></button><h1><?= e($title) ?></h1></div>
       <div class="who">
         <button type="button" id="themeBtn" class="themebtn" title="Toggle light/dark"><i data-lucide="sun-moon"></i></button>
         <a href="<?= url('profile.php') ?>" class="whoami"><i data-lucide="user-round"></i><span><?= e($u['name'] ?? '') ?></span></a>
@@ -496,6 +526,20 @@ function layout_footer(): void { ?>
     </div>
   </div>
 </div>
+<?php if (can_edit()): ?>
+<a class="fab" href="<?= url('bank_form.php') ?>" title="New valuation"><i data-lucide="plus"></i><span>New Valuation</span></a>
+<?php endif; ?>
+<script>
+(function(){
+  var t=document.getElementById('menuToggle'), s=document.getElementById('sidebar'), o=document.getElementById('navOverlay');
+  if(!t||!s||!o) return;
+  function open(){s.classList.add('open');o.classList.add('show');}
+  function close(){s.classList.remove('open');o.classList.remove('show');}
+  t.addEventListener('click',function(){ s.classList.contains('open')?close():open(); });
+  o.addEventListener('click',close);
+  s.querySelectorAll('a').forEach(function(a){a.addEventListener('click',close);});
+})();
+</script>
 <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 <script>
 (function(){

@@ -60,6 +60,13 @@ function portal_header(string $title): void {
   .modal-head{display:flex;justify-content:space-between;align-items:center;background:#171c22;color:#fff;padding:10px 16px}
   .modal-head a,.modal-head button{background:#d41d1d;color:#fff;border:0;padding:7px 14px;border-radius:6px;font-size:13px;cursor:pointer;margin-left:8px;text-decoration:none}
   .modal-head .close{background:#2b3340} .modal iframe{flex:1;width:100%;border:0;background:#fff}
+  @media(max-width:860px){
+    .pbar{padding:12px 14px} .pbar .brand img{height:32px}
+    .wrap{padding:16px}
+    .kpis{grid-template-columns:1fr 1fr}
+    table.list{display:block;overflow-x:auto;white-space:nowrap;-webkit-overflow-scrolling:touch}
+    .modal{width:96%;height:94vh}
+  }
 </style></head>
 <body>
 <div class="pbar">
