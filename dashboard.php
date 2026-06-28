@@ -48,7 +48,7 @@ layout_header('Dashboard', 'dashboard');
   <div class="panel">
     <div class="panel-h">Recent Bank Valuations <span class="muted" style="font-weight:400;font-size:12px">(last 30 days)</span> <a href="<?= url('bank_list.php') ?>" class="lnk">View all →</a></div>
     <input type="search" id="recentSearch" placeholder="Quick search these…" autocomplete="off"
-           style="width:100%;background:#0f1419;border:1px solid var(--line);color:var(--txt);padding:8px 10px;border-radius:7px;font-size:13px;margin-bottom:12px">
+           style="width:100%;background:var(--input);border:1px solid var(--line);color:var(--txt);padding:8px 10px;border-radius:7px;font-size:13px;margin-bottom:12px">
     <table class="list" id="recentTable">
       <thead><tr><th>Reg No.</th><th>Make/Model</th><th>Customer</th><th>Value</th><th></th></tr></thead>
       <tbody>
@@ -146,7 +146,7 @@ document.querySelectorAll('.kpi-num[data-count]').forEach(function(el){
 <style>
   .recent-pager{display:flex;gap:5px;justify-content:center;flex-wrap:wrap;margin-top:12px}
   .recent-pager .pgb{background:var(--panel);border:1px solid var(--line);color:var(--txt);padding:5px 10px;border-radius:6px;font-size:12px;cursor:pointer}
-  .recent-pager .pgb:hover:not(:disabled){background:#2b3340}
+  .recent-pager .pgb:hover:not(:disabled){background:var(--hover)}
   .recent-pager .pgb.cur{background:var(--accent);border-color:var(--accent);color:#fff}
   .recent-pager .pgb:disabled{opacity:.4;cursor:default}
 </style>

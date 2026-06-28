@@ -71,7 +71,7 @@ layout_header('Analytics', '');
   .bars{display:flex;flex-direction:column;gap:9px}
   .bar-row{display:grid;grid-template-columns:120px 1fr 90px;align-items:center;gap:10px;font-size:12px}
   .bar-lbl{color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .bar-track{background:#0f1419;border-radius:6px;height:18px;overflow:hidden}
+  .bar-track{background:var(--input);border-radius:6px;height:18px;overflow:hidden}
   .bar-fill{display:block;height:100%;background:linear-gradient(90deg,#2563eb,#d41d1d)}
   .bar-val{text-align:right;color:var(--txt)}
 </style>

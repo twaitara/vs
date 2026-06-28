@@ -26,8 +26,10 @@ function layout_header(string $title, string $active = ''): void {
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-  :root{--bg:#0f1216;--panel:#171c22;--line:#262d36;--txt:#e6e9ee;--mut:#9aa4b2;--accent:#d41d1d;--accent2:#2563eb;}
-  html[data-theme="light"]{--bg:#eef1f5;--panel:#ffffff;--line:#dce1e8;--txt:#1a2330;--mut:#5b6573;--accent:#d41d1d;--accent2:#2563eb;}
+  :root{--bg:#0f1216;--panel:#171c22;--line:#262d36;--txt:#e6e9ee;--mut:#9aa4b2;--accent:#d41d1d;--accent2:#2563eb;
+        --input:#0f1419;--chip:#1b212a;--th:#1b212a;--rowh:#1a2028;--hover:#2b3340;}
+  html[data-theme="light"]{--bg:#eef1f5;--panel:#ffffff;--line:#dce1e8;--txt:#1a2330;--mut:#5b6573;--accent:#d41d1d;--accent2:#2563eb;
+        --input:#f3f6f9;--chip:#eef1f5;--th:#eef2f7;--rowh:#f5f8fb;--hover:#e6ebf1;}
   *{box-sizing:border-box}
   body{margin:0;font-family:'Plus Jakarta Sans',system-ui,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--txt);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
   h1,h2,h3,.brand{font-weight:700;letter-spacing:-0.015em}
@@ -39,9 +41,9 @@ function layout_header(string $title, string $active = ''): void {
   .brand small{display:block;color:var(--mut);font-weight:400;font-size:11px;margin-top:8px}
   .nav a{display:flex;align-items:center;gap:11px;padding:11px 20px;color:var(--mut);font-size:14px;border-left:3px solid transparent;transition:background .18s,color .18s,transform .18s,padding .18s;opacity:0;animation:navIn .4s ease forwards}
   .nav a i{width:18px;height:18px;flex:0 0 18px;transition:transform .18s}
-  .nav a:hover{background:#1e242c;color:var(--txt);padding-left:24px}
+  .nav a:hover{background:var(--rowh);color:var(--txt);padding-left:24px}
   .nav a:hover i{transform:scale(1.15)}
-  .nav a.on{color:#fff;border-left-color:var(--accent);background:linear-gradient(90deg,rgba(212,29,29,.16),transparent)}
+  .nav a.on{color:var(--txt);border-left-color:var(--accent);background:linear-gradient(90deg,rgba(212,29,29,.16),transparent)}
   .nav a.on i{color:var(--accent)}
   @keyframes navIn{from{opacity:0;transform:translateX(-10px)}to{opacity:1;transform:none}}
   .main{flex:1;display:flex;flex-direction:column;min-width:0}
@@ -59,12 +61,12 @@ function layout_header(string $title, string $active = ''): void {
   #spinner.on{display:flex}
   #spinner .sp{width:42px;height:42px;border:4px solid rgba(255,255,255,.25);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite}
   @keyframes spin{to{transform:rotate(360deg)}}
-  .themebtn{background:#2b3340;color:#cdd5e0;border:0;border-radius:6px;width:28px;height:24px;cursor:pointer;font-size:13px;margin-right:6px}
+  .themebtn{background:var(--chip);color:var(--mut);border:0;border-radius:6px;width:28px;height:24px;cursor:pointer;font-size:13px;margin-right:6px}
   .who{display:flex;align-items:center;gap:10px}
   .who .whoami{display:flex;align-items:center;gap:6px;color:var(--mut);font-size:13px;transition:color .15s}
   .who .whoami:hover{color:var(--txt)} .who .whoami i{width:16px;height:16px}
   .who .logout{display:inline-flex;color:var(--mut);transition:color .15s,transform .15s} .who .logout:hover{color:var(--accent);transform:translateX(2px)} .who .logout i{width:18px;height:18px}
-  .who .role{background:#2b3340;color:#cdd5e0;font-size:11px;padding:2px 8px;border-radius:10px}
+  .who .role{background:var(--chip);color:var(--mut);font-size:11px;padding:2px 8px;border-radius:10px}
   /* ---- global motion + icon polish ---- */
   .content{animation:fadeUp .45s cubic-bezier(.2,.7,.2,1)}
   @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
@@ -76,7 +78,7 @@ function layout_header(string $title, string $active = ''): void {
   .rbtn{transition:background .15s,transform .15s} .rbtn:hover{transform:translateY(-1px)}
   .themebtn{display:inline-flex;align-items:center;justify-content:center} .themebtn i{width:15px;height:15px}
   .card,.kpi,.panel{transition:transform .2s,box-shadow .2s,border-color .2s}
-  .kpi:hover,.panel:hover{transform:translateY(-3px);box-shadow:0 10px 30px rgba(0,0,0,.28);border-color:#33404e}
+  .kpi:hover,.panel:hover{transform:translateY(-3px);box-shadow:0 10px 30px rgba(0,0,0,.18);border-color:var(--line)}
   .badge{transition:transform .15s}.badge:hover{transform:scale(1.05)}
   a,button{ -webkit-tap-highlight-color:transparent }
   ::-webkit-scrollbar{width:10px;height:10px}::-webkit-scrollbar-thumb{background:#2b3340;border-radius:6px}::-webkit-scrollbar-track{background:transparent}
@@ -84,39 +86,39 @@ function layout_header(string $title, string $active = ''): void {
   .subnav a{display:inline-flex;align-items:center;gap:7px;padding:9px 14px;color:var(--mut);font-size:13px;border-bottom:2px solid transparent;transition:color .15s,border-color .15s}
   .subnav a i{width:16px;height:16px}
   .subnav a:hover{color:var(--txt)}
-  .subnav a.on{color:#fff;border-bottom-color:var(--accent)}
+  .subnav a.on{color:var(--accent);border-bottom-color:var(--accent)}
   .btn{display:inline-block;background:var(--accent);color:#fff;border:0;padding:9px 16px;border-radius:8px;font-size:14px;cursor:pointer}
-  .btn:hover{filter:brightness(1.1)} .btn.sec{background:#2b3340} .btn.blue{background:var(--accent2)}
+  .btn:hover{filter:brightness(1.1)} .btn.sec{background:var(--chip);color:var(--txt)} .btn.blue{background:var(--accent2)}
   table.list{width:100%;border-collapse:collapse;background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
   table.list th,table.list td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--line);font-size:13px}
-  table.list th{background:#1b212a;color:var(--mut);font-weight:600}
-  table.list tr:hover td{background:#1a2028}
+  table.list th{background:var(--th);color:var(--mut);font-weight:600}
+  table.list tr:hover td{background:var(--rowh)}
   .toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;gap:12px}
-  .toolbar input[type=search]{background:var(--panel);border:1px solid var(--line);color:var(--txt);padding:9px 12px;border-radius:8px;width:280px}
+  .toolbar input[type=search]{background:var(--input);border:1px solid var(--line);color:var(--txt);padding:9px 12px;border-radius:8px;width:280px}
   form.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:20px;margin-bottom:20px}
   fieldset{border:1px solid var(--line);border-radius:10px;padding:16px 18px;margin:0 0 18px}
   legend{color:var(--accent);font-weight:600;padding:0 8px;font-size:14px}
   .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px}
   label.f{display:block;font-size:12px;color:var(--mut);margin-bottom:5px}
-  .f input,.f select,.f textarea{width:100%;background:#0f1419;border:1px solid var(--line);color:var(--txt);padding:8px 10px;border-radius:7px;font-size:14px;font-family:inherit}
+  .f input,.f select,.f textarea{width:100%;background:var(--input);border:1px solid var(--line);color:var(--txt);padding:8px 10px;border-radius:7px;font-size:14px;font-family:inherit}
   .f textarea{min-height:70px;resize:vertical}
   .yn{display:flex;gap:14px;font-size:13px;align-items:center}
   .yn label{display:flex;gap:5px;align-items:center;color:var(--txt)}
   .actions a{margin-right:8px;font-size:13px;color:var(--accent2)}
-  .actions a.rbtn{display:inline-block;border:1px solid var(--line);color:var(--txt);padding:4px 12px;border-radius:6px;background:#1b212a}
-  .actions a.rbtn:hover{background:#2b3340}
+  .actions a.rbtn{display:inline-block;border:1px solid var(--line);color:var(--txt);padding:4px 12px;border-radius:6px;background:var(--chip)}
+  .actions a.rbtn:hover{background:var(--hover)}
   .pager{display:flex;gap:6px;justify-content:center;align-items:center;margin-top:18px;flex-wrap:wrap}
   .pager a,.pager span{padding:6px 11px;border:1px solid var(--line);border-radius:6px;font-size:13px;background:var(--panel);color:var(--txt)}
-  .pager a:hover{background:#2b3340}
+  .pager a:hover{background:var(--hover)}
   .pager .cur{background:var(--accent);border-color:var(--accent);color:#fff}
-  .pager .dis,.pager .gap{color:var(--mut);border-color:transparent;background:transparent}
+  Xborder-color:transparent;background:transparent}
   .count{color:var(--mut);font-size:12px;margin-top:10px;text-align:center}
   .sortlink{color:var(--mut)} .sortlink:hover{color:var(--txt)}
   .filterbar{display:none;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:16px}
   .filterbar.open{display:block}
   .fb-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}
   .fb-grid label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--mut)}
-  .fb-grid input,.fb-grid select{background:#0f1419;border:1px solid var(--line);color:var(--txt);padding:7px 9px;border-radius:7px;font-size:13px}
+  .fb-grid input,.fb-grid select{background:var(--input);border:1px solid var(--line);color:var(--txt);padding:7px 9px;border-radius:7px;font-size:13px}
   .fb-actions{margin-top:12px;display:flex;gap:8px}
   .bulkbar{display:flex;align-items:center;gap:14px;margin-bottom:10px;font-size:13px;color:var(--mut)}
   .badge{display:inline-block;font-size:11px;padding:2px 7px;border-radius:10px;white-space:nowrap}
@@ -305,7 +307,7 @@ function form_assets(): void { ?>
   .dropzone{border:2px dashed var(--line);border-radius:10px;padding:16px;text-align:center;color:var(--mut);cursor:pointer;font-size:13px}
   .dropzone.drag{border-color:var(--accent);color:var(--txt)}
   .thumbs{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px}
-  .thumb{position:relative;width:92px;height:70px;border:1px solid var(--line);border-radius:6px;overflow:hidden;background:#0f1419}
+  .thumb{position:relative;width:92px;height:70px;border:1px solid var(--line);border-radius:6px;overflow:hidden;background:var(--input)}
   .thumb img{width:100%;height:100%;object-fit:cover}
   .thumb .rm{position:absolute;top:2px;right:2px;background:rgba(0,0,0,.65);color:#fff;border:0;border-radius:4px;cursor:pointer;font-size:11px;padding:0 5px;line-height:16px}
   .thumb.removing{opacity:.35}
