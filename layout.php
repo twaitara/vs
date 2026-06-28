@@ -81,7 +81,30 @@ function layout_header(string $title, string $active = ''): void {
   .kpi:hover,.panel:hover{transform:translateY(-3px);box-shadow:0 10px 30px rgba(0,0,0,.18);border-color:var(--line)}
   .badge{transition:transform .15s}.badge:hover{transform:scale(1.05)}
   a,button{ -webkit-tap-highlight-color:transparent }
-  ::-webkit-scrollbar{width:10px;height:10px}::-webkit-scrollbar-thumb{background:#2b3340;border-radius:6px}::-webkit-scrollbar-track{background:transparent}
+  ::-webkit-scrollbar{width:10px;height:10px}::-webkit-scrollbar-thumb{background:var(--hover);border-radius:6px}::-webkit-scrollbar-track{background:transparent}
+  /* ===================== visual life ===================== */
+  body{background:
+      radial-gradient(1100px 560px at 100% -8%, rgba(212,29,29,.12), transparent 55%),
+      radial-gradient(900px 520px at -8% 108%, rgba(37,99,235,.10), transparent 55%),
+      var(--bg);
+      background-attachment:fixed}
+  .side{background:linear-gradient(180deg, var(--panel), var(--bg))}
+  .brand-logo{box-shadow:0 6px 18px rgba(0,0,0,.25)}
+  .top{position:sticky;top:0;z-index:50;background:var(--panel);box-shadow:0 1px 0 var(--line)}
+  .btn{background:linear-gradient(135deg,var(--accent),#ff5a3c);font-weight:600;position:relative;overflow:hidden}
+  .btn.sec{background:var(--chip);color:var(--txt)}
+  .btn.blue{background:linear-gradient(135deg,#2563eb,#4f8bff)}
+  .btn::after{content:"";position:absolute;top:0;left:-130%;width:55%;height:100%;
+      background:linear-gradient(120deg,transparent,rgba(255,255,255,.35),transparent);transform:skewX(-20deg);transition:left .6s}
+  .btn:hover::after{left:150%}
+  .card,.panel,.kpi{box-shadow:0 1px 2px rgba(0,0,0,.06),0 10px 28px rgba(0,0,0,.07)}
+  .kpi{overflow:hidden;position:relative}
+  .kpi::before{content:"";position:absolute;left:0;right:0;top:0;height:3px;background:linear-gradient(90deg,var(--accent),#ff8a5c)}
+  table.list{box-shadow:0 10px 28px rgba(0,0,0,.07)}
+  table.list th{background:linear-gradient(180deg,var(--th),var(--panel))}
+  .badge::before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;background:currentColor;margin-right:6px;vertical-align:1px;opacity:.85}
+  table.list tbody tr{animation:rowIn .35s ease both}
+  @keyframes rowIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
   .subnav{display:flex;flex-wrap:wrap;gap:4px;border-bottom:1px solid var(--line);margin-bottom:20px}
   .subnav a{display:inline-flex;align-items:center;gap:7px;padding:9px 14px;color:var(--mut);font-size:13px;border-bottom:2px solid transparent;transition:color .15s,border-color .15s}
   .subnav a i{width:16px;height:16px}
@@ -138,6 +161,12 @@ function layout_header(string $title, string $active = ''): void {
   .modal-head .acts .close{background:#2b3340}
   .modal iframe{flex:1;width:100%;border:0;background:#fff}
   .muted{color:var(--mut)}
+  /* === overrides (must win over base rules above) === */
+  .btn{background:linear-gradient(135deg,var(--accent),#ff5a3c)!important;font-weight:600}
+  .btn.sec{background:var(--chip)!important;color:var(--txt)}
+  .btn.blue{background:linear-gradient(135deg,#2563eb,#4f8bff)!important}
+  table.list th{background:linear-gradient(180deg,var(--th),var(--panel))}
+  table.list tbody tr:hover td{background:var(--rowh)}
 </style>
 </head>
 <body>

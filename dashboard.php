@@ -34,9 +34,24 @@ try {
 } catch (Throwable $e) {}
 
 $cur = setting('currency', CURRENCY);
+$hour = (int)date('G');
+$greet = $hour < 12 ? 'Good morning' : ($hour < 17 ? 'Good afternoon' : 'Good evening');
+$me = current_user();
 
 layout_header('Dashboard', 'dashboard');
 ?>
+<div class="hero">
+  <div class="hero-text">
+    <div class="hero-greet"><?= e($greet) ?>, <?= e($me['name'] ?? '') ?> 👋</div>
+    <div class="hero-sub"><?= date('l, j F Y') ?> · Here's your valuation overview.</div>
+  </div>
+  <?php if (can_edit()): ?>
+  <div class="hero-actions">
+    <a class="btn" href="<?= url('bank_form.php') ?>"><i data-lucide="plus"></i>New Bank Valuation</a>
+    <a class="btn blue" href="<?= url('insurance_form.php') ?>"><i data-lucide="plus"></i>Insurance</a>
+  </div>
+  <?php endif; ?>
+</div>
 <div class="kpis">
   <div class="kpi"><div class="kpi-ic ic-blue"><i data-lucide="landmark"></i></div><div><div class="kpi-label">Bank Valuations</div><div class="kpi-num" data-count="<?= (int)$bankTotal ?>">0</div></div></div>
   <div class="kpi"><div class="kpi-ic ic-green"><i data-lucide="shield-check"></i></div><div><div class="kpi-label">Insurance Valuations</div><div class="kpi-num" data-count="<?= (int)$insTotal ?>">0</div></div></div>
@@ -88,6 +103,12 @@ layout_header('Dashboard', 'dashboard');
 </div>
 
 <style>
+  .hero{display:flex;justify-content:space-between;align-items:center;gap:18px;flex-wrap:wrap;padding:24px 26px;border-radius:18px;margin-bottom:20px;border:1px solid var(--line);position:relative;overflow:hidden;
+        background:linear-gradient(120deg, rgba(212,29,29,.22), rgba(37,99,235,.16) 55%, transparent 80%), var(--panel)}
+  .hero::after{content:"";position:absolute;right:-40px;top:-40px;width:180px;height:180px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.10),transparent 70%);pointer-events:none}
+  .hero-greet{font-size:23px;font-weight:800;letter-spacing:-.02em}
+  .hero-sub{color:var(--mut);font-size:13px;margin-top:5px}
+  .hero-actions{display:flex;gap:10px;flex-wrap:wrap;position:relative;z-index:1}
   .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-bottom:22px}
   .kpi{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px;display:flex;align-items:center;gap:14px}
   .kpi-ic{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex:0 0 48px}
