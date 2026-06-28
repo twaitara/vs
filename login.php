@@ -17,8 +17,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Sign in · <?= e(APP_NAME) ?></title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
- body{margin:0;font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif;background:#0f1216;color:#e6e9ee;display:flex;min-height:100vh;align-items:center;justify-content:center}
+ body{margin:0;font-family:'Plus Jakarta Sans',system-ui,Segoe UI,Roboto,Arial,sans-serif;-webkit-font-smoothing:antialiased;background:#0f1216;color:#e6e9ee;display:flex;min-height:100vh;align-items:center;justify-content:center}
  .box{background:#171c22;border:1px solid #262d36;border-radius:12px;padding:30px;width:340px}
  h1{font-size:20px;margin:0 0 4px} p.sub{color:#9aa4b2;margin:0 0 22px;font-size:13px}
  label{display:block;font-size:12px;color:#9aa4b2;margin:14px 0 5px}
