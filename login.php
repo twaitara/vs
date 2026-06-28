@@ -17,6 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Sign in · <?= e(APP_NAME) ?></title>
+<link rel="icon" type="image/png" href="<?= url('assets/logo.png') ?>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -32,8 +33,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <body>
 <form class="box" method="post">
   <?= csrf_field() ?>
-  <h1><?= e(APP_NAME) ?></h1>
-  <p class="sub">Automobile Valuers & Assessors</p>
+  <img src="<?= url('assets/logo2.png') ?>" alt="<?= e(APP_NAME) ?>" style="max-width:180px;width:100%;background:#fff;padding:10px;border-radius:8px;display:block;margin:0 auto 18px">
+  <p class="sub" style="text-align:center">Automobile Valuers & Assessors</p>
   <?php if ($error): ?><div class="err"><?= e($error) ?></div><?php endif; ?>
   <label>Email</label>
   <input type="email" name="email" required autofocus>
