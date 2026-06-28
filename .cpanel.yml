@@ -6,7 +6,7 @@ deployment:
     # Common forms:
     #   /home/tonykett/public_html/vs
     #   /home/tonykett/nineonetwo.online/vs
-    - export DEPLOYPATH=/home/tonykett/public_html/vs
+    - export DEPLOYPATH=/home4/tonyketter/vs
     - /bin/mkdir -p $DEPLOYPATH
     # Copy the app files into the deploy folder.
     # config.php is NOT in the repo (gitignored), so your server credentials
