@@ -6,7 +6,7 @@ deployment:
     # Common forms:
     #   /home/tonykett/public_html/vs
     #   /home/tonykett/nineonetwo.online/vs
-    - export DEPLOYPATH=/home4/tonyketter/vs
+    - export DEPLOYPATH=/home4/tonyketter/nineonetwo.online/vs
     - /bin/mkdir -p $DEPLOYPATH
     # Copy ALL app files + folders (lib_dompdf, assets, uploads) into the live folder.
     # config.php and valuation.sql are NOT in the repo (gitignored), so your
