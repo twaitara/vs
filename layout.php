@@ -79,6 +79,9 @@ function layout_header(string $title, string $active = ''): void {
   #spinner .sp-msg{margin-top:15px;color:var(--txt);font-weight:700;font-size:15px}
   #spinner .sp-sub{color:var(--mut);font-size:12px;margin-top:3px}
   .themebtn{background:var(--chip);color:var(--mut);border:0;border-radius:6px;width:28px;height:24px;cursor:pointer;font-size:13px;margin-right:6px}
+  .topbackup{display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,#1c9c5d,#27c46f);color:#fff;padding:7px 13px;border-radius:8px;font-size:13px;font-weight:700;box-shadow:0 4px 14px rgba(28,156,93,.4);transition:transform .15s,box-shadow .15s}
+  .topbackup:hover{transform:translateY(-1px);box-shadow:0 7px 20px rgba(28,156,93,.55)}
+  .topbackup i{width:16px;height:16px}
   .who{display:flex;align-items:center;gap:10px}
   .who .whoami{display:flex;align-items:center;gap:6px;color:var(--mut);font-size:13px;transition:color .15s}
   .who .whoami:hover{color:var(--txt)} .who .whoami i{width:16px;height:16px}
@@ -200,7 +203,8 @@ function layout_header(string $title, string $active = ''): void {
     .content{padding:16px}
     .top{padding:12px 14px}
     .top h1{font-size:16px}
-    .who{gap:6px} .who .whoami span,.who .role{display:none}
+    .who{gap:6px} .who .whoami span,.who .role,.who .topbackup span{display:none}
+    .who .topbackup{padding:7px 9px}
     table.list{display:block;overflow-x:auto;white-space:nowrap;-webkit-overflow-scrolling:touch}
     .toolbar{flex-direction:column;align-items:stretch}
     .toolbar > div{display:flex;gap:8px;flex-wrap:wrap}
@@ -248,6 +252,7 @@ function layout_header(string $title, string $active = ''): void {
     <div class="top">
       <div class="top-l"><button class="menu-toggle" id="menuToggle" title="Menu"><i data-lucide="menu"></i></button><h1><?= e($title) ?></h1></div>
       <div class="who">
+        <?php if (is_admin()): ?><a href="<?= url('backup.php') ?>" class="topbackup" title="Backup database"><i data-lucide="database-backup"></i><span>Backup DB</span></a><?php endif; ?>
         <button type="button" id="themeBtn" class="themebtn" title="Toggle light/dark"><i data-lucide="sun-moon"></i></button>
         <a href="<?= url('profile.php') ?>" class="whoami"><i data-lucide="user-round"></i><span><?= e($u['name'] ?? '') ?></span></a>
         <span class="role"><?= e(ucfirst($u['role'] ?? '')) ?></span>
