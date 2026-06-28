@@ -41,7 +41,7 @@ function layout_header(string $title, string $active = ''): void {
   .top{display:flex;justify-content:space-between;align-items:center;padding:14px 24px;border-bottom:1px solid var(--line);background:var(--panel)}
   .top h1{font-size:17px;margin:0}
   .who{color:var(--mut);font-size:13px}
-  .content{padding:24px;max-width:1200px;width:100%}
+  .content{padding:24px;max-width:none;width:100%}
   .flash{background:#0f3d24;border:1px solid #1c7a47;color:#b8f5d0;padding:10px 14px;border-radius:8px;margin-bottom:16px}
   .flash-err{background:#3d0f0f;border-color:#7a1c1c;color:#f5c0c0}
   #toasts{position:fixed;top:16px;right:16px;z-index:3000;display:flex;flex-direction:column;gap:8px}
