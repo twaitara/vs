@@ -112,7 +112,7 @@ function render_list(array $cfg): void {
         <label>Client<select name="client"><?= options('clients', $client) ?></select></label>
         <label>Type<select name="vtype"><?= options('types', $vtype) ?></select></label>
         <?php if ($hasStatus): ?><label>Status<select name="status"><option value="">-- any --</option><?php foreach (valuation_statuses() as $sk=>$sl): ?><option value="<?= $sk ?>" <?= $status===$sk?'selected':'' ?>><?= e($sl) ?></option><?php endforeach; ?></select></label><?php endif; ?>
-        <label>Insurance<select name="ins">
+        <label>Insurance Status<select name="ins">
           <option value="">-- any --</option>
           <option value="expired" <?= $ins==='expired'?'selected':'' ?>>Expired</option>
           <option value="soon" <?= $ins==='soon'?'selected':'' ?>>Expiring soon (30d)</option>
