@@ -13,6 +13,19 @@ function layout_header(string $title, string $active = ''): void {
     // Everything else lives under the Settings hub.
     if (can_edit()) $nav['settings'] = ['label' => 'Settings', 'href' => is_admin() ? 'settings.php' : 'clients.php', 'icon' => 'settings'];
     $fl = flash();
+    $lastBackup = '';
+    if (is_admin()) {
+        try {
+            $bk = db()->query("SELECT created_at, user_name FROM audit_log WHERE action='backup' ORDER BY id DESC LIMIT 1")->fetch();
+            if ($bk) {
+                $t = strtotime($bk['created_at']);
+                $u = trim((string)($bk['user_name'] ?? ''));
+                $lastBackup = 'Last: ' . ($t ? date('j M y', $t) : '') . ($u !== '' ? ' · ' . strtok($u, ' ') : '');
+            } else {
+                $lastBackup = 'Never backed up';
+            }
+        } catch (Throwable $e) { $lastBackup = ''; }
+    }
     ?><!doctype html>
 <html lang="en">
 <head>
@@ -82,6 +95,9 @@ function layout_header(string $title, string $active = ''): void {
   .topbackup{display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,#1c9c5d,#27c46f);color:#fff;padding:7px 13px;border-radius:8px;font-size:13px;font-weight:700;box-shadow:0 4px 14px rgba(28,156,93,.4);transition:transform .15s,box-shadow .15s}
   .topbackup:hover{transform:translateY(-1px);box-shadow:0 7px 20px rgba(28,156,93,.55)}
   .topbackup i{width:16px;height:16px}
+  .topbackup .bk-txt{display:flex;flex-direction:column;align-items:flex-start;line-height:1.15}
+  .topbackup .bk-main{font-size:13px;font-weight:700}
+  .topbackup .bk-meta{font-size:9.5px;font-weight:500;opacity:.9}
   .who{display:flex;align-items:center;gap:10px}
   .who .whoami{display:flex;align-items:center;gap:6px;color:var(--mut);font-size:13px;transition:color .15s}
   .who .whoami:hover{color:var(--txt)} .who .whoami i{width:16px;height:16px}
@@ -252,7 +268,7 @@ function layout_header(string $title, string $active = ''): void {
     <div class="top">
       <div class="top-l"><button class="menu-toggle" id="menuToggle" title="Menu"><i data-lucide="menu"></i></button><h1><?= e($title) ?></h1></div>
       <div class="who">
-        <?php if (is_admin()): ?><a href="<?= url('backup.php') ?>" class="topbackup" title="Backup database" onclick="return confirm('IMPORTANT: You are responsible for backing up and safely keeping your own data.\n\nDownload regular copies and store them off-site (e.g. cloud storage or another computer). No copies are retained on your behalf.\n\nDownload a backup now?');"><i data-lucide="database-backup"></i><span>Backup DB</span></a><?php endif; ?>
+        <?php if (is_admin()): ?><a href="<?= url('backup.php') ?>" class="topbackup" title="Backup database — you are responsible for keeping your own backups" onclick="return confirm('IMPORTANT: You are responsible for backing up and safely keeping your own data.\n\nDownload regular copies and store them off-site (e.g. cloud storage or another computer). No copies are retained on your behalf.\n\nDownload a backup now?');"><i data-lucide="database-backup"></i><span class="bk-txt"><span class="bk-main">Backup DB</span><?php if ($lastBackup): ?><span class="bk-meta"><?= e($lastBackup) ?></span><?php endif; ?></span></a><?php endif; ?>
         <button type="button" id="themeBtn" class="themebtn" title="Toggle light/dark"><i data-lucide="sun-moon"></i></button>
         <a href="<?= url('profile.php') ?>" class="whoami"><i data-lucide="user-round"></i><span><?= e($u['name'] ?? '') ?></span></a>
         <span class="role"><?= e(ucfirst($u['role'] ?? '')) ?></span>
