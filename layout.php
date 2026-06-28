@@ -68,6 +68,21 @@ function layout_header(string $title, string $active = ''): void {
   .pager .cur{background:var(--accent);border-color:var(--accent);color:#fff}
   .pager .dis,.pager .gap{color:var(--mut);border-color:transparent;background:transparent}
   .count{color:var(--mut);font-size:12px;margin-top:10px;text-align:center}
+  .sortlink{color:var(--mut)} .sortlink:hover{color:var(--txt)}
+  .filterbar{display:none;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:16px}
+  .filterbar.open{display:block}
+  .fb-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}
+  .fb-grid label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--mut)}
+  .fb-grid input,.fb-grid select{background:#0f1419;border:1px solid var(--line);color:var(--txt);padding:7px 9px;border-radius:7px;font-size:13px}
+  .fb-actions{margin-top:12px;display:flex;gap:8px}
+  .bulkbar{display:flex;align-items:center;gap:14px;margin-bottom:10px;font-size:13px;color:var(--mut)}
+  .badge{display:inline-block;font-size:11px;padding:2px 7px;border-radius:10px;white-space:nowrap}
+  .b-red{background:#3d0f0f;color:#f5a3a3;border:1px solid #7a1c1c}
+  .b-amber{background:#3d2f0f;color:#f5d79a;border:1px solid #7a5c1c}
+  .b-grey{background:#2b3340;color:#cdd5e0}
+  .listfoot{display:flex;justify-content:space-between;align-items:center;margin-top:14px;flex-wrap:wrap;gap:10px}
+  .listfoot .pp{color:var(--mut);font-size:12px}
+  .listfoot .pp select{background:var(--panel);border:1px solid var(--line);color:var(--txt);padding:5px 8px;border-radius:6px;margin-left:6px}
   .modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:1000;align-items:center;justify-content:center}
   .modal-bg.open{display:flex}
   .modal{background:#fff;width:90%;max-width:900px;height:90vh;border-radius:10px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 10px 40px rgba(0,0,0,.5)}
