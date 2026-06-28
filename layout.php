@@ -252,7 +252,7 @@ function layout_header(string $title, string $active = ''): void {
     <div class="top">
       <div class="top-l"><button class="menu-toggle" id="menuToggle" title="Menu"><i data-lucide="menu"></i></button><h1><?= e($title) ?></h1></div>
       <div class="who">
-        <?php if (is_admin()): ?><a href="<?= url('backup.php') ?>" class="topbackup" title="Backup database"><i data-lucide="database-backup"></i><span>Backup DB</span></a><?php endif; ?>
+        <?php if (is_admin()): ?><a href="<?= url('backup.php') ?>" class="topbackup" title="Backup database" onclick="return confirm('IMPORTANT: You are responsible for backing up and safely keeping your own data.\n\nDownload regular copies and store them off-site (e.g. cloud storage or another computer). No copies are retained on your behalf.\n\nDownload a backup now?');"><i data-lucide="database-backup"></i><span>Backup DB</span></a><?php endif; ?>
         <button type="button" id="themeBtn" class="themebtn" title="Toggle light/dark"><i data-lucide="sun-moon"></i></button>
         <a href="<?= url('profile.php') ?>" class="whoami"><i data-lucide="user-round"></i><span><?= e($u['name'] ?? '') ?></span></a>
         <span class="role"><?= e(ucfirst($u['role'] ?? '')) ?></span>
@@ -622,7 +622,7 @@ function layout_footer(): void { ?>
   });
   // PDF / print: bar + overlay
   document.querySelectorAll('a[href*="print.php"],a[href*="export.php"],a[href*="backup.php"]').forEach(function(a){
-    a.addEventListener('click', function(){ tbStart(); showSpinner('Generating…'); setTimeout(function(){ hideSpinner(); tbDone(); }, 5000); });
+    a.addEventListener('click', function(e){ if(e.defaultPrevented) return; tbStart(); showSpinner('Generating…'); setTimeout(function(){ hideSpinner(); tbDone(); }, 5000); });
   });
   // Internal navigation links: just the top bar
   document.querySelectorAll('a[href]').forEach(function(a){

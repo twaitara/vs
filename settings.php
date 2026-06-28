@@ -60,7 +60,12 @@ settings_nav('general');
 
 <div class="card" style="max-width:680px">
   <h3 style="margin-top:0">Database Backup</h3>
-  <p class="muted" style="font-size:13px">Download a full SQL dump of the database. Keep regular off-site copies.</p>
+  <div style="display:flex;gap:10px;background:#3d2f0f;border:1px solid #7a5c1c;color:#f5d79a;padding:11px 14px;border-radius:10px;font-size:13px;margin-bottom:12px">
+    <span style="font-size:18px;line-height:1">⚠️</span>
+    <div><b>You are responsible for backing up your own data.</b><br>
+    Download backups regularly and store them safely <b>off-site</b> (cloud storage or another computer). No copies are kept on your behalf — if data is lost and you have no backup, it cannot be recovered.</div>
+  </div>
+  <p class="muted" style="font-size:13px">Download a full SQL dump of the database below.</p>
   <a class="btn" href="<?= url('backup.php') ?>">⬇ Download backup (.sql)</a>
   <p class="muted" style="font-size:12px;margin-top:12px">
     For automated daily backups, set a <code>backup_token</code> below and add a cron job (cPanel → Cron Jobs):<br>
