@@ -12,9 +12,12 @@ function layout_header(string $title, string $active = ''): void {
         'insurers'  => ['label' => 'Insurers',             'href' => 'insurers.php'],
         'types'     => ['label' => 'Valuation Types',      'href' => 'types.php'],
     ];
+    if (can_edit()) $nav['recycle'] = ['label' => 'Recycle Bin', 'href' => 'recycle.php'];
     if (is_admin()) {
-        $nav['users']    = ['label' => 'Users',    'href' => 'users.php'];
-        $nav['settings'] = ['label' => 'Settings', 'href' => 'settings.php'];
+        $nav['analytics'] = ['label' => 'Analytics', 'href' => 'analytics.php'];
+        $nav['users']     = ['label' => 'Users',     'href' => 'users.php'];
+        $nav['audit']     = ['label' => 'Audit Log', 'href' => 'audit.php'];
+        $nav['settings']  = ['label' => 'Settings',  'href' => 'settings.php'];
     }
     $fl = flash();
     ?><!doctype html>
@@ -91,6 +94,7 @@ function layout_header(string $title, string $active = ''): void {
   .b-red{background:#3d0f0f;color:#f5a3a3;border:1px solid #7a1c1c}
   .b-amber{background:#3d2f0f;color:#f5d79a;border:1px solid #7a5c1c}
   .b-grey{background:#2b3340;color:#cdd5e0}
+  .b-green{background:#0f3d24;color:#b8f5d0;border:1px solid #1c7a47}
   .listfoot{display:flex;justify-content:space-between;align-items:center;margin-top:14px;flex-wrap:wrap;gap:10px}
   .listfoot .pp{color:var(--mut);font-size:12px}
   .listfoot .pp select{background:var(--panel);border:1px solid var(--line);color:var(--txt);padding:5px 8px;border-radius:6px;margin-left:6px}

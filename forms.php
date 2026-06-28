@@ -72,12 +72,12 @@ function f_yn(string $name, string $label, array $row): string {
 function save_row(string $table, array $columns, array $post, $id = null, array $extra = []): int {
     $data = [];
     foreach ($columns as $c) {
-        if (array_key_exists($c, $post)) {
+        if (array_key_exists($c, $post) && column_exists($table, $c)) {
             $val = is_string($post[$c]) ? trim($post[$c]) : $post[$c];
             $data[$c] = ($val === '') ? null : $val;
         }
     }
-    foreach ($extra as $k => $v) $data[$k] = $v; // file paths, json, etc.
+    foreach ($extra as $k => $v) if (column_exists($table, $k)) $data[$k] = $v;
 
     $now = date('Y-m-d H:i:s');
     $data['updated_at'] = $now;

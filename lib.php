@@ -170,6 +170,27 @@ function set_setting(string $key, string $value): void {
     $st->execute([$key, $value]);
 }
 
+// ---------------- Status workflow & report numbers ----------------
+function valuation_statuses(): array {
+    return ['draft' => 'Draft', 'submitted' => 'Submitted', 'approved' => 'Approved'];
+}
+function status_badge(?string $s): string {
+    $cls = ['draft' => 'b-grey', 'submitted' => 'b-amber', 'approved' => 'b-green'][$s] ?? 'b-grey';
+    $lbl = valuation_statuses()[$s] ?? ucfirst((string)($s ?: 'draft'));
+    return '<span class="badge ' . $cls . '">' . e($lbl) . '</span>';
+}
+/** Generate next sequential report number, e.g. KEN/2026/0007. */
+function next_report_no(string $table): string {
+    $prefix = setting('report_prefix', 'KEN');
+    $year = date('Y');
+    try {
+        $st = db()->prepare("SELECT COUNT(*) FROM `$table` WHERE YEAR(created_at) = ?");
+        $st->execute([$year]);
+        $seq = (int)$st->fetchColumn() + 1;
+    } catch (Throwable $e) { $seq = 1; }
+    return sprintf('%s/%s/%04d', $prefix, $year, $seq);
+}
+
 // ---------------- Audit ----------------
 function audit(string $action, string $entity = '', $entityId = null, ?string $details = null): void {
     try {

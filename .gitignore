@@ -1,5 +1,6 @@
 # Secrets — never commit real DB credentials
 config.php
+.env
 
 # Real customer data dump — keep out of version control
 valuation.sql

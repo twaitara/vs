@@ -33,6 +33,8 @@ function render_list(array $cfg): void {
     $q      = trim($_GET['q'] ?? '');
     $client = $_GET['client'] ?? '';
     $vtype  = $_GET['vtype'] ?? '';
+    $status = $_GET['status'] ?? '';
+    $hasStatus = column_exists($table, 'status');
     $dfrom  = $_GET['dfrom'] ?? '';
     $dto    = $_GET['dto'] ?? '';
     $vmin   = $_GET['vmin'] ?? '';
@@ -54,6 +56,7 @@ function render_list(array $cfg): void {
     if ($q !== '')      { $cond[] = '(reg_no LIKE ? OR make LIKE ? OR customer_name LIKE ?)'; $l="%$q%"; array_push($params,$l,$l,$l); }
     if ($client !== '') { $cond[] = 'client = ?';         $params[] = $client; }
     if ($vtype !== '')  { $cond[] = 'valuation_type = ?'; $params[] = $vtype; }
+    if ($status !== '' && $hasStatus) { $cond[] = 'status = ?'; $params[] = $status; }
     if ($dfrom !== '')  { $cond[] = 'created_at >= ?';    $params[] = $dfrom . ' 00:00:00'; }
     if ($dto !== '')    { $cond[] = 'created_at <= ?';    $params[] = $dto . ' 23:59:59'; }
     if ($vmin !== '')   { $cond[] = "$vf >= ?";           $params[] = (float)$vmin; }
@@ -67,13 +70,14 @@ function render_list(array $cfg): void {
 
     $orderCol = $sortable[$sort];
     $imgSel = column_exists($table, 'images') ? 'images' : 'NULL AS images';
-    $sql = "SELECT id, reg_no, make, customer_name, client, valuation_type, insurance_exp, $imgSel, `$vf` AS val, created_at
+    $statSel = $hasStatus ? 'status' : "'draft' AS status";
+    $sql = "SELECT id, reg_no, make, customer_name, client, valuation_type, insurance_exp, $imgSel, $statSel, `$vf` AS val, created_at
             FROM `$table`$where ORDER BY `$orderCol` $dir LIMIT $pp OFFSET $offset";
     $st = db()->prepare($sql); $st->execute($params); $rows = $st->fetchAll();
 
     // Params to preserve across sort/pagination links.
     $base = $cfg['nav'] === 'bank' ? 'bank_list.php' : 'insurance_list.php';
-    $keep = array_filter(['q'=>$q,'client'=>$client,'vtype'=>$vtype,'dfrom'=>$dfrom,'dto'=>$dto,'vmin'=>$vmin,'vmax'=>$vmax,'pp'=>$pp,'sort'=>$sort,'dir'=>$dir], fn($v)=>$v!=='' && $v!==null);
+    $keep = array_filter(['q'=>$q,'client'=>$client,'vtype'=>$vtype,'status'=>$status,'dfrom'=>$dfrom,'dto'=>$dto,'vmin'=>$vmin,'vmax'=>$vmax,'pp'=>$pp,'sort'=>$sort,'dir'=>$dir], fn($v)=>$v!=='' && $v!==null);
 
     // Sortable header link.
     $sortHeader = function(string $key, string $label) use ($sort,$dir,$base,$keep) {
@@ -84,15 +88,16 @@ function render_list(array $cfg): void {
     };
 
     layout_header($cfg['title'], $cfg['nav']);
-    $hasFilters = ($client||$vtype||$dfrom||$dto||$vmin!==''||$vmax!=='');
+    $hasFilters = ($client||$vtype||$status||$dfrom||$dto||$vmin!==''||$vmax!=='');
     ?>
     <div class="toolbar">
       <form method="get" style="margin:0" id="searchForm">
-        <?php foreach (['client','vtype','dfrom','dto','vmin','vmax','pp','sort','dir'] as $k) if (($keep[$k] ?? '')!=='') echo '<input type="hidden" name="'.$k.'" value="'.e($keep[$k]).'">'; ?>
+        <?php foreach (['client','vtype','status','dfrom','dto','vmin','vmax','pp','sort','dir'] as $k) if (($keep[$k] ?? '')!=='') echo '<input type="hidden" name="'.$k.'" value="'.e($keep[$k]).'">'; ?>
         <input type="search" name="q" id="quickSearch" placeholder="Quick search reg no, make, customer…" value="<?= e($q) ?>" autocomplete="off">
       </form>
       <div style="display:flex;gap:8px">
         <button type="button" class="btn sec" onclick="document.getElementById('filterBar').classList.toggle('open')">⛃ Filters<?= $hasFilters ? ' •' : '' ?></button>
+        <a class="btn sec" href="<?= url('export.php?type=' . $cfg['nav'] . '&' . http_build_query($keep)) ?>">⬇ CSV</a>
         <?php if (can_edit()): ?><a class="btn" href="<?= url($cfg['form_page']) ?>">+ New</a><?php endif; ?>
       </div>
     </div>
@@ -102,6 +107,7 @@ function render_list(array $cfg): void {
       <div class="fb-grid">
         <label>Client<select name="client"><?= options('clients', $client) ?></select></label>
         <label>Type<select name="vtype"><?= options('types', $vtype) ?></select></label>
+        <?php if ($hasStatus): ?><label>Status<select name="status"><option value="">-- any --</option><?php foreach (valuation_statuses() as $sk=>$sl): ?><option value="<?= $sk ?>" <?= $status===$sk?'selected':'' ?>><?= e($sl) ?></option><?php endforeach; ?></select></label><?php endif; ?>
         <label>From<input type="date" name="dfrom" value="<?= e($dfrom) ?>"></label>
         <label>To<input type="date" name="dto" value="<?= e($dto) ?>"></label>
         <label>Min value<input type="number" name="vmin" value="<?= e($vmin) ?>" step="0.01"></label>
@@ -146,7 +152,7 @@ function render_list(array $cfg): void {
             <td><?= e($r['make']) ?></td>
             <td><?= e($r['customer_name']) ?></td>
             <td><?= e(lookup_name('clients', $r['client'])) ?></td>
-            <td><?= status_badges($r) ?></td>
+            <td><?= $hasStatus ? status_badge($r['status']) . ' ' : '' ?><?= status_badges($r) ?></td>
             <td><?= $r['val'] !== null ? number_format((float)$r['val']) : '' ?></td>
             <td class="muted"><?= e(ddate($r['created_at'])) ?></td>
             <td class="actions">

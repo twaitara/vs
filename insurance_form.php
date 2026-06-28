@@ -28,7 +28,7 @@ $COLUMNS = [
     'idling','eng_mounts_damage','oil_leaks','water_pump_ok','radiator_damage','air_con_damage','engine_comment',
     // other
     'air_bags_no','inspection_officer','inspection_date','extras','note_value','notes','anti_theft',
-    'remarks','pending','remedy','ammends','assessed_value',
+    'remarks','pending','remedy','ammends','assessed_value','status',
 ];
 
 $id  = $_GET['id'] ?? ($_POST['id'] ?? null);
@@ -41,7 +41,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $required = ['reg_no' => 'Reg Number', 'make' => 'Make/Model', 'customer_name' => 'Customer Name', 'assessed_value' => 'Assessed Value'];
     foreach ($required as $f => $lbl) if (trim((string)($_POST[$f] ?? '')) === '') $errors[$f] = 'Required';
     if (!$errors) {
-        $newId = save_row('valuations', $COLUMNS, $_POST, $id);
+        $extra = (!$id && column_exists('valuations', 'report_no')) ? ['report_no' => next_report_no('valuations')] : [];
+        $newId = save_row('valuations', $COLUMNS, $_POST, $id, $extra);
         audit($id ? 'update' : 'create', 'valuation', $newId, $_POST['reg_no'] ?? '');
         flash($id ? 'Insurance valuation updated.' : 'Valuation added successfully.');
         redirect('insurance_list.php');
@@ -145,6 +146,9 @@ layout_header($id ? 'Edit Insurance Valuation' : 'New Insurance Valuation', 'ins
     <?= f_money('assessed_value','Assessed Value',$row,true,true) ?>
     <?= f_input('inspection_date','Inspection Date',$row,'date') ?>
     <?= f_input('inspection_officer','Inspection Officer',$row) ?>
+    <div class="f"><label class="f">Status</label><select name="status">
+      <?php foreach (valuation_statuses() as $k => $l): ?><option value="<?= $k ?>" <?= ($row['status'] ?? 'draft') === $k ? 'selected' : '' ?>><?= e($l) ?></option><?php endforeach; ?>
+    </select></div>
     <?= f_text('note_value','Note Value',$row,'W/S value estimated at 00000/= R/CD/TV value estimated at 00000/= REMARKS:') ?>
     <?= f_text('notes','N.B.',$row) ?>
     <?= f_text('extras','Extras',$row) ?>

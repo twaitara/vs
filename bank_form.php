@@ -10,7 +10,7 @@ $COLUMNS = [
     'mileage','chasis_no','engine_no','engine_capacity','fuel_type','colour','insurer','insurance_pol_no',
     'insurance_exp','coach_condition','mechanical_condition','electrical','general_condition','headlight_type',
     'market_value','forced_value','tyres','principal_valuer','bank_officer','officer_phone','assesment_date',
-    'extras','note_value','notes','anti_theft','remarks','pending','remedy','ammends',
+    'extras','note_value','notes','anti_theft','remarks','pending','remedy','ammends','status',
 ];
 
 $id  = $_GET['id'] ?? ($_POST['id'] ?? null);
@@ -24,6 +24,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     foreach ($required as $f => $lbl) if (trim((string)($_POST[$f] ?? '')) === '') $errors[$f] = 'Required';
     if (!$errors) {
         $files = handle_uploads($_POST['reg_no'] ?? '', $row);
+        if (!$id && column_exists('bankvaluations', 'report_no')) $files['report_no'] = next_report_no('bankvaluations');
         $newId = save_row('bankvaluations', $COLUMNS, $_POST, $id, $files);
         audit($id ? 'update' : 'create', 'bankvaluation', $newId, $_POST['reg_no'] ?? '');
         flash($id ? 'Bank valuation updated.' : 'Bank valuation saved.');
@@ -94,6 +95,9 @@ layout_header($id ? 'Edit Bank Valuation' : 'New Bank Valuation', 'bank');
     <?= f_input('assesment_date','Assessment Date',$row,'date') ?>
     <?= f_input('bank_officer','Bank Officer Name',$row) ?>
     <?= f_input('officer_phone','Officer Phone No.',$row) ?>
+    <div class="f"><label class="f">Status</label><select name="status">
+      <?php foreach (valuation_statuses() as $k => $l): ?><option value="<?= $k ?>" <?= ($row['status'] ?? 'draft') === $k ? 'selected' : '' ?>><?= e($l) ?></option><?php endforeach; ?>
+    </select></div>
   </div></fieldset>
 
   <fieldset><legend>Extra Information</legend><div class="grid">

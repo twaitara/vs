@@ -192,7 +192,7 @@ function render_bank_report(array $val): string {
                 <p><span>Bank Officer:</span> <?= $g('bank_officer') ?></p>
                 <p><span>Report Destination:</span> <?= e($client) ?></p>
             </td>
-            <td><p><span>Kennet Valuers Identifier:</span> KENBNKVL-<?= $g('id') ?></p></td>
+            <td><?php if (!empty($val['report_no'])): ?><p><span>Report No:</span> <?= $g('report_no') ?></p><?php endif; ?><p><span>Kennet Valuers Identifier:</span> KENBNKVL-<?= $g('id') ?></p></td>
         </tr>
     </table>
 
@@ -363,6 +363,7 @@ function render_insurance_report(array $val): string {
 
     <div class="card"><div class="card-header">Disclaimer</div><div class="card-body">
         <p class="note">For and on behalf of <?= e($coName) ?>, this report reflects the assessed value and condition of the subject vehicle as presented for inspection on the stated date.</p>
+        <?php if (!empty($val['report_no'])): ?><p class="note">Report No: <strong><?= $g('report_no') ?></strong></p><?php endif; ?>
         <p class="note">Kennet Valuers Identifier: <strong>KENINSVL-<?= $g('id') ?></strong></p>
     </div></div>
 

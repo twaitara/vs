@@ -20,6 +20,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     foreach ($FIELDS as $key => $_) {
         if (array_key_exists($key, $_POST)) set_setting($key, trim((string)$_POST[$key]));
     }
+    if (array_key_exists('backup_token', $_POST)) set_setting('backup_token', trim((string)$_POST['backup_token']));
     // Optional logo uploads (header logo + watermark).
     @mkdir(__DIR__ . '/assets', 0775, true);
     foreach (['logo2' => 'logo2.png', 'logo' => 'logo.png'] as $field => $dest) {
@@ -55,4 +56,19 @@ layout_header('Settings', 'settings');
 
   <button class="btn" type="submit">Save settings</button>
 </form>
+
+<div class="card" style="max-width:680px">
+  <h3 style="margin-top:0">Database Backup</h3>
+  <p class="muted" style="font-size:13px">Download a full SQL dump of the database. Keep regular off-site copies.</p>
+  <a class="btn" href="<?= url('backup.php') ?>">⬇ Download backup (.sql)</a>
+  <p class="muted" style="font-size:12px;margin-top:12px">
+    For automated daily backups, set a <code>backup_token</code> below and add a cron job (cPanel → Cron Jobs):<br>
+    <code>wget -q -O ~/backups/vs-$(date +\%F).sql "https://nineonetwo.online/vs/backup.php?token=YOUR_TOKEN"</code>
+  </p>
+  <form method="post" style="margin-top:8px;max-width:360px">
+    <?= csrf_field() ?>
+    <div class="f"><label class="f">backup_token (for cron)</label><input type="text" name="backup_token" value="<?= e(setting('backup_token')) ?>"></div>
+    <button class="btn sec" type="submit">Save token</button>
+  </form>
+</div>
 <?php layout_footer();
