@@ -1,11 +1,30 @@
-# Kennet Valuation — run as a standalone app inside this folder.
-# Stop the parent (WordPress) .htaccess rewrite rules from hijacking requests.
-RewriteEngine Off
+# ============================================================
+# Kennet Valuation — standalone app in the /vs subfolder.
+# Stops the parent (WordPress) .htaccess from hijacking this
+# folder, and serves index.php when the folder is opened.
+# ============================================================
 
-# Serve index.php when the folder is opened.
-DirectoryIndex index.php
+# Open index.php when someone visits /vs/
+DirectoryIndex index.php index.html
 
-# Block direct web access to sensitive files in this folder.
+# Turn OFF any rewrite rules inherited from the domain root
+# (this is what was sending /vs to the WordPress 404 page).
+<IfModule mod_rewrite.c>
+    RewriteEngine Off
+</IfModule>
+
+# Make sure this folder is publicly accessible.
+<IfModule mod_authz_core.c>
+    Require all granted
+</IfModule>
+
+# Don't let anyone open the raw database dump / docs in a browser.
 <FilesMatch "\.(sql|md)$">
-  Require all denied
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
 </FilesMatch>

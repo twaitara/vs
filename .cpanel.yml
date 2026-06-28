@@ -1,0 +1,14 @@
+---
+deployment:
+  tasks:
+    # ⚠️ Set DEPLOYPATH to the ABSOLUTE path of your /vs folder on the server.
+    # Find it in cPanel File Manager: open the vs folder and read the path bar.
+    # Common forms:
+    #   /home/tonykett/public_html/vs
+    #   /home/tonykett/nineonetwo.online/vs
+    - export DEPLOYPATH=/home/tonykett/public_html/vs
+    - /bin/mkdir -p $DEPLOYPATH
+    # Copy the app files into the deploy folder.
+    # config.php is NOT in the repo (gitignored), so your server credentials
+    # and BASE_URL are preserved on every deploy.
+    - /bin/cp -R index.php login.php logout.php bank_list.php bank_form.php insurance_list.php insurance_form.php clients.php insurers.php types.php report.php lib.php layout.php forms.php lookup_page.php config.sample.php schema_patch.sql .htaccess $DEPLOYPATH/
