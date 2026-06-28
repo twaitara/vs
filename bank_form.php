@@ -107,8 +107,15 @@ layout_header($id ? 'Edit Bank Valuation' : 'New Bank Valuation', 'bank');
     <?= f_text('ammends','Ammendments',$row) ?>
   </div>
   <div class="grid" style="margin-top:14px">
-    <div class="f"><label class="f">Logbook (image)</label><input type="file" name="logbook" accept="image/*"></div>
-    <div class="f"><label class="f">Photos (multiple)</label><input type="file" name="images[]" accept="image/*" multiple></div>
+    <div class="f"><label class="f">Logbook (image)</label><input type="file" name="logbook" accept="image/*" capture="environment"></div>
+    <div class="f"><label class="f">Photos (from gallery)</label><input type="file" name="images[]" accept="image/*" multiple></div>
+  </div>
+  <div style="margin-top:12px">
+    <label class="btn sec camera-btn" style="display:inline-flex;align-items:center;gap:8px;cursor:pointer">
+      <i data-lucide="camera"></i> Take Photo with Camera
+      <input type="file" name="camera_photos[]" accept="image/*" capture="environment" multiple style="display:none">
+    </label>
+    <small class="muted" style="display:block;margin-top:6px">On a phone this opens the camera so you can snap the vehicle directly.</small>
   </div>
   <?php $existingImgs = !empty($row['images']) ? (json_decode($row['images'], true) ?: []) : []; ?>
   <?php if ($existingImgs): ?>

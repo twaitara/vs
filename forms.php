@@ -138,12 +138,14 @@ function handle_uploads(string $regNo, array $row): array {
         $existing = array_values(array_filter($existing, fn($p) => !in_array($p, $removed, true)));
     }
     $paths = [];
-    if (!empty($_FILES['images']['name'][0])) {
+    // Accept both the gallery picker (images[]) and the camera capture (camera_photos[]).
+    foreach (['images', 'camera_photos'] as $field) {
+        if (empty($_FILES[$field]['name'][0])) continue;
         @mkdir("$base/images", 0775, true);
-        foreach ($_FILES['images']['name'] as $i => $name) {
+        foreach ($_FILES[$field]['name'] as $i => $name) {
             if (!$name) continue;
             $fn = uniqid('img_') . '_' . basename($name);
-            if (move_uploaded_file($_FILES['images']['tmp_name'][$i], "$base/images/$fn")) {
+            if (move_uploaded_file($_FILES[$field]['tmp_name'][$i], "$base/images/$fn")) {
                 $paths[] = "photos/$reg/images/$fn";
             }
         }

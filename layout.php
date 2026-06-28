@@ -491,6 +491,13 @@ function form_assets(): void { ?>
         var img=document.createElement('img'); img.src=URL.createObjectURL(file); d.appendChild(img); thumbs.appendChild(d);
       });
     }
+    var camInput=document.querySelector('input[name="camera_photos[]"]');
+    if(camInput){ camInput.addEventListener('change',function(){
+      Array.prototype.slice.call(camInput.files).forEach(function(file){
+        var d=document.createElement('div'); d.className='thumb cam';
+        var im=document.createElement('img'); im.src=URL.createObjectURL(file); d.appendChild(im); thumbs.appendChild(d);
+      });
+    }); }
   }
   // existing-image remove toggles
   document.querySelectorAll('.thumb .rm').forEach(function(btn){
