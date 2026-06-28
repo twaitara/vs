@@ -2,21 +2,34 @@
 require_once __DIR__ . '/layout.php';
 require_login();
 
-$q = trim($_GET['q'] ?? '');
-$sql = "SELECT id, reg_no, make, customer_name, client, created_at FROM bankvaluations";
+$q       = trim($_GET['q'] ?? '');
+$perPage = 25;
+$page    = max(1, (int)($_GET['page'] ?? 1));
+
+$where = '';
 $params = [];
 if ($q !== '') {
-    $sql .= " WHERE reg_no LIKE ? OR make LIKE ? OR customer_name LIKE ?";
+    $where = " WHERE reg_no LIKE ? OR make LIKE ? OR customer_name LIKE ?";
     $like = "%$q%"; $params = [$like, $like, $like];
 }
-$sql .= " ORDER BY id DESC";
+
+// Total count for pagination.
+$cst = db()->prepare("SELECT COUNT(*) FROM bankvaluations" . $where);
+$cst->execute($params);
+$total = (int)$cst->fetchColumn();
+$pages = max(1, (int)ceil($total / $perPage));
+if ($page > $pages) $page = $pages;
+$offset = ($page - 1) * $perPage;
+
+$sql = "SELECT id, reg_no, make, customer_name, client, created_at FROM bankvaluations"
+     . $where . " ORDER BY id DESC LIMIT $perPage OFFSET $offset";
 $st = db()->prepare($sql); $st->execute($params); $rows = $st->fetchAll();
 
 layout_header('Bank Valuations', 'bank');
 ?>
 <div class="toolbar">
-  <form method="get" style="margin:0">
-    <input type="search" name="q" placeholder="Search reg no, make, customer…" value="<?= e($q) ?>">
+  <form method="get" style="margin:0" id="searchForm">
+    <input type="search" name="q" id="quickSearch" placeholder="Quick search reg no, make, customer…" value="<?= e($q) ?>" autocomplete="off">
   </form>
   <a class="btn" href="<?= url('bank_form.php') ?>">+ New Bank Valuation</a>
 </div>
@@ -42,4 +55,7 @@ layout_header('Bank Valuations', 'bank');
   <?php endforeach; endif; ?>
   </tbody>
 </table>
+<?php pagination_bar($page, $pages, 'bank_list.php', $q !== '' ? ['q' => $q] : []); ?>
+<div class="count"><?= number_format($total) ?> record<?= $total === 1 ? '' : 's' ?><?= $q !== '' ? ' matching “' . e($q) . '”' : '' ?> · page <?= $page ?> of <?= $pages ?></div>
+<?php quick_search_script(); ?>
 <?php layout_footer();

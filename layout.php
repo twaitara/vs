@@ -55,6 +55,12 @@ function layout_header(string $title, string $active = ''): void {
   .actions a{margin-right:8px;font-size:13px;color:var(--accent2)}
   .actions a.rbtn{display:inline-block;border:1px solid var(--line);color:var(--txt);padding:4px 12px;border-radius:6px;background:#1b212a}
   .actions a.rbtn:hover{background:#2b3340}
+  .pager{display:flex;gap:6px;justify-content:center;align-items:center;margin-top:18px;flex-wrap:wrap}
+  .pager a,.pager span{padding:6px 11px;border:1px solid var(--line);border-radius:6px;font-size:13px;background:var(--panel);color:var(--txt)}
+  .pager a:hover{background:#2b3340}
+  .pager .cur{background:var(--accent);border-color:var(--accent);color:#fff}
+  .pager .dis,.pager .gap{color:var(--mut);border-color:transparent;background:transparent}
+  .count{color:var(--mut);font-size:12px;margin-top:10px;text-align:center}
   .muted{color:var(--mut)}
 </style>
 </head>
@@ -77,6 +83,58 @@ function layout_header(string $title, string $active = ''): void {
     </div>
     <div class="content">
       <?php if ($fl): ?><div class="flash"><?= e($fl) ?></div><?php endif; ?>
+<?php }
+
+/**
+ * Render a pagination bar. $base is the page filename; $params are extra query
+ * params to preserve (e.g. ['q' => 'abc']).
+ */
+function pagination_bar(int $page, int $pages, string $base, array $params = []): void {
+    if ($pages <= 1) return;
+    $mk = function (int $p) use ($base, $params) {
+        $params['page'] = $p;
+        return url($base . '?' . http_build_query($params));
+    };
+    $win = 2; // pages shown on each side of current
+    echo '<div class="pager">';
+    echo $page > 1
+        ? '<a href="' . $mk($page - 1) . '">‹ Prev</a>'
+        : '<span class="dis">‹ Prev</span>';
+    $start = max(1, $page - $win);
+    $end   = min($pages, $page + $win);
+    if ($start > 1) { echo '<a href="' . $mk(1) . '">1</a>'; if ($start > 2) echo '<span class="gap">…</span>'; }
+    for ($p = $start; $p <= $end; $p++) {
+        echo $p === $page
+            ? '<span class="cur">' . $p . '</span>'
+            : '<a href="' . $mk($p) . '">' . $p . '</a>';
+    }
+    if ($end < $pages) { if ($end < $pages - 1) echo '<span class="gap">…</span>'; echo '<a href="' . $mk($pages) . '">' . $pages . '</a>'; }
+    echo $page < $pages
+        ? '<a href="' . $mk($page + 1) . '">Next ›</a>'
+        : '<span class="dis">Next ›</span>';
+    echo '</div>';
+}
+
+/**
+ * Live "quick search": auto-submits the search form a moment after typing stops,
+ * and restores the cursor to the box after the page reloads.
+ */
+function quick_search_script(): void { ?>
+<script>
+(function(){
+  var input = document.getElementById('quickSearch');
+  var form  = document.getElementById('searchForm');
+  if(!input || !form) return;
+  var t;
+  input.addEventListener('input', function(){
+    clearTimeout(t);
+    t = setTimeout(function(){ form.submit(); }, 350);
+  });
+  // keep focus + caret at end after reload
+  input.focus();
+  var v = input.value; input.value = ''; input.value = v;
+})();
+</script>
 <?php }
 
 function layout_footer(): void { ?>
