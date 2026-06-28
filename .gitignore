@@ -1,0 +1,15 @@
+# Secrets — never commit real DB credentials
+config.php
+
+# Real customer data dump — keep out of version control
+valuation.sql
+
+# Uploaded files (photos, logbooks)
+uploads/*
+!uploads/.htaccess
+!uploads/index.html
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+*.log
