@@ -240,6 +240,7 @@ function layout_header(string $title, string $active = ''): void {
     .toolbar input[type=search]{width:100%}
     .fb-grid{grid-template-columns:1fr 1fr}
     .fab{display:inline-flex}
+    #navInstall{display:flex}
   }
   /* floating quick-action button */
   .fab{position:fixed;right:18px;bottom:18px;z-index:120;align-items:center;gap:8px;
@@ -252,6 +253,7 @@ function layout_header(string $title, string $active = ''): void {
   .nav .lucide-shield-check{color:#22c55e}
   .nav .lucide-bar-chart-3{color:#b18cff}
   .nav .lucide-settings{color:#f5b14a}
+  #navInstall{display:none}
   #navInstall .lucide-download{color:#27c46f}
   #navInstall.installable{background:linear-gradient(90deg,rgba(39,196,111,.16),transparent)}
   .subnav .lucide-building-2{color:#5b9bff}.subnav .lucide-users{color:#22c55e}.subnav .lucide-shield{color:#5b9bff}
@@ -605,6 +607,7 @@ window.__dp = null;
 window.addEventListener('beforeinstallprompt', function(e){
   e.preventDefault(); window.__dp = e;
   var n=document.getElementById('navInstall'); if(n) n.classList.add('installable');
+  if(!window.matchMedia('(max-width:860px)').matches) return; // mobile only
   if(document.getElementById('installBtn')) return;
   var b=document.createElement('button'); b.id='installBtn'; b.textContent='⤓ Install app';
   b.style.cssText='position:fixed;left:16px;bottom:16px;z-index:130;background:#2563eb;color:#fff;border:0;padding:11px 16px;border-radius:24px;font-weight:700;font-size:13px;box-shadow:0 8px 24px rgba(37,99,235,.45);cursor:pointer';
