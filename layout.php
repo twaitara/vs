@@ -38,7 +38,12 @@ function layout_header(string $title, string $active = ''): void {
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title><?= e($title) ?> · <?= e(APP_NAME) ?></title>
 <link rel="icon" type="image/png" href="<?= url('assets/logo.png') ?>">
-<link rel="apple-touch-icon" href="<?= url('assets/logo.png') ?>">
+<link rel="manifest" href="<?= url('manifest.php') ?>">
+<meta name="theme-color" content="#0f1216">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="<?= url('icons/apple-180.png') ?>">
 <script>(function(){try{var t=localStorage.getItem('theme')||'dark';document.documentElement.setAttribute('data-theme',t);}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -589,6 +594,20 @@ function layout_footer(): void { ?>
 <?php if (can_edit()): ?>
 <a class="fab" href="<?= url('bank_form.php') ?>" title="New valuation"><i data-lucide="plus"></i><span>New Valuation</span></a>
 <?php endif; ?>
+<script>
+if('serviceWorker' in navigator){ navigator.serviceWorker.register('<?= url('sw.js') ?>').catch(function(){}); }
+(function(){
+  var dp=null;
+  window.addEventListener('beforeinstallprompt', function(e){
+    e.preventDefault(); dp=e;
+    if(document.getElementById('installBtn')) return;
+    var b=document.createElement('button'); b.id='installBtn'; b.textContent='⤓ Install app';
+    b.style.cssText='position:fixed;left:16px;bottom:16px;z-index:130;background:#2563eb;color:#fff;border:0;padding:11px 16px;border-radius:24px;font-weight:700;font-size:13px;box-shadow:0 8px 24px rgba(37,99,235,.45);cursor:pointer';
+    b.onclick=function(){ b.remove(); dp.prompt(); };
+    document.body.appendChild(b);
+  });
+})();
+</script>
 <script>
 (function(){
   var t=document.getElementById('menuToggle'), s=document.getElementById('sidebar'), o=document.getElementById('navOverlay');
