@@ -252,6 +252,8 @@ function layout_header(string $title, string $active = ''): void {
   .nav .lucide-shield-check{color:#22c55e}
   .nav .lucide-bar-chart-3{color:#b18cff}
   .nav .lucide-settings{color:#f5b14a}
+  #navInstall .lucide-download{color:#27c46f}
+  #navInstall.installable{background:linear-gradient(90deg,rgba(39,196,111,.16),transparent)}
   .subnav .lucide-building-2{color:#5b9bff}.subnav .lucide-users{color:#22c55e}.subnav .lucide-shield{color:#5b9bff}
   .subnav .lucide-tags{color:#f5b14a}.subnav .lucide-user-cog{color:#b18cff}.subnav .lucide-scroll-text{color:#5b9bff}.subnav .lucide-trash-2{color:#ff6b6b}
   .rbtn .lucide-pencil{color:#5b9bff}.rbtn .lucide-copy{color:#b18cff}.rbtn .lucide-eye{color:#22c55e}.rbtn .lucide-printer{color:#7c8896}
@@ -274,6 +276,9 @@ function layout_header(string $title, string $active = ''): void {
           <i data-lucide="<?= e($item['icon']) ?>"></i><span><?= e($item['label']) ?></span>
         </a>
       <?php endforeach; ?>
+      <a href="#" id="navInstall" onclick="return kInstall();" style="animation-delay:<?= (0.04 * count($nav)) ?>s">
+        <i data-lucide="download"></i><span>Install App</span>
+      </a>
     </nav>
   </aside>
   <div class="overlay" id="navOverlay"></div>
@@ -596,17 +601,27 @@ function layout_footer(): void { ?>
 <?php endif; ?>
 <script>
 if('serviceWorker' in navigator){ navigator.serviceWorker.register('<?= url('sw.js') ?>').catch(function(){}); }
-(function(){
-  var dp=null;
-  window.addEventListener('beforeinstallprompt', function(e){
-    e.preventDefault(); dp=e;
-    if(document.getElementById('installBtn')) return;
-    var b=document.createElement('button'); b.id='installBtn'; b.textContent='⤓ Install app';
-    b.style.cssText='position:fixed;left:16px;bottom:16px;z-index:130;background:#2563eb;color:#fff;border:0;padding:11px 16px;border-radius:24px;font-weight:700;font-size:13px;box-shadow:0 8px 24px rgba(37,99,235,.45);cursor:pointer';
-    b.onclick=function(){ b.remove(); dp.prompt(); };
-    document.body.appendChild(b);
-  });
-})();
+window.__dp = null;
+window.addEventListener('beforeinstallprompt', function(e){
+  e.preventDefault(); window.__dp = e;
+  var n=document.getElementById('navInstall'); if(n) n.classList.add('installable');
+  if(document.getElementById('installBtn')) return;
+  var b=document.createElement('button'); b.id='installBtn'; b.textContent='⤓ Install app';
+  b.style.cssText='position:fixed;left:16px;bottom:16px;z-index:130;background:#2563eb;color:#fff;border:0;padding:11px 16px;border-radius:24px;font-weight:700;font-size:13px;box-shadow:0 8px 24px rgba(37,99,235,.45);cursor:pointer';
+  b.onclick=function(){ b.remove(); if(window.__dp){window.__dp.prompt();window.__dp=null;} };
+  document.body.appendChild(b);
+});
+window.addEventListener('appinstalled', function(){ window.__dp=null; var b=document.getElementById('installBtn'); if(b)b.remove(); });
+window.kInstall = function(){
+  if(window.__dp){ window.__dp.prompt(); window.__dp=null; }
+  else if(window.matchMedia('(display-mode: standalone)').matches || navigator.standalone){
+    if(window.toast) toast('The app is already installed.');
+  } else {
+    if(window.toast) toast('To install: open your browser menu (⋮) and choose “Install app” or “Add to Home screen”.');
+    else alert('To install: open your browser menu and choose “Install app” / “Add to Home Screen”.');
+  }
+  return false;
+};
 </script>
 <script>
 (function(){
