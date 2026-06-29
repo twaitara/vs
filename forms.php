@@ -117,11 +117,11 @@ function handle_uploads(string $regNo, array $row): array {
     $base = UPLOAD_DIR . "/photos/$reg";
     $out = [];
 
-    // logbook (single)
+    // logbook (single) — resized & compressed
     if (!empty($_FILES['logbook']['name'])) {
         @mkdir($base, 0775, true);
-        $fn = uniqid('logbook_') . '_' . basename($_FILES['logbook']['name']);
-        if (move_uploaded_file($_FILES['logbook']['tmp_name'], "$base/$fn")) {
+        $fn = uniqid('logbook_') . '.jpg';
+        if (save_resized_jpeg($_FILES['logbook']['tmp_name'], "$base/$fn", 1600, 82)) {
             $out['logbook'] = "photos/$reg/$fn";
         }
     } elseif (!empty($row['logbook'])) {
@@ -144,8 +144,8 @@ function handle_uploads(string $regNo, array $row): array {
         @mkdir("$base/images", 0775, true);
         foreach ($_FILES[$field]['name'] as $i => $name) {
             if (!$name) continue;
-            $fn = uniqid('img_') . '_' . basename($name);
-            if (move_uploaded_file($_FILES[$field]['tmp_name'][$i], "$base/images/$fn")) {
+            $fn = uniqid('img_') . '.jpg';
+            if (save_resized_jpeg($_FILES[$field]['tmp_name'][$i], "$base/images/$fn", 1600, 82)) {
                 $paths[] = "photos/$reg/images/$fn";
             }
         }

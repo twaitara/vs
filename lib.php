@@ -269,6 +269,53 @@ function options(string $table, $selected = null): string {
     return $out;
 }
 
+// ---------------- Images (GD) ----------------
+function gd_available(): bool { return function_exists('imagecreatefromstring') && function_exists('imagejpeg'); }
+
+/** Load image bytes into a white-flattened, downscaled GD resource. Returns [resource|false]. */
+function gd_load_scaled(string $bytes, int $maxDim) {
+    $img = @imagecreatefromstring($bytes);
+    if (!$img) return false;
+    $w = imagesx($img); $h = imagesy($img);
+    $scale = min(1.0, $maxDim / max($w, $h));
+    $nw = max(1, (int)round($w * $scale));
+    $nh = max(1, (int)round($h * $scale));
+    $dst = imagecreatetruecolor($nw, $nh);
+    $white = imagecolorallocate($dst, 255, 255, 255);   // flatten transparency for JPEG
+    imagefilledrectangle($dst, 0, 0, $nw, $nh, $white);
+    imagecopyresampled($dst, $img, 0, 0, 0, 0, $nw, $nh, $w, $h);
+    imagedestroy($img);
+    return $dst;
+}
+
+/** Save an uploaded image as a downscaled JPEG (clear but not big). Falls back to a raw copy. */
+function save_resized_jpeg(string $tmp, string $dest, int $maxDim = 1600, int $quality = 82): bool {
+    $bytes = @file_get_contents($tmp);
+    if ($bytes === false) return false;
+    if (gd_available()) {
+        $img = gd_load_scaled($bytes, $maxDim);
+        if ($img) { $ok = @imagejpeg($img, $dest, $quality); imagedestroy($img); if ($ok) return true; }
+    }
+    return (bool)@copy($tmp, $dest);
+}
+
+/** Return a downscaled JPEG data URI for embedding in PDFs (space-efficient). */
+function gd_jpeg_data_uri(string $absPath, int $maxDim = 1000, int $quality = 62): ?string {
+    $bytes = @file_get_contents($absPath);
+    if ($bytes === false) return null;
+    if (gd_available()) {
+        $img = gd_load_scaled($bytes, $maxDim);
+        if ($img) {
+            ob_start(); @imagejpeg($img, null, $quality); $out = ob_get_clean(); imagedestroy($img);
+            if ($out !== '') return 'data:image/jpeg;base64,' . base64_encode($out);
+        }
+    }
+    // Fallback: embed original bytes.
+    $ext = strtolower(pathinfo($absPath, PATHINFO_EXTENSION));
+    $mime = $ext === 'png' ? 'image/png' : ($ext === 'gif' ? 'image/gif' : 'image/jpeg');
+    return 'data:' . $mime . ';base64,' . base64_encode($bytes);
+}
+
 // ---------------- Formatting ----------------
 function money($v): string { return number_format((float)$v, 2); }
 function ddate($v): string {

@@ -218,8 +218,8 @@ function render_bank_report(array $val): string {
         <table>
         <?php if ($images): for ($i = 0; $i < count($images); $i += 2): ?>
             <tr>
-                <td><?php $d = report_img_data(UPLOAD_DIR . '/' . ltrim($images[$i], '/')); if ($d): ?><img src="<?= $d ?>" width="290"><?php endif; ?></td>
-                <?php if ($i + 1 < count($images)): $d2 = report_img_data(UPLOAD_DIR . '/' . ltrim($images[$i+1], '/')); ?>
+                <td><?php $d = gd_jpeg_data_uri(UPLOAD_DIR . '/' . ltrim($images[$i], '/'), 1000, 62); if ($d): ?><img src="<?= $d ?>" width="290"><?php endif; ?></td>
+                <?php if ($i + 1 < count($images)): $d2 = gd_jpeg_data_uri(UPLOAD_DIR . '/' . ltrim($images[$i+1], '/'), 1000, 62); ?>
                     <td><?php if ($d2): ?><img src="<?= $d2 ?>" width="290"><?php endif; ?></td>
                 <?php else: ?><td></td><?php endif; ?>
             </tr>
@@ -229,7 +229,7 @@ function render_bank_report(array $val): string {
         </table>
     </div>
 
-    <?php $lb = !empty($val['logbook']) ? report_img_data(UPLOAD_DIR . '/' . ltrim($val['logbook'], '/')) : null; ?>
+    <?php $lb = !empty($val['logbook']) ? gd_jpeg_data_uri(UPLOAD_DIR . '/' . ltrim($val['logbook'], '/'), 1200, 70) : null; ?>
     <?php if ($lb): ?>
     <div style="page-break-before: always;"></div>
     <div class="logbook-area">
