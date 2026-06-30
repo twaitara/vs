@@ -52,12 +52,14 @@ layout_header('Dashboard', 'dashboard');
   </div>
   <?php endif; ?>
 </div>
+<?php if (is_admin()): ?>
 <div class="kpis">
   <div class="kpi"><div class="kpi-ic ic-blue"><i data-lucide="landmark"></i></div><div><div class="kpi-label">Bank Valuations</div><div class="kpi-num" data-count="<?= (int)$bankTotal ?>">0</div></div></div>
   <div class="kpi"><div class="kpi-ic ic-green"><i data-lucide="shield-check"></i></div><div><div class="kpi-label">Insurance Valuations</div><div class="kpi-num" data-count="<?= (int)$insTotal ?>">0</div></div></div>
   <div class="kpi"><div class="kpi-ic ic-amber"><i data-lucide="calendar-plus"></i></div><div><div class="kpi-label">New This Month</div><div class="kpi-num" data-count="<?= (int)$bankMonth ?>">0</div></div></div>
   <div class="kpi"><div class="kpi-ic ic-red"><i data-lucide="coins"></i></div><div><div class="kpi-label">Total Value (<?= e($cur) ?>)</div><div class="kpi-num sm" data-count="<?= (int)$totalValue ?>">0</div></div></div>
 </div>
+<?php endif; ?>
 
 <div class="dash-grid">
   <div class="panel hide-mobile">
