@@ -90,7 +90,7 @@ $eng = [
 
 layout_header($id ? 'Edit Insurance Valuation' : 'New Insurance Valuation', 'insurance');
 ?>
-<form class="card wizard" method="post"<?= $id ? '' : ' data-draft="insnew"' ?>>
+<form class="card wizard" method="post" data-draft="ins<?= $id ? (int)$id : 'new' ?>">
   <?= csrf_field() ?>
   <?php if ($id): ?><input type="hidden" name="id" value="<?= e($id) ?>"><?php endif; ?>
 

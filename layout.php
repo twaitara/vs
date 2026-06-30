@@ -439,6 +439,9 @@ function form_assets(): void { ?>
   .words-preview{display:block;margin-top:4px;font-style:italic}
   .draft-bar{background:#3d2f0f;border:1px solid #7a5c1c;color:#f5d79a;padding:8px 12px;border-radius:8px;margin-bottom:14px;font-size:13px}
   .draft-bar a{color:#fff;text-decoration:underline;cursor:pointer;margin-left:8px}
+  .autosave-note{display:block;margin-top:12px;font-size:12px;color:var(--mut)}
+  .autosave-note.ok{color:#3ddc84}
+  .autosave-note::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:currentColor;margin-right:6px;vertical-align:1px}
   .quick-add{margin-left:8px;font-size:12px;color:var(--accent2);cursor:pointer}
   .dropzone{border:2px dashed var(--line);border-radius:10px;padding:16px;text-align:center;color:var(--mut);cursor:pointer;font-size:13px}
   .dropzone.drag{border-color:var(--accent);color:var(--txt)}
@@ -572,23 +575,40 @@ function form_assets(): void { ?>
     });
   });
 
-  // ---------- auto-save draft (new forms only) ----------
+  // ---------- auto-save draft (new & edit forms; survives crashes) ----------
   var df=document.querySelector('form[data-draft]');
   if(df && window.localStorage){
     var key='draft_'+df.dataset.draft;
-    var fields=function(){return df.querySelectorAll('input[name]:not([type=file]):not([type=hidden]),select[name],textarea[name]');};
+    var fields=function(){return df.querySelectorAll('input[name]:not([type=file]):not([type=hidden]):not([name=_csrf]),select[name],textarea[name]');};
+    var pad=function(n){return (n<10?'0':'')+n;};
+    var clock=function(d){return pad(d.getHours())+':'+pad(d.getMinutes())+':'+pad(d.getSeconds());};
+
+    // status pill
+    var note=document.createElement('div'); note.className='autosave-note'; note.textContent='Autosave on';
+    df.appendChild(note);
+
+    // restore banner if a draft exists
     var saved=localStorage.getItem(key);
-    if(saved){
+    if(saved){ try{
+      var prev=JSON.parse(saved); var when=prev.t?new Date(prev.t):null;
       var bar=document.createElement('div'); bar.className='draft-bar';
-      bar.innerHTML='You have an unsaved draft. <a id="dRestore">Restore</a> <a id="dDiscard">Discard</a>';
-      df.parentNode.insertBefore(bar, df);
-      bar.querySelector('#dRestore').onclick=function(){try{var o=JSON.parse(saved);fields().forEach(function(el){if(o[el.name]!=null){if(el.type==='radio'){el.checked=(el.value===o[el.name]);}else el.value=o[el.name];}});}catch(e){} bar.remove();};
+      bar.innerHTML='<span><i data-lucide="rotate-ccw" style="width:15px;height:15px;vertical-align:-3px"></i> Unsaved draft found'+(when?(' from '+clock(when)):'')+'.</span> <a id="dRestore">Restore</a> <a id="dDiscard">Discard</a>';
+      df.parentNode.insertBefore(bar, df); if(window.refreshIcons)refreshIcons();
+      bar.querySelector('#dRestore').onclick=function(){var o=prev.d||prev;fields().forEach(function(el){if(o[el.name]!=null){if(el.type==='radio'){el.checked=(el.value===o[el.name]);}else el.value=o[el.name];}});
+        df.querySelectorAll('input.money').forEach(function(m){m.dispatchEvent(new Event('input'));}); bar.remove(); note.textContent='Draft restored';};
       bar.querySelector('#dDiscard').onclick=function(){localStorage.removeItem(key);bar.remove();};
+    }catch(e){} }
+
+    function save(){
+      var o={}; fields().forEach(function(el){ if(el.type==='radio'){ if(el.checked)o[el.name]=el.value; } else o[el.name]=el.value; });
+      try{ localStorage.setItem(key, JSON.stringify({t:Date.now(), d:o})); note.textContent='Draft saved '+clock(new Date()); note.classList.add('ok'); }catch(e){}
     }
-    var t; df.addEventListener('input',function(){clearTimeout(t);t=setTimeout(function(){
-      var o={}; fields().forEach(function(el){if(el.type==='radio'){if(el.checked)o[el.name]=el.value;}else o[el.name]=el.value;}); localStorage.setItem(key,JSON.stringify(o));
-    },500);});
-    df.addEventListener('submit',function(){localStorage.removeItem(key);});
+    var t;
+    df.addEventListener('input', function(){ clearTimeout(t); t=setTimeout(save, 400); });
+    df.addEventListener('change', save);            // selects, radios
+    document.addEventListener('visibilitychange', function(){ if(document.hidden) save(); });
+    window.addEventListener('pagehide', save);      // closing / navigating away
+    df.addEventListener('submit', function(){ try{localStorage.removeItem(key);}catch(e){} });
   }
 })();
 </script>

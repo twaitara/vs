@@ -37,7 +37,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 layout_header($id ? 'Edit Bank Valuation' : 'New Bank Valuation', 'bank');
 ?>
-<form class="card wizard" method="post" enctype="multipart/form-data"<?= $id ? '' : ' data-draft="banknew"' ?>>
+<form class="card wizard" method="post" enctype="multipart/form-data" data-draft="bank<?= $id ? (int)$id : 'new' ?>">
   <?= csrf_field() ?>
   <?php if ($id): ?><input type="hidden" name="id" value="<?= e($id) ?>"><?php endif; ?>
 
