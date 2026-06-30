@@ -88,6 +88,11 @@ function user_role(): string { return current_user()['role'] ?? 'guest'; }
 function is_admin(): bool { return user_role() === 'admin'; }
 /** Viewers can read/print but not create/edit/delete. */
 function can_edit(): bool { return in_array(user_role(), ['admin', 'valuer'], true); }
+/** May sign/finalise reports: admins, or any user granted a signing mandate. */
+function can_sign(): bool {
+    $u = current_user();
+    return $u && (is_admin() || (int)($u['can_sign'] ?? 0) === 1);
+}
 
 function require_login(): void { if (!current_user()) redirect('login.php'); }
 function require_admin(): void {

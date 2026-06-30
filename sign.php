@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/lib.php';
-require_admin();
+require_login();
+if (!can_sign()) { http_response_code(403); exit('You do not have a signing mandate.'); }
 
 $type  = ($_GET['type'] ?? 'bank') === 'insurance' ? 'insurance' : 'bank';
 $table = $type === 'insurance' ? 'valuations' : 'bankvaluations';

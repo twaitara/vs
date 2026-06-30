@@ -28,7 +28,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!$errors) {
             $st = db()->prepare('INSERT INTO users (name,email,role,active,password,created_at,updated_at) VALUES (?,?,?,1,?,NOW(),NOW())');
             $st->execute([$name, $email, $role, password_hash($pass, PASSWORD_BCRYPT)]);
-            audit('create', 'user', db()->lastInsertId(), $email);
+            $newId = (int)db()->lastInsertId();
+            if (column_exists('users', 'can_sign')) db()->prepare('UPDATE users SET can_sign=? WHERE id=?')->execute([!empty($_POST['can_sign']) ? 1 : 0, $newId]);
+            audit('create', 'user', $newId, $email);
             flash('User created.');
             redirect('users.php');
         }
@@ -39,6 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!$errors) {
             $st = db()->prepare('UPDATE users SET name=?, email=?, role=?, updated_at=NOW() WHERE id=?');
             $st->execute([$name, $email, $role, $uid]);
+            if (column_exists('users', 'can_sign')) db()->prepare('UPDATE users SET can_sign=? WHERE id=?')->execute([!empty($_POST['can_sign']) ? 1 : 0, $uid]);
             audit('update', 'user', $uid, $email);
             flash('User updated.');
             redirect('users.php');
@@ -85,6 +88,7 @@ settings_nav('users');
         <option value="<?= $k ?>" <?= ($edit['role'] ?? 'valuer') === $k ? 'selected' : '' ?>><?= e($lbl) ?></option>
       <?php endforeach; ?>
     </select></div>
+    <label style="display:flex;gap:8px;align-items:center;font-size:13px;color:var(--mut);margin:2px 0 4px"><input type="checkbox" name="can_sign" value="1" <?= !empty($edit['can_sign']) ? 'checked' : '' ?>> Signing mandate — can sign &amp; finalise reports</label>
     <?php if (!$edit): ?>
       <div class="f"><label class="f">Password</label><input type="password" name="password" required minlength="6"></div>
     <?php endif; ?>
@@ -98,13 +102,14 @@ settings_nav('users');
   <div class="card">
     <h3 style="margin-top:0">All Users</h3>
     <table class="list">
-      <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Actions</th></tr></thead>
+      <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Signing</th><th>Status</th><th>Actions</th></tr></thead>
       <tbody>
       <?php foreach ($users as $usr): ?>
         <tr>
           <td><?= e($usr['name']) ?></td>
           <td><?= e($usr['email']) ?></td>
           <td><?= e(ucfirst($usr['role'] ?? '')) ?></td>
+          <td><?= (!empty($usr['can_sign']) || ($usr['role'] ?? '') === 'admin') ? '<span class="badge b-green">Can sign</span>' : '<span class="muted">—</span>' ?></td>
           <td><?= ((int)($usr['active'] ?? 1) === 1)
                 ? '<span style="color:#36a35f">Active</span>'
                 : '<span style="color:#d41d1d">Disabled</span>' ?></td>
