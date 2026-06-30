@@ -84,7 +84,14 @@ if ($editId) {
     }
 }
 
-$users = db()->query('SELECT * FROM users ORDER BY name')->fetchAll();
+// Everyone but the super admin has the super-admin account hidden entirely.
+if (is_superadmin()) {
+    $users = db()->query('SELECT * FROM users ORDER BY name')->fetchAll();
+} else {
+    $st = db()->prepare('SELECT * FROM users WHERE LOWER(email) <> LOWER(?) ORDER BY name');
+    $st->execute([SUPERADMIN_EMAIL]);
+    $users = $st->fetchAll();
+}
 
 layout_header('Users', 'settings');
 settings_nav('users');
