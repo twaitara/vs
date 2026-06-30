@@ -8,7 +8,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $res = attempt_client_login(trim($_POST['email'] ?? ''), $_POST['password'] ?? '');
     if ($res === true) {
         if (system_locked()) { client_logout(); $error = denied_message(); }
-        else redirect('portal.php');
+        else { if (setting('banner_enabled') === '1') $_SESSION['avail_notice_pending'] = 1; redirect('portal.php'); }
     } else {
         $error = $res === 'locked' ? 'Too many attempts. Try again in 15 minutes.' : 'Invalid email or password.';
     }

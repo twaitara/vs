@@ -83,6 +83,18 @@ function portal_header(string $title): void {
 </div>
 <div class="wrap">
   <?php if ($fl): ?><div class="flash <?= ($fl['type'] ?? 'ok') === 'err' ? 'err' : '' ?>"><?= e($fl['msg'] ?? '') ?></div><?php endif; ?>
+  <?php if (!empty($_SESSION['avail_notice_pending']) && setting('banner_enabled') === '1'): unset($_SESSION['avail_notice_pending']); ?>
+    <div class="modal-bg open" id="availModal" style="z-index:5000">
+      <div class="modal" style="max-width:440px;height:auto;background:var(--panel);color:var(--txt);border:1px solid var(--line)">
+        <div style="padding:26px;text-align:center">
+          <div style="font-size:34px">⚠️</div>
+          <h3 style="margin:8px 0 10px">Please note</h3>
+          <p style="color:var(--mut);font-size:14px;line-height:1.6"><?= e(availability_message()) ?></p>
+          <button class="rbtn" type="button" style="background:var(--accent);color:#fff;border:0;padding:9px 18px" onclick="document.getElementById('availModal').remove()">I acknowledge</button>
+        </div>
+      </div>
+    </div>
+  <?php endif; ?>
 <?php }
 
 function portal_footer(): void { ?>

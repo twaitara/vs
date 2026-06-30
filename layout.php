@@ -315,6 +315,19 @@ function layout_header(string $title, string $active = ''): void {
       <?php if (setting('banner_enabled') === '1' && setting('banner_until')): ?>
         <div class="sysbanner"><i data-lucide="alert-triangle"></i> <?= e(availability_message()) ?></div>
       <?php endif; ?>
+      <?php if (!empty($_SESSION['avail_notice_pending']) && setting('banner_enabled') === '1'): unset($_SESSION['avail_notice_pending']); ?>
+        <div class="modal-bg open" id="availModal" style="z-index:5000">
+          <div class="modal" style="max-width:440px;height:auto;background:var(--panel);color:var(--txt);border:1px solid var(--line)">
+            <div style="padding:26px;text-align:center">
+              <div style="font-size:34px">⚠️</div>
+              <h3 style="margin:8px 0 10px">Please note</h3>
+              <p style="color:var(--mut);font-size:14px;line-height:1.6"><?= e(availability_message()) ?></p>
+              <button class="btn" type="button" onclick="document.getElementById('availModal').remove();document.body.style.overflow=''">I acknowledge</button>
+            </div>
+          </div>
+        </div>
+        <script>document.body.style.overflow='hidden';</script>
+      <?php endif; ?>
       <?php if ($fl): ?><script>window.__flash = <?= json_encode($fl) ?>;</script><?php endif; ?>
 <?php }
 
