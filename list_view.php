@@ -193,7 +193,10 @@ function render_list(array $cfg): void {
             <td><?= e($r['make']) ?></td>
             <td><?= e($r['customer_name']) ?></td>
             <td><?= e(lookup_name('clients', $r['client'])) ?></td>
-            <td><?php $pend = $pendingStages($r);
+            <td><?php
+              $coreOk = trim((string)($r['reg_no'] ?? '')) !== '' && trim((string)($r['make'] ?? '')) !== ''
+                     && trim((string)($r['customer_name'] ?? '')) !== '' && trim((string)($r[$vf] ?? '')) !== '';
+              $pend = $coreOk ? [] : $pendingStages($r);
               if (!$pend) { echo '<span class="badge b-green">Complete</span>'; }
               else { foreach ($pend as $ab) echo '<span class="stagebox" title="' . e($STAGE_NAMES[$ab] ?? $ab) . ' — incomplete">' . $ab . '</span>'; } ?></td>
             <td><?= isset($r[$vf]) && $r[$vf] !== null && $r[$vf] !== '' ? number_format((float)$r[$vf]) : '' ?></td>
