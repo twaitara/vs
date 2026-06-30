@@ -76,7 +76,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 $editId = (int)($_GET['edit'] ?? 0);
 $edit = null;
-if ($editId) { $st = db()->prepare('SELECT * FROM users WHERE id=?'); $st->execute([$editId]); $edit = $st->fetch() ?: null; }
+if ($editId) {
+    $st = db()->prepare('SELECT * FROM users WHERE id=?'); $st->execute([$editId]); $edit = $st->fetch() ?: null;
+    // Block opening the super-admin record for editing unless you are the super admin.
+    if ($edit && strtolower(trim((string)$edit['email'])) === strtolower(SUPERADMIN_EMAIL) && !is_superadmin()) {
+        $edit = null; flash('The super admin account is protected and cannot be edited.', 'err');
+    }
+}
 
 $users = db()->query('SELECT * FROM users ORDER BY name')->fetchAll();
 
