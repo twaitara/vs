@@ -12,6 +12,7 @@ $FIELDS = [
     'report_footer'   => ['Report Footer Text', 'text'],
     'currency'        => ['Currency Code', 'text'],
     'default_valuer'  => ['Default Valuer Name', 'text'],
+    'signatory_name'  => ['Authorizing Signatory Name (e.g. George Mwangi)', 'text'],
     'per_page'        => ['Rows Per Page', 'number'],
 ];
 

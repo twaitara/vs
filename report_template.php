@@ -68,6 +68,7 @@ function render_bank_report(array $val): string {
     $signed     = !empty($val['signed_at']);
     $sig        = ($signed && is_file($sigFile)) ? report_img_data($sigFile) : null;
     $signedDate = $signed ? date('d M Y', strtotime($val['signed_at'])) : '';
+    $signatoryName = setting('signatory_name', 'George Mwangi');
 
     ob_start(); ?>
 <!DOCTYPE html>
@@ -213,8 +214,8 @@ function render_bank_report(array $val): string {
         <table>
             <tr>
                 <td width="50%"><p><span>Authorizing Signature:</span></p>
-                    <div style="height:50px; border-bottom:1px solid #ccc; text-align:center;"><?php if ($sig): ?><img src="<?= $sig ?>" style="max-height:48px; max-width:230px;"><?php endif; ?></div>
-                    <p class="note">Name & Stamp</p></td>
+                    <div style="height:70px; border-bottom:1px solid #ccc; text-align:center;"><?php if ($sig): ?><img src="<?= $sig ?>" style="max-height:68px; max-width:300px;"><?php endif; ?></div>
+                    <p class="note"><?php if ($signed): ?><strong style="color:#080bc0ff;font-size:13px;"><?= e($signatoryName) ?></strong><br><?php endif; ?>Name & Stamp</p></td>
                 <td width="50%"><p><span>Date:</span></p>
                     <div style="height:50px; border-bottom:1px solid #ccc; font-weight:bold; color:#080bc0ff;"><?= e($signedDate) ?></div></td>
             </tr>
@@ -287,6 +288,7 @@ function render_insurance_report(array $val): string {
     $signed     = !empty($val['signed_at']);
     $sig        = ($signed && is_file($sigFile)) ? report_img_data($sigFile) : null;
     $signedDate = $signed ? date('d M Y', strtotime($val['signed_at'])) : '';
+    $signatoryName = setting('signatory_name', 'George Mwangi');
 
     // Checklist groups (field => question). Values stored as "1"/"0".
     $groups = [
@@ -381,7 +383,7 @@ function render_insurance_report(array $val): string {
     </div></div>
 
     <table><tr>
-        <td width="50%"><p><span>Authorizing Signature:</span></p><div style="height:50px;border-bottom:1px solid #ccc;text-align:center;"><?php if ($sig): ?><img src="<?= $sig ?>" style="max-height:48px;max-width:230px;"><?php endif; ?></div><p class="note">Name & Stamp</p></td>
+        <td width="50%"><p><span>Authorizing Signature:</span></p><div style="height:70px;border-bottom:1px solid #ccc;text-align:center;"><?php if ($sig): ?><img src="<?= $sig ?>" style="max-height:68px;max-width:300px;"><?php endif; ?></div><p class="note"><?php if ($signed): ?><strong style="color:#080bc0ff;font-size:13px;"><?= e($signatoryName) ?></strong><br><?php endif; ?>Name & Stamp</p></td>
         <td width="50%"><p><span>Date:</span></p><div style="height:50px;border-bottom:1px solid #ccc;font-weight:bold;color:#080bc0ff;"><?= e($signedDate) ?></div></td>
     </tr></table>
 
