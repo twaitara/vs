@@ -117,7 +117,7 @@ layout_header($id ? 'Edit Insurance Valuation' : 'New Insurance Valuation', 'ins
   </div></fieldset>
 
   <fieldset><legend>Engine & Mileage</legend><div class="grid">
-    <?= f_input('mileage','Odometer Reading',$row,'number') ?>
+    <?= f_input('mileage','Odometer Reading (KMS / MI / HRS)',$row,'text',false,'placeholder="e.g. 85000 KMS or 3200 HRS"') ?>
     <?= f_input('colour','Colour',$row) ?>
     <?= f_input('engine_no','Engine No.',$row) ?>
     <?= f_input('engine_capacity','Engine Capacity',$row) ?>
