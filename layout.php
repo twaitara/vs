@@ -435,7 +435,7 @@ function form_assets(): void { ?>
   .wizard.tabbed > fieldset.active{display:block}
   .tabs{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:16px;border-bottom:1px solid var(--line)}
   .tabbtn{background:transparent;border:0;border-bottom:2px solid transparent;color:var(--mut);padding:9px 14px;cursor:pointer;font-size:13px}
-  .tabbtn.active{color:#fff;border-bottom-color:var(--accent)}
+  .tabbtn.active{color:var(--txt);font-weight:700;border-bottom-color:var(--accent)}
   .tabbtn.has-invalid{color:#f5a3a3}
   .wizard-nav{display:flex;justify-content:space-between;margin:10px 0 0}
   .f.has-err input,.f.has-err select,.f.has-err textarea{border-color:#d41d1d}
