@@ -8,10 +8,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = trim($_POST['email'] ?? '');
     $pass  = $_POST['password'] ?? '';
     $res = attempt_login($email, $pass);
-    if ($res === true) redirect('dashboard.php');
-    $error = $res === 'locked'
-        ? 'Too many failed attempts. Please wait 15 minutes and try again.'
-        : 'Invalid email or password.';
+    if ($res === true) {
+        if (system_locked() && !is_superadmin()) { logout(); $error = 'This system is no longer available for use. Please contact the administrator.'; }
+        else redirect('dashboard.php');
+    } else {
+        $error = $res === 'locked'
+            ? 'Too many failed attempts. Please wait 15 minutes and try again.'
+            : 'Invalid email or password.';
+    }
 }
 ?><!doctype html>
 <html lang="en"><head>

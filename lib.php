@@ -100,7 +100,34 @@ function can_sign(): bool {
     return $u && (is_admin() || (int)($u['can_sign'] ?? 0) === 1);
 }
 
-function require_login(): void { if (!current_user()) redirect('login.php'); }
+/** System is locked once the availability "until" date has passed (banner enabled). */
+function system_locked(): bool {
+    if (setting('banner_enabled') !== '1') return false;
+    $until = setting('banner_until');
+    if (!$until) return false;
+    $end = strtotime($until . ' 23:59:59');
+    return $end && time() > $end;
+}
+
+/** Render the "no longer available" page and stop. */
+function deny_unavailable(): void {
+    http_response_code(503);
+    $app = defined('APP_NAME') ? APP_NAME : 'System';
+    echo '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">'
+        . '<title>Unavailable</title>'
+        . '<div style="font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif;background:#0f1216;color:#e6e9ee;'
+        . 'min-height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;padding:24px;margin:0">'
+        . '<div style="max-width:380px"><div style="font-size:46px">⛔</div>'
+        . '<h1 style="font-size:22px;margin:10px 0 8px">System no longer available</h1>'
+        . '<p style="color:#9aa4b2;font-size:14px;line-height:1.6">' . e($app) . ' is no longer available for use. '
+        . 'Please contact the administrator for assistance.</p></div></div>';
+    exit;
+}
+
+function require_login(): void {
+    if (!current_user()) redirect('login.php');
+    if (system_locked() && !is_superadmin()) { logout(); deny_unavailable(); }
+}
 function require_admin(): void {
     require_login();
     if (!is_admin()) { http_response_code(403); exit('Admins only.'); }
@@ -160,7 +187,10 @@ function logout(): void {
 
 // ---------------- Client portal auth (separate from staff) ----------------
 function current_client(): ?array { return $_SESSION['client_user'] ?? null; }
-function require_client(): void { if (!current_client()) redirect('portal_login.php'); }
+function require_client(): void {
+    if (!current_client()) redirect('portal_login.php');
+    if (system_locked()) { client_logout(); deny_unavailable(); }
+}
 
 function attempt_client_login(string $email, string $password) {
     $ip = $_SERVER['REMOTE_ADDR'] ?? '';
