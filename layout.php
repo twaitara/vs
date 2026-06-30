@@ -196,7 +196,9 @@ function layout_header(string $title, string $active = ''): void {
   .fb-grid label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--mut)}
   .fb-grid input,.fb-grid select{background:var(--input);border:1px solid var(--line);color:var(--txt);padding:7px 9px;border-radius:7px;font-size:13px}
   .fb-actions{margin-top:12px;display:flex;gap:8px}
-  .bulkbar{display:flex;align-items:center;gap:14px;margin-bottom:10px;font-size:13px;color:var(--mut)}
+  .bulkbar{display:flex;align-items:center;gap:14px;margin-bottom:10px;font-size:13px;color:var(--mut);flex-wrap:wrap}
+  .stagebox{display:inline-block;font-size:9px;font-weight:700;letter-spacing:.5px;padding:2px 5px;border-radius:3px;background:#3d2f0f;color:#f5d79a;border:1px solid #7a5c1c;margin:1px;line-height:1.3}
+  .stagekey{font-size:11px;color:var(--mut);display:inline-flex;flex-wrap:wrap;align-items:center}
   .badge{display:inline-block;font-size:11px;padding:2px 7px;border-radius:10px;white-space:nowrap}
   .b-red{background:#3d0f0f;color:#f5a3a3;border:1px solid #7a1c1c}
   .b-amber{background:#3d2f0f;color:#f5d79a;border:1px solid #7a5c1c}

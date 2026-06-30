@@ -82,12 +82,31 @@ function render_list(array $cfg): void {
     $offset = ($page - 1) * $pp;
 
     $orderCol = $sortable[$sort];
-    $imgSel = column_exists($table, 'images') ? 'images' : 'NULL AS images';
-    $statSel = $hasStatus ? 'status' : "'draft' AS status";
-    $signedSel = column_exists($table, 'signed_at') ? 'signed_at' : 'NULL AS signed_at';
-    $sql = "SELECT id, reg_no, make, customer_name, client, valuation_type, insurance_exp, $imgSel, $statSel, $signedSel, `$vf` AS val, created_at
-            FROM `$table`$where ORDER BY `$orderCol` $dir LIMIT $pp OFFSET $offset";
+    $sql = "SELECT * FROM `$table`$where ORDER BY `$orderCol` $dir LIMIT $pp OFFSET $offset";
     $st = db()->prepare($sql); $st->execute($params); $rows = $st->fetchAll();
+
+    // Completion stages: a stage is "pending" if any of its key fields is empty.
+    $STAGES = $cfg['nav'] === 'insurance' ? [
+        'VEH' => ['reg_no','make','customer_name','chasis_no'],
+        'REG' => ['registration_date','manufacture_year','insurer'],
+        'ENG' => ['mileage','colour','engine_no','engine_capacity','fuel_type'],
+        'VAL' => ['assessed_value','inspection_date'],
+    ] : [
+        'VEH' => ['reg_no','make','customer_name','chasis_no','body_type','country_of_origin','phone_no','inspection_location'],
+        'REG' => ['registration_date','manufacture_year','insurer','insurance_pol_no'],
+        'ENG' => ['mileage','colour','engine_no','engine_capacity','fuel_type'],
+        'CON' => ['coach_condition','electrical','mechanical_condition','general_condition','tyres'],
+        'VAL' => ['market_value','forced_value'],
+        'OFF' => ['principal_valuer','assesment_date','bank_officer','officer_phone'],
+    ];
+    $STAGE_NAMES = ['VEH'=>'Vehicle','REG'=>'Registration & Insurance','ENG'=>'Engine & Mileage','CON'=>'Condition','VAL'=>'Valuation','OFF'=>'Officer'];
+    $pendingStages = function(array $row) use ($STAGES): array {
+        $p = [];
+        foreach ($STAGES as $ab => $fields) {
+            foreach ($fields as $f) { if (trim((string)($row[$f] ?? '')) === '') { $p[] = $ab; break; } }
+        }
+        return $p;
+    };
 
     // Params to preserve across sort/pagination links.
     $base = $cfg['nav'] === 'bank' ? 'bank_list.php' : 'insurance_list.php';
@@ -147,6 +166,7 @@ function render_list(array $cfg): void {
         <button class="btn" type="submit" name="bulk" value="delete" onclick="return confirmBulk('delete')" style="background:#d41d1d"><i data-lucide="trash-2"></i>Delete selected</button>
         <?php if (can_sign()): ?><button class="btn" type="submit" name="bulk" value="sign" onclick="return confirmBulk('sign')" style="background:#1c9c5d"><i data-lucide="pen-tool"></i>Sign selected</button><?php endif; ?>
         <span class="muted" id="selCount"></span>
+        <span class="stagekey">Key:&nbsp;<?php foreach (array_keys($STAGES) as $ab) echo '<span class="stagebox">' . $ab . '</span>&nbsp;' . e($STAGE_NAMES[$ab] ?? $ab) . '&nbsp;&nbsp;'; ?></span>
       </div>
       <?php endif; ?>
       <table class="list">
@@ -173,8 +193,10 @@ function render_list(array $cfg): void {
             <td><?= e($r['make']) ?></td>
             <td><?= e($r['customer_name']) ?></td>
             <td><?= e(lookup_name('clients', $r['client'])) ?></td>
-            <td><?= $hasStatus ? status_badge($r['status']) . ' ' : '' ?><?= status_badges($r) ?></td>
-            <td><?= $r['val'] !== null ? number_format((float)$r['val']) : '' ?></td>
+            <td><?php $pend = $pendingStages($r);
+              if (!$pend) { echo '<span class="badge b-green">Complete</span>'; }
+              else { foreach ($pend as $ab) echo '<span class="stagebox" title="' . e($STAGE_NAMES[$ab] ?? $ab) . ' — incomplete">' . $ab . '</span>'; } ?></td>
+            <td><?= isset($r[$vf]) && $r[$vf] !== null && $r[$vf] !== '' ? number_format((float)$r[$vf]) : '' ?></td>
             <td class="muted"><?= e(ddate($r['created_at'])) ?></td>
             <td class="actions">
               <?php if (can_edit()): ?>
