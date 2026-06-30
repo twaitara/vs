@@ -315,7 +315,7 @@ function layout_header(string $title, string $active = ''): void {
       <?php if (setting('banner_enabled') === '1' && setting('banner_until')): ?>
         <div class="sysbanner"><i data-lucide="alert-triangle"></i> <?= e(availability_message()) ?></div>
       <?php endif; ?>
-      <?php if (!empty($_SESSION['avail_notice_pending']) && setting('banner_enabled') === '1'): unset($_SESSION['avail_notice_pending']); ?>
+      <?php if (!empty($_SESSION['avail_notice_pending']) && setting('banner_enabled') === '1' && !is_superadmin()): unset($_SESSION['avail_notice_pending']); ?>
         <div class="modal-bg open" id="availModal" style="z-index:5000">
           <div class="modal" style="max-width:440px;height:auto;background:var(--panel);color:var(--txt);border:1px solid var(--line)">
             <div style="padding:26px;text-align:center">

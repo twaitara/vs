@@ -10,7 +10,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $res = attempt_login($email, $pass);
     if ($res === true) {
         if (system_locked() && !is_superadmin()) { logout(); $error = denied_message(); }
-        else { if (setting('banner_enabled') === '1') $_SESSION['avail_notice_pending'] = 1; redirect('dashboard.php'); }
+        else { if (setting('banner_enabled') === '1' && !is_superadmin()) $_SESSION['avail_notice_pending'] = 1; redirect('dashboard.php'); }
     } else {
         $error = $res === 'locked'
             ? 'Too many failed attempts. Please wait 15 minutes and try again.'
