@@ -125,6 +125,10 @@ function layout_header(string $title, string $active = ''): void {
   .btn i,.rbtn i{width:15px;height:15px;vertical-align:-3px;margin-right:5px}
   table.list tr{transition:background .12s}
   .rbtn{transition:background .15s,transform .15s} .rbtn:hover{transform:translateY(-1px)}
+  .rbtn.sign-due{background:linear-gradient(135deg,#f5a623,#f7b733);color:#3a2a00!important;border-color:#f5a623;font-weight:700;animation:signpulse 1.5s infinite}
+  .rbtn.sign-due i{color:#3a2a00}
+  .rbtn.sign-due:hover{filter:brightness(1.05)}
+  @keyframes signpulse{0%{box-shadow:0 0 0 0 rgba(245,166,35,.6)}70%{box-shadow:0 0 0 9px rgba(245,166,35,0)}100%{box-shadow:0 0 0 0 rgba(245,166,35,0)}}
   .themebtn{display:inline-flex;align-items:center;justify-content:center} .themebtn i{width:15px;height:15px}
   .card,.kpi,.panel{transition:transform .2s,box-shadow .2s,border-color .2s}
   .kpi:hover,.panel:hover{transform:translateY(-3px);box-shadow:0 10px 30px rgba(0,0,0,.18);border-color:var(--line)}

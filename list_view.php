@@ -183,7 +183,7 @@ function render_list(array $cfg): void {
               <a class="rbtn" href="#" onclick="openPreview(<?= (int)$r['id'] ?>,'<?= e($cfg['nav']) ?>');return false;"><i data-lucide="eye"></i>Preview</a>
               <a class="rbtn" href="<?= url('print.php?type='.$cfg['nav'].'&id='.$r['id']) ?>"><i data-lucide="printer"></i>Print</a>
               <?php if (can_sign() && empty($r['signed_at'])): ?>
-                <a class="rbtn" style="border-color:#7a5c1c;color:#f5d79a" href="<?= url('sign.php?type='.$cfg['nav'].'&id='.$r['id'].'&_csrf='.csrf_token()) ?>" onclick="return confirm('Sign this report? It will be marked Complete and stamped with today’s date.')"><i data-lucide="pen-tool"></i>Sign</a>
+                <a class="rbtn sign-due" href="<?= url('sign.php?type='.$cfg['nav'].'&id='.$r['id'].'&_csrf='.csrf_token()) ?>" onclick="return confirm('Sign this report? It will be marked Complete and stamped with today’s date.')"><i data-lucide="pen-tool"></i>Sign</a>
               <?php elseif (!empty($r['signed_at'])): ?>
                 <span class="rbtn" style="border-color:#1c7a47;color:#3ddc84;cursor:default" title="Signed <?= e(ddate($r['signed_at'])) ?>"><i data-lucide="check"></i>Signed</span>
               <?php endif; ?>
