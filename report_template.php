@@ -64,6 +64,11 @@ function render_bank_report(array $val): string {
     $coEmail  = setting('company_email', 'info@kennetvaluers.com');
     $coFooter = setting('report_footer', '© ' . $coName . ' | Valuation Report | Confidential Document');
 
+    $sigFile    = __DIR__ . '/' . ltrim(setting('signature_image', 'storage/signature.png'), '/');
+    $signed     = !empty($val['signed_at']);
+    $sig        = ($signed && is_file($sigFile)) ? report_img_data($sigFile) : null;
+    $signedDate = $signed ? date('d M Y', strtotime($val['signed_at'])) : '';
+
     ob_start(); ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -207,8 +212,11 @@ function render_bank_report(array $val): string {
     <div class="signature-area">
         <table>
             <tr>
-                <td width="50%"><p><span>Authorizing Signature:</span></p><div style="height:50px; border-bottom:1px solid #ccc;"></div><p class="note">Name & Stamp</p></td>
-                <td width="50%"><p><span>Date:</span></p><div style="height:50px; border-bottom:1px solid #ccc;"></div></td>
+                <td width="50%"><p><span>Authorizing Signature:</span></p>
+                    <div style="height:50px; border-bottom:1px solid #ccc; text-align:center;"><?php if ($sig): ?><img src="<?= $sig ?>" style="max-height:48px; max-width:230px;"><?php endif; ?></div>
+                    <p class="note">Name & Stamp</p></td>
+                <td width="50%"><p><span>Date:</span></p>
+                    <div style="height:50px; border-bottom:1px solid #ccc; font-weight:bold; color:#080bc0ff;"><?= e($signedDate) ?></div></td>
             </tr>
         </table>
     </div>
@@ -274,6 +282,11 @@ function render_insurance_report(array $val): string {
     $coTel    = setting('company_tel', '+254 723 441 666, +254 712 730 738, +254 706 850 101');
     $coEmail  = setting('company_email', 'info@kennetvaluers.com');
     $coFooter = setting('report_footer', '© ' . $coName . ' | Valuation Report | Confidential Document');
+
+    $sigFile    = __DIR__ . '/' . ltrim(setting('signature_image', 'storage/signature.png'), '/');
+    $signed     = !empty($val['signed_at']);
+    $sig        = ($signed && is_file($sigFile)) ? report_img_data($sigFile) : null;
+    $signedDate = $signed ? date('d M Y', strtotime($val['signed_at'])) : '';
 
     // Checklist groups (field => question). Values stored as "1"/"0".
     $groups = [
@@ -368,8 +381,8 @@ function render_insurance_report(array $val): string {
     </div></div>
 
     <table><tr>
-        <td width="50%"><p><span>Authorizing Signature:</span></p><div style="height:50px;border-bottom:1px solid #ccc;"></div><p class="note">Name & Stamp</p></td>
-        <td width="50%"><p><span>Date:</span></p><div style="height:50px;border-bottom:1px solid #ccc;"></div></td>
+        <td width="50%"><p><span>Authorizing Signature:</span></p><div style="height:50px;border-bottom:1px solid #ccc;text-align:center;"><?php if ($sig): ?><img src="<?= $sig ?>" style="max-height:48px;max-width:230px;"><?php endif; ?></div><p class="note">Name & Stamp</p></td>
+        <td width="50%"><p><span>Date:</span></p><div style="height:50px;border-bottom:1px solid #ccc;font-weight:bold;color:#080bc0ff;"><?= e($signedDate) ?></div></td>
     </tr></table>
 
     <div class="footer"><p><?= e($coFooter) ?></p></div>

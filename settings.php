@@ -28,6 +28,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             @move_uploaded_file($_FILES[$field]['tmp_name'], __DIR__ . '/assets/' . $dest);
         }
     }
+    // Authorizing signature — stored in storage/ (not web-accessible), embedded only on signed reports.
+    if (!empty($_FILES['signature']['name']) && is_uploaded_file($_FILES['signature']['tmp_name'])) {
+        @mkdir(__DIR__ . '/storage', 0775, true);
+        if (@move_uploaded_file($_FILES['signature']['tmp_name'], __DIR__ . '/storage/signature.png')) {
+            set_setting('signature_image', 'storage/signature.png');
+        }
+    }
     audit('update', 'settings');
     flash('Settings saved.');
     redirect('settings.php');
@@ -53,6 +60,17 @@ settings_nav('general');
   </div>
   <p class="muted" style="font-size:12px">Current header logo:</p>
   <img src="<?= url('assets/logo2.png') ?>?v=<?= time() ?>" style="max-height:60px;background:#fff;padding:6px;border-radius:6px">
+  </fieldset>
+
+  <fieldset><legend>Authorizing Signature (admins only)</legend>
+    <p class="muted" style="font-size:13px">Upload the authorizing signature (PNG, transparent background works best). It is stored privately and appears on a report <b>only after it is signed</b>. Used when admins click “Sign report”.</p>
+    <div class="f"><label class="f">Signature image (PNG)</label><input type="file" name="signature" accept="image/png"></div>
+    <?php $sigp = __DIR__ . '/storage/signature.png'; if (is_file($sigp)): ?>
+      <p class="muted" style="font-size:12px;margin-top:10px">Current signature on file:</p>
+      <img src="data:image/png;base64,<?= base64_encode(file_get_contents($sigp)) ?>" style="max-height:70px;background:#fff;padding:6px;border-radius:6px">
+    <?php else: ?>
+      <p class="muted" style="font-size:12px;margin-top:10px">No signature uploaded yet.</p>
+    <?php endif; ?>
   </fieldset>
 
   <button class="btn" type="submit">Save settings</button>

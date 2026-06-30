@@ -198,12 +198,27 @@ function set_setting(string $key, string $value): void {
 
 // ---------------- Status workflow & report numbers ----------------
 function valuation_statuses(): array {
-    return ['draft' => 'Draft', 'submitted' => 'Submitted', 'approved' => 'Approved'];
+    return ['draft' => 'Draft', 'submitted' => 'Submitted', 'approved' => 'Approved', 'complete' => 'Complete'];
 }
 function status_badge(?string $s): string {
-    $cls = ['draft' => 'b-grey', 'submitted' => 'b-amber', 'approved' => 'b-green'][$s] ?? 'b-grey';
+    $cls = ['draft' => 'b-grey', 'submitted' => 'b-amber', 'approved' => 'b-green', 'complete' => 'b-green'][$s] ?? 'b-grey';
     $lbl = valuation_statuses()[$s] ?? ucfirst((string)($s ?: 'draft'));
     return '<span class="badge ' . $cls . '">' . e($lbl) . '</span>';
+}
+
+/** Sign valuations: stamp signed_at/by and mark status Complete. Returns count. */
+function sign_records(string $table, array $ids): int {
+    $ids = array_values(array_filter(array_map('intval', $ids)));
+    if (!$ids) return 0;
+    $sets = []; $params = [];
+    if (column_exists($table, 'signed_at')) $sets[] = 'signed_at = NOW()';
+    if (column_exists($table, 'signed_by')) { $sets[] = 'signed_by = ?'; $params[] = current_user()['id'] ?? null; }
+    if (column_exists($table, 'status'))    $sets[] = "status = 'complete'";
+    if (!$sets) return 0;
+    $in = implode(',', array_fill(0, count($ids), '?'));
+    db()->prepare("UPDATE `$table` SET " . implode(', ', $sets) . " WHERE id IN ($in)")
+        ->execute(array_merge($params, $ids));
+    return count($ids);
 }
 /** Generate next sequential report number, e.g. KEN/2026/0007. */
 function next_report_no(string $table): string {

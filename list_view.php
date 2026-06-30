@@ -14,17 +14,26 @@ function render_list(array $cfg): void {
     $vf    = $cfg['value_field'];
     $soft  = column_exists($table, 'deleted_at');
 
-    // ---- Bulk soft-delete (POST) ----
-    if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['bulk'] ?? '') === 'delete') {
+    // ---- Bulk actions (POST): delete or sign ----
+    $bulk = $_POST['bulk'] ?? '';
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array($bulk, ['delete', 'sign'], true)) {
         csrf_verify();
-        if (!can_edit()) { http_response_code(403); exit('View-only access.'); }
-        $ids = array_filter(array_map('intval', (array)($_POST['ids'] ?? [])));
-        if ($ids && $soft) {
-            $in = implode(',', array_fill(0, count($ids), '?'));
-            $st = db()->prepare("UPDATE `$table` SET deleted_at = NOW() WHERE id IN ($in)");
-            $st->execute($ids);
-            audit('bulk_delete', $cfg['type'], implode(',', $ids), count($ids) . ' records');
-            flash(count($ids) . ' record(s) deleted.');
+        $ids = array_values(array_filter(array_map('intval', (array)($_POST['ids'] ?? []))));
+        if ($bulk === 'delete') {
+            if (!can_edit()) { http_response_code(403); exit('View-only access.'); }
+            if ($ids && $soft) {
+                $in = implode(',', array_fill(0, count($ids), '?'));
+                db()->prepare("UPDATE `$table` SET deleted_at = NOW() WHERE id IN ($in)")->execute($ids);
+                audit('bulk_delete', $cfg['type'], implode(',', $ids), count($ids) . ' records');
+                flash(count($ids) . ' record(s) deleted.');
+            }
+        } elseif ($bulk === 'sign') {
+            if (!is_admin()) { http_response_code(403); exit('Admins only.'); }
+            if ($ids) {
+                $n = sign_records($table, $ids);
+                audit('sign', $cfg['type'], implode(',', $ids), $n . ' signed');
+                flash($n ? ($n . ' report(s) signed and marked Complete.') : 'Could not sign (run schema_v6.sql).', $n ? 'ok' : 'err');
+            }
         }
         redirect($cfg['nav'] === 'bank' ? 'bank_list.php' : 'insurance_list.php');
     }
@@ -75,7 +84,8 @@ function render_list(array $cfg): void {
     $orderCol = $sortable[$sort];
     $imgSel = column_exists($table, 'images') ? 'images' : 'NULL AS images';
     $statSel = $hasStatus ? 'status' : "'draft' AS status";
-    $sql = "SELECT id, reg_no, make, customer_name, client, valuation_type, insurance_exp, $imgSel, $statSel, `$vf` AS val, created_at
+    $signedSel = column_exists($table, 'signed_at') ? 'signed_at' : 'NULL AS signed_at';
+    $sql = "SELECT id, reg_no, make, customer_name, client, valuation_type, insurance_exp, $imgSel, $statSel, $signedSel, `$vf` AS val, created_at
             FROM `$table`$where ORDER BY `$orderCol` $dir LIMIT $pp OFFSET $offset";
     $st = db()->prepare($sql); $st->execute($params); $rows = $st->fetchAll();
 
@@ -130,11 +140,12 @@ function render_list(array $cfg): void {
     </form>
 
     <form method="post" id="bulkForm">
-      <?= csrf_field() ?><input type="hidden" name="bulk" value="delete">
+      <?= csrf_field() ?>
       <?php if (can_edit()): ?>
       <div class="bulkbar">
         <label><input type="checkbox" id="selAll"> Select all</label>
-        <button class="btn" type="submit" onclick="return confirmBulk()" style="background:#d41d1d"><i data-lucide="trash-2"></i>Delete selected</button>
+        <button class="btn" type="submit" name="bulk" value="delete" onclick="return confirmBulk('delete')" style="background:#d41d1d"><i data-lucide="trash-2"></i>Delete selected</button>
+        <?php if (is_admin()): ?><button class="btn" type="submit" name="bulk" value="sign" onclick="return confirmBulk('sign')" style="background:#1c9c5d"><i data-lucide="pen-tool"></i>Sign selected</button><?php endif; ?>
         <span class="muted" id="selCount"></span>
       </div>
       <?php endif; ?>
@@ -171,6 +182,11 @@ function render_list(array $cfg): void {
               <?php endif; ?>
               <a class="rbtn" href="#" onclick="openPreview(<?= (int)$r['id'] ?>,'<?= e($cfg['nav']) ?>');return false;"><i data-lucide="eye"></i>Preview</a>
               <a class="rbtn" href="<?= url('print.php?type='.$cfg['nav'].'&id='.$r['id']) ?>"><i data-lucide="printer"></i>Print</a>
+              <?php if (is_admin() && empty($r['signed_at'])): ?>
+                <a class="rbtn" style="border-color:#1c7a47;color:#3ddc84" href="<?= url('sign.php?type='.$cfg['nav'].'&id='.$r['id'].'&_csrf='.csrf_token()) ?>" onclick="return confirm('Sign this report? It will be marked Complete and stamped with today’s date.')"><i data-lucide="pen-tool"></i>Sign</a>
+              <?php elseif (!empty($r['signed_at'])): ?>
+                <span class="rbtn" style="border-color:#1c7a47;color:#3ddc84;cursor:default" title="Signed <?= e(ddate($r['signed_at'])) ?>"><i data-lucide="check"></i>Signed</span>
+              <?php endif; ?>
             </td>
           </tr>
         <?php endforeach; endif; ?>
@@ -196,7 +212,9 @@ function render_list(array $cfg): void {
       function upd(){var n=chks().filter(c=>c.checked).length;var el=document.getElementById('selCount');if(el)el.textContent=n?n+' selected':'';}
       if(selAll)selAll.addEventListener('change',function(){chks().forEach(c=>c.checked=selAll.checked);upd();});
       chks().forEach(c=>c.addEventListener('change',upd));
-      function confirmBulk(){var n=chks().filter(c=>c.checked).length;if(!n){alert('Select at least one row.');return false;}return confirm('Delete '+n+' selected record(s)?');}
+      function confirmBulk(verb){var n=chks().filter(c=>c.checked).length;if(!n){alert('Select at least one row.');return false;}
+      var msg = verb==='sign' ? ('Sign '+n+' selected report(s)? This marks them Complete and stamps today’s date.') : ('Delete '+n+' selected record(s)?');
+      return confirm(msg);}
     </script>
     <?php quick_search_script(); ?>
     <?php layout_footer();
