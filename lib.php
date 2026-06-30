@@ -100,13 +100,29 @@ function can_sign(): bool {
     return $u && (is_admin() || (int)($u['can_sign'] ?? 0) === 1);
 }
 
-/** System is locked once the availability "until" date has passed (banner enabled). */
+/** Availability cut-off timestamp (date or date+time). */
+function banner_until_ts(): ?int {
+    $u = trim(setting('banner_until'));
+    if ($u === '') return null;
+    $s = strlen($u) <= 10 ? $u . ' 23:59:59' : str_replace('T', ' ', $u); // date-only ends at day's end
+    $t = strtotime($s);
+    return $t ?: null;
+}
+/** System is locked once the availability cut-off has passed (banner enabled). */
 function system_locked(): bool {
     if (setting('banner_enabled') !== '1') return false;
-    $until = setting('banner_until');
-    if (!$until) return false;
-    $end = strtotime($until . ' 23:59:59');
-    return $end && time() > $end;
+    $t = banner_until_ts();
+    return $t && time() > $t;
+}
+/** The banner text, with {until} replaced by the formatted date/time. */
+function availability_message(): string {
+    $msg = setting('banner_message', 'This system will be available until {until}.');
+    $t = banner_until_ts();
+    return str_replace('{until}', $t ? date('d M Y, g:i A', $t) : '', $msg);
+}
+/** The message shown to non-super-admins when the system is locked. */
+function denied_message(): string {
+    return setting('banner_denied_message', 'This system is no longer available for use. Please contact the administrator.');
 }
 
 /** Render the "no longer available" page and stop. */
@@ -119,8 +135,7 @@ function deny_unavailable(): void {
         . 'min-height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;padding:24px;margin:0">'
         . '<div style="max-width:380px"><div style="font-size:46px">⛔</div>'
         . '<h1 style="font-size:22px;margin:10px 0 8px">System no longer available</h1>'
-        . '<p style="color:#9aa4b2;font-size:14px;line-height:1.6">' . e($app) . ' is no longer available for use. '
-        . 'Please contact the administrator for assistance.</p></div></div>';
+        . '<p style="color:#9aa4b2;font-size:14px;line-height:1.6">' . e(denied_message()) . '</p></div></div>';
     exit;
 }
 

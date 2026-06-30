@@ -312,8 +312,8 @@ function layout_header(string $title, string $active = ''): void {
       <div class="sp-sub">Please wait a moment</div>
     </div></div>
     <div class="content">
-      <?php if (setting('banner_enabled') === '1' && ($bu = setting('banner_until'))): ?>
-        <div class="sysbanner"><i data-lucide="alert-triangle"></i> This system will be available until <strong><?= e(ddate($bu)) ?></strong>.</div>
+      <?php if (setting('banner_enabled') === '1' && setting('banner_until')): ?>
+        <div class="sysbanner"><i data-lucide="alert-triangle"></i> <?= e(availability_message()) ?></div>
       <?php endif; ?>
       <?php if ($fl): ?><script>window.__flash = <?= json_encode($fl) ?>;</script><?php endif; ?>
 <?php }

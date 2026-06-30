@@ -9,7 +9,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $pass  = $_POST['password'] ?? '';
     $res = attempt_login($email, $pass);
     if ($res === true) {
-        if (system_locked() && !is_superadmin()) { logout(); $error = 'This system is no longer available for use. Please contact the administrator.'; }
+        if (system_locked() && !is_superadmin()) { logout(); $error = denied_message(); }
         else redirect('dashboard.php');
     } else {
         $error = $res === 'locked'

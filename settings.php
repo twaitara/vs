@@ -26,6 +26,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (is_superadmin() && isset($_POST['_banner_form'])) {
         set_setting('banner_enabled', !empty($_POST['banner_enabled']) ? '1' : '0');
         set_setting('banner_until', trim((string)($_POST['banner_until'] ?? '')));
+        set_setting('banner_message', trim((string)($_POST['banner_message'] ?? '')));
+        set_setting('banner_denied_message', trim((string)($_POST['banner_denied_message'] ?? '')));
     }
     // Optional logo uploads (header logo + watermark).
     @mkdir(__DIR__ . '/assets', 0775, true);
@@ -86,9 +88,13 @@ settings_nav('general');
 <form class="card" method="post" style="max-width:680px;border-color:#7a5c1c">
   <?= csrf_field() ?><input type="hidden" name="_banner_form" value="1">
   <h3 style="margin-top:0">System Availability Notice <span class="muted" style="font-size:12px;font-weight:400">(super admin only)</span></h3>
-  <p class="muted" style="font-size:13px">Turn on a banner shown to everyone, stating the system is available until the date you set.</p>
-  <label style="display:flex;gap:8px;align-items:center;font-size:14px;margin:6px 0 12px"><input type="checkbox" name="banner_enabled" value="1" <?= setting('banner_enabled') === '1' ? 'checked' : '' ?>> Show availability banner</label>
-  <div class="f" style="max-width:240px"><label class="f">Available until</label><input type="date" name="banner_until" value="<?= e(setting('banner_until')) ?>"></div>
+  <p class="muted" style="font-size:13px">Turn on a banner shown to everyone. After the date &amp; time below passes, only the super admin can log in — everyone else sees the “access denied” message.</p>
+  <label style="display:flex;gap:8px;align-items:center;font-size:14px;margin:6px 0 12px"><input type="checkbox" name="banner_enabled" value="1" <?= setting('banner_enabled') === '1' ? 'checked' : '' ?>> Show availability banner / enable lockout</label>
+  <div class="f" style="max-width:280px"><label class="f">Available until (date &amp; time)</label><input type="datetime-local" name="banner_until" value="<?= e(str_replace(' ', 'T', setting('banner_until'))) ?>"></div>
+  <div class="f"><label class="f">Banner message <span class="muted">(use <code>{until}</code> for the date/time)</span></label>
+    <textarea name="banner_message" placeholder="This system will be available until {until}."><?= e(setting('banner_message')) ?></textarea></div>
+  <div class="f"><label class="f">Access-denied message (shown when locked users try to log in)</label>
+    <textarea name="banner_denied_message" placeholder="This system is no longer available for use. Please contact the administrator."><?= e(setting('banner_denied_message')) ?></textarea></div>
   <button class="btn" type="submit" style="margin-top:10px"><i data-lucide="save"></i>Save notice</button>
 </form>
 <?php endif; ?>

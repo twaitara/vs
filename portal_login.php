@@ -7,7 +7,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     csrf_verify();
     $res = attempt_client_login(trim($_POST['email'] ?? ''), $_POST['password'] ?? '');
     if ($res === true) {
-        if (system_locked()) { client_logout(); $error = 'This system is no longer available for use. Please contact the administrator.'; }
+        if (system_locked()) { client_logout(); $error = denied_message(); }
         else redirect('portal.php');
     } else {
         $error = $res === 'locked' ? 'Too many attempts. Try again in 15 minutes.' : 'Invalid email or password.';
