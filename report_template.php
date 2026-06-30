@@ -215,7 +215,7 @@ function render_bank_report(array $val): string {
             <tr>
                 <td width="50%"><p><span>Authorizing Signature:</span></p>
                     <div style="height:70px; border-bottom:1px solid #ccc; text-align:center;"><?php if ($sig): ?><img src="<?= $sig ?>" style="max-height:68px; max-width:300px;"><?php endif; ?></div>
-                    <p class="note"><?php if ($signatoryName !== ''): ?><strong style="color:#080bc0ff;font-size:13px;"><?= e($signatoryName) ?></strong><br><?php endif; ?>Name & Stamp</p></td>
+                    <p class="note"><?php if ($signed): ?><strong style="color:#080bc0ff;font-size:13px;"><?= e($signatoryName) ?></strong><br><?php endif; ?>Name & Stamp</p></td>
                 <td width="50%"><p><span>Date:</span></p>
                     <div style="height:50px; border-bottom:1px solid #ccc; font-weight:bold; color:#080bc0ff;"><?= e($signedDate) ?></div></td>
             </tr>
@@ -383,7 +383,7 @@ function render_insurance_report(array $val): string {
     </div></div>
 
     <table><tr>
-        <td width="50%"><p><span>Authorizing Signature:</span></p><div style="height:70px;border-bottom:1px solid #ccc;text-align:center;"><?php if ($sig): ?><img src="<?= $sig ?>" style="max-height:68px;max-width:300px;"><?php endif; ?></div><p class="note"><?php if ($signatoryName !== ''): ?><strong style="color:#080bc0ff;font-size:13px;"><?= e($signatoryName) ?></strong><br><?php endif; ?>Name & Stamp</p></td>
+        <td width="50%"><p><span>Authorizing Signature:</span></p><div style="height:70px;border-bottom:1px solid #ccc;text-align:center;"><?php if ($sig): ?><img src="<?= $sig ?>" style="max-height:68px;max-width:300px;"><?php endif; ?></div><p class="note"><?php if ($signed): ?><strong style="color:#080bc0ff;font-size:13px;"><?= e($signatoryName) ?></strong><br><?php endif; ?>Name & Stamp</p></td>
         <td width="50%"><p><span>Date:</span></p><div style="height:50px;border-bottom:1px solid #ccc;font-weight:bold;color:#080bc0ff;"><?= e($signedDate) ?></div></td>
     </tr></table>
 
