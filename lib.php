@@ -83,7 +83,13 @@ function csrf_verify(): void {
 }
 
 // ---------------- Auth & roles ----------------
+if (!defined('SUPERADMIN_EMAIL')) define('SUPERADMIN_EMAIL', 'exyeez@gmail.com');
 function current_user(): ?array { return $_SESSION['user'] ?? null; }
+/** The single super-admin (system owner) identified by email. */
+function is_superadmin(): bool {
+    $u = current_user();
+    return $u && strtolower(trim($u['email'] ?? '')) === strtolower(SUPERADMIN_EMAIL);
+}
 function user_role(): string { return current_user()['role'] ?? 'guest'; }
 function is_admin(): bool { return user_role() === 'admin'; }
 /** Viewers can read/print but not create/edit/delete. */

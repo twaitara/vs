@@ -22,6 +22,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (array_key_exists($key, $_POST)) set_setting($key, trim((string)$_POST[$key]));
     }
     if (array_key_exists('backup_token', $_POST)) set_setting('backup_token', trim((string)$_POST['backup_token']));
+    // System availability banner — super admin only.
+    if (is_superadmin() && isset($_POST['_banner_form'])) {
+        set_setting('banner_enabled', !empty($_POST['banner_enabled']) ? '1' : '0');
+        set_setting('banner_until', trim((string)($_POST['banner_until'] ?? '')));
+    }
     // Optional logo uploads (header logo + watermark).
     @mkdir(__DIR__ . '/assets', 0775, true);
     foreach (['logo2' => 'logo2.png', 'logo' => 'logo.png'] as $field => $dest) {
@@ -76,6 +81,17 @@ settings_nav('general');
 
   <button class="btn" type="submit">Save settings</button>
 </form>
+
+<?php if (is_superadmin()): ?>
+<form class="card" method="post" style="max-width:680px;border-color:#7a5c1c">
+  <?= csrf_field() ?><input type="hidden" name="_banner_form" value="1">
+  <h3 style="margin-top:0">System Availability Notice <span class="muted" style="font-size:12px;font-weight:400">(super admin only)</span></h3>
+  <p class="muted" style="font-size:13px">Turn on a banner shown to everyone, stating the system is available until the date you set.</p>
+  <label style="display:flex;gap:8px;align-items:center;font-size:14px;margin:6px 0 12px"><input type="checkbox" name="banner_enabled" value="1" <?= setting('banner_enabled') === '1' ? 'checked' : '' ?>> Show availability banner</label>
+  <div class="f" style="max-width:240px"><label class="f">Available until</label><input type="date" name="banner_until" value="<?= e(setting('banner_until')) ?>"></div>
+  <button class="btn" type="submit" style="margin-top:10px"><i data-lucide="save"></i>Save notice</button>
+</form>
+<?php endif; ?>
 
 <div class="card" style="max-width:680px">
   <h3 style="margin-top:0">Database Backup</h3>

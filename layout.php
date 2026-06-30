@@ -75,6 +75,8 @@ function layout_header(string $title, string $active = ''): void {
   .content{padding:24px;max-width:none;width:100%}
   .flash{background:#0f3d24;border:1px solid #1c7a47;color:#b8f5d0;padding:10px 14px;border-radius:8px;margin-bottom:16px}
   .flash-err{background:#3d0f0f;border-color:#7a1c1c;color:#f5c0c0}
+  .sysbanner{display:flex;align-items:center;gap:8px;justify-content:center;background:linear-gradient(90deg,#7a5c1c,#9a7320);color:#fff;padding:9px 14px;border-radius:8px;margin-bottom:16px;font-size:13px;font-weight:600}
+  .sysbanner i{width:16px;height:16px}
   #toasts{position:fixed;top:16px;right:16px;z-index:3000;display:flex;flex-direction:column;gap:8px}
   .toast{background:#171c22;border:1px solid #1c7a47;color:#b8f5d0;padding:11px 16px;border-radius:8px;font-size:13px;box-shadow:0 6px 24px rgba(0,0,0,.35);max-width:320px;animation:tin .25s ease}
   .toast.err{border-color:#7a1c1c;color:#f5c0c0}
@@ -310,6 +312,9 @@ function layout_header(string $title, string $active = ''): void {
       <div class="sp-sub">Please wait a moment</div>
     </div></div>
     <div class="content">
+      <?php if (setting('banner_enabled') === '1' && ($bu = setting('banner_until'))): ?>
+        <div class="sysbanner"><i data-lucide="alert-triangle"></i> This system will be available until <strong><?= e(ddate($bu)) ?></strong>.</div>
+      <?php endif; ?>
       <?php if ($fl): ?><script>window.__flash = <?= json_encode($fl) ?>;</script><?php endif; ?>
 <?php }
 
