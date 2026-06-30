@@ -38,7 +38,7 @@ $errors = [];
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     csrf_verify();
     if (isset($_POST['assessed_value'])) $_POST['assessed_value'] = str_replace(',', '', $_POST['assessed_value']);
-    $required = ['reg_no' => 'Reg Number', 'make' => 'Make/Model', 'customer_name' => 'Customer Name', 'assessed_value' => 'Assessed Value'];
+    $required = ['reg_no' => 'Reg Number']; // save early; the rest can be completed later
     foreach ($required as $f => $lbl) if (trim((string)($_POST[$f] ?? '')) === '') $errors[$f] = 'Required';
     if (!$errors) {
         $extra = (!$id && column_exists('valuations', 'report_no')) ? ['report_no' => next_report_no('valuations')] : [];
@@ -97,10 +97,10 @@ layout_header($id ? 'Edit Insurance Valuation' : 'New Insurance Valuation', 'ins
   <fieldset><legend>Vehicle & Ownership Details</legend><div class="grid">
     <?= f_input('reg_no','Reg Number',$row,'text',true) ?>
     <?= f_input('country_of_origin','Country of Origin',$row) ?>
-    <?= f_input('make','Make/Model',$row,'text',true) ?>
+    <?= f_input('make','Make/Model',$row,'text',false) ?>
     <?= f_input('chasis_no','Chasis No.',$row) ?>
     <?= f_input('air_bags_no','Number of Airbags',$row,'number') ?>
-    <?= f_input('customer_name','Customer Name',$row,'text',true) ?>
+    <?= f_input('customer_name','Customer Name',$row,'text',false) ?>
     <?= f_input('phone_no','Phone Number',$row) ?>
     <?= f_input('inspection_location','Inspection Location',$row) ?>
     <?= f_select('client','Client','clients',$row,true) ?>
@@ -143,7 +143,7 @@ layout_header($id ? 'Edit Insurance Valuation' : 'New Insurance Valuation', 'ins
   <?php endforeach; ?>
 
   <fieldset><legend>Vehicle Valuation</legend><div class="grid">
-    <?= f_money('assessed_value','Assessed Value',$row,true,true) ?>
+    <?= f_money('assessed_value','Assessed Value',$row,false,true) ?>
     <?= f_input('inspection_date','Inspection Date',$row,'date') ?>
     <?= f_input('inspection_officer','Inspection Officer',$row) ?>
     <div class="f"><label class="f">Status</label><select name="status">

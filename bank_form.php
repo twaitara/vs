@@ -20,7 +20,7 @@ $errors = [];
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     csrf_verify();
     foreach (['market_value', 'forced_value'] as $m) if (isset($_POST[$m])) $_POST[$m] = str_replace(',', '', $_POST[$m]);
-    $required = ['reg_no' => 'Reg Number', 'make' => 'Make/Model', 'customer_name' => 'Customer Name', 'market_value' => 'Market Value'];
+    $required = ['reg_no' => 'Reg Number']; // save early; the rest can be completed later
     foreach ($required as $f => $lbl) if (trim((string)($_POST[$f] ?? '')) === '') $errors[$f] = 'Required';
     if (!$errors) {
         $files = handle_uploads($_POST['reg_no'] ?? '', $row);
@@ -45,10 +45,10 @@ layout_header($id ? 'Edit Bank Valuation' : 'New Bank Valuation', 'bank');
     <?= f_input('reg_no','Reg Number',$row,'text',true) ?>
     <?= f_input('country_of_origin','Country of Origin',$row) ?>
     <?= f_input('serial_no','Serial No.',$row) ?>
-    <?= f_input('make','Make/Model',$row,'text',true) ?>
+    <?= f_input('make','Make/Model',$row,'text',false) ?>
     <?= f_input('chasis_no','Chasis No.',$row) ?>
     <?= f_input('body_type','Body Type',$row) ?>
-    <?= f_input('customer_name','Customer Name',$row,'text',true) ?>
+    <?= f_input('customer_name','Customer Name',$row,'text',false) ?>
     <?= f_input('phone_no','Phone Number',$row) ?>
     <?= f_input('inspection_location','Inspection Location',$row) ?>
     <?= f_select('valuation_type','Valuation Type','types',$row,true) ?>
@@ -82,7 +82,7 @@ layout_header($id ? 'Edit Bank Valuation' : 'New Bank Valuation', 'bank');
   </div></fieldset>
 
   <fieldset><legend>Vehicle Valuation</legend><div class="grid">
-    <?= f_money('market_value','Market Value',$row,true,true) ?>
+    <?= f_money('market_value','Market Value',$row,false,true) ?>
     <?= f_money('forced_value','Forced Value',$row,false) ?>
     <?= f_text('note_value','Note Value',$row,'W/S value estimated at 00000/= R/CD/TV value estimated at 00000/= REMARKS:') ?>
     <?= f_text('notes','N.B.',$row) ?>
