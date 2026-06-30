@@ -1,6 +1,6 @@
 <?php
 require_once __DIR__ . '/layout.php';
-require_login();
+require_admin();
 
 /** Render a simple add/edit/delete admin page for a lookup table (id, name). */
 function lookup_admin(string $table, string $title, string $subkey): void {

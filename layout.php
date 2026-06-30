@@ -10,8 +10,8 @@ function layout_header(string $title, string $active = ''): void {
         'insurance' => ['label' => 'Insurance Valuations', 'href' => 'insurance_list.php',  'icon' => 'shield-check'],
     ];
     if (is_admin()) $nav['analytics'] = ['label' => 'Analytics', 'href' => 'analytics.php', 'icon' => 'bar-chart-3'];
-    // Everything else lives under the Settings hub.
-    if (can_edit()) $nav['settings'] = ['label' => 'Settings', 'href' => is_admin() ? 'settings.php' : 'clients.php', 'icon' => 'settings'];
+    // Settings hub is admin-only.
+    if (is_admin()) $nav['settings'] = ['label' => 'Settings', 'href' => 'settings.php', 'icon' => 'settings'];
     $fl = flash();
     $lastBackup = ''; $bkOverdue = false;
     if (is_admin()) {

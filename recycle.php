@@ -1,6 +1,6 @@
 <?php
 require_once __DIR__ . '/layout.php';
-require_can_edit();
+require_admin();
 
 $tables = ['bank' => 'bankvaluations', 'insurance' => 'valuations'];
 
