@@ -12,6 +12,7 @@ $dfrom=$_GET['dfrom']??''; $dto=$_GET['dto']??''; $vmin=$_GET['vmin']??''; $vmax
 
 $cond=[]; $params=[];
 if (column_exists($table,'deleted_at')) $cond[]='deleted_at IS NULL';
+if (!sees_all_valuations() && column_exists($table,'created_by')){ $cond[]='created_by = ?'; $params[]=(int)(current_user()['id']??0); }
 if ($q!==''){ $cond[]='(reg_no LIKE ? OR make LIKE ? OR customer_name LIKE ?)'; $l="%$q%"; array_push($params,$l,$l,$l); }
 if ($client!==''){ $cond[]='client = ?'; $params[]=$client; }
 if ($vtype!==''){ $cond[]='valuation_type = ?'; $params[]=$vtype; }

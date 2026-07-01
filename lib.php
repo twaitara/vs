@@ -452,6 +452,16 @@ function user_list_for_valuer(): array {
     return $out;
 }
 
+/** Officers may only touch their own valuations; admins & coordinators any. Aborts otherwise. */
+function require_own_valuation(array $row): void {
+    if (sees_all_valuations()) return;
+    if (!array_key_exists('created_by', $row)) return; // pre-migration safety
+    if ((int)($row['created_by'] ?? 0) !== (int)(current_user()['id'] ?? -1)) {
+        flash('That valuation belongs to another valuer.', 'err');
+        redirect('dashboard.php');
+    }
+}
+
 /** Kennet officers (valuers) available to receive an assignment: id => "Name (INI)". */
 function officer_list(): array {
     $out = [];

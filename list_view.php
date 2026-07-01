@@ -64,6 +64,10 @@ function render_list(array $cfg): void {
     // ---- WHERE ----
     $cond = [];  $params = [];
     if ($soft) $cond[] = 'deleted_at IS NULL';
+    // Officers (valuers) see only their own valuations; admins & coordinators see all.
+    if (!sees_all_valuations() && column_exists($table, 'created_by')) {
+        $cond[] = 'created_by = ?'; $params[] = (int)(current_user()['id'] ?? 0);
+    }
     if ($q !== '')      { $cond[] = '(reg_no LIKE ? OR make LIKE ? OR customer_name LIKE ?)'; $l="%$q%"; array_push($params,$l,$l,$l); }
     if ($client !== '') { $cond[] = 'client = ?';         $params[] = $client; }
     if ($vtype !== '')  { $cond[] = 'valuation_type = ?'; $params[] = $vtype; }

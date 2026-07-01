@@ -7,8 +7,16 @@ function dash_scalar(string $sql, array $p = []) {
     try { $st = db()->prepare($sql); $st->execute($p); return $st->fetchColumn(); }
     catch (Throwable $e) { return 0; }
 }
-$bankWhere = not_deleted_sql('bankvaluations');
-$insWhere  = not_deleted_sql('valuations');
+// Officers see only their own figures; admins & coordinators see everything.
+$own = sees_all_valuations() ? '' : ('created_by = ' . (int)(current_user()['id'] ?? 0));
+function dash_where(string $t, string $own): string {
+    $c = [];
+    if (column_exists($t, 'deleted_at')) $c[] = 'deleted_at IS NULL';
+    if ($own !== '' && column_exists($t, 'created_by')) $c[] = $own;
+    return $c ? ' WHERE ' . implode(' AND ', $c) : '';
+}
+$bankWhere = dash_where('bankvaluations', $own);
+$insWhere  = dash_where('valuations', $own);
 
 $bankTotal = (int)dash_scalar("SELECT COUNT(*) FROM bankvaluations" . $bankWhere);
 $insTotal  = (int)dash_scalar("SELECT COUNT(*) FROM valuations" . $insWhere);

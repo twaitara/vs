@@ -8,10 +8,12 @@ $id   = $_GET['id'] ?? null;
 if ($type === 'insurance') {
     $val = load_insurance_valuation($id);
     if (!$val) { http_response_code(404); exit('Valuation not found'); }
+    require_own_valuation($val);
     $html = render_insurance_report($val);
 } else {
     $val = load_bank_valuation($id);
     if (!$val) { http_response_code(404); exit('Valuation not found'); }
+    require_own_valuation($val);
     $html = render_bank_report($val);
 }
 

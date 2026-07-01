@@ -16,6 +16,7 @@ $COLUMNS = [
 $id  = $_GET['id'] ?? ($_POST['id'] ?? null);
 $row = load_row('bankvaluations', $id);
 
+if ($id) require_own_valuation($row);
 if ($id && !empty($row['signed_at']) && !is_admin()) {
     flash('This report is signed and can only be edited by an admin.', 'err');
     redirect('bank_list.php');
