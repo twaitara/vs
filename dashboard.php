@@ -84,6 +84,7 @@ layout_header('Dashboard', 'dashboard');
     <div id="recentPager" class="recent-pager"></div>
   </div>
 
+  <?php if (is_admin()): ?>
   <div class="panel">
     <div class="panel-h">Top Clients</div>
     <table class="list">
@@ -102,6 +103,7 @@ layout_header('Dashboard', 'dashboard');
     </div>
     <?php endif; ?>
   </div>
+  <?php endif; ?>
 </div>
 
 <style>
