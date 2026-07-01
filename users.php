@@ -5,6 +5,28 @@ require_admin();
 $ROLES = ['admin' => 'Admin', 'valuer' => 'Valuer', 'viewer' => 'Viewer (read-only)'];
 $me = current_user();
 
+/** Email a staff member their system login link and credentials. */
+function staff_email(string $to, ?string $name, string $password): bool {
+    $company = setting('company_name', 'Kennet Valuation');
+    $from    = setting('company_email', 'no-reply@' . ($_SERVER['SERVER_NAME'] ?? 'localhost'));
+    $scheme  = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+    $host    = $_SERVER['HTTP_HOST'] ?? $_SERVER['SERVER_NAME'] ?? '';
+    $link    = $scheme . '://' . $host . url('login.php');
+    $hi = $name ? 'Dear ' . $name . ',' : 'Hello,';
+    $subject = 'Your ' . $company . ' System Login';
+    $body = '<div style="font-family:Arial,sans-serif;font-size:14px;color:#222;line-height:1.6">'
+        . '<p>' . htmlspecialchars($hi) . '</p>'
+        . '<p>An account has been created for you on the ' . htmlspecialchars($company) . ' system.</p>'
+        . '<table cellpadding="0" cellspacing="0" style="margin:14px 0">'
+        . '<tr><td style="padding:4px 0"><b>System&nbsp;link:</b></td><td style="padding:4px 0 4px 12px"><a href="' . $link . '">' . $link . '</a></td></tr>'
+        . '<tr><td style="padding:4px 0"><b>Username:</b></td><td style="padding:4px 0 4px 12px">' . htmlspecialchars($to) . '</td></tr>'
+        . '<tr><td style="padding:4px 0"><b>Password:</b></td><td style="padding:4px 0 4px 12px">' . htmlspecialchars($password) . '</td></tr></table>'
+        . '<p>Please keep these details secure and change your password after your first login (Profile).</p>'
+        . '<p>Regards,<br>' . htmlspecialchars($company) . '</p></div>';
+    $headers = "From: $company <$from>\r\nReply-To: $from\r\nMIME-Version: 1.0\r\nContent-Type: text/html; charset=UTF-8\r\n";
+    return @mail($to, $subject, $body, $headers);
+}
+
 // ---- Actions ----
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     csrf_verify();
@@ -17,7 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $errors = [];
 
     // Protect the super admin account: only the super admin may change it.
-    if ($uid && in_array($action, ['toggle', 'update', 'resetpw'], true)) {
+    if ($uid && in_array($action, ['toggle', 'update', 'resetpw', 'emaillogin'], true)) {
         $tm = db()->prepare('SELECT email FROM users WHERE id=?'); $tm->execute([$uid]);
         if (strtolower(trim((string)$tm->fetchColumn())) === strtolower(SUPERADMIN_EMAIL) && !is_superadmin()) {
             flash('The super admin account is protected and can only be managed by the super admin.', 'err');
@@ -43,7 +65,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (column_exists('users', 'can_sign')) db()->prepare('UPDATE users SET can_sign=? WHERE id=?')->execute([!empty($_POST['can_sign']) ? 1 : 0, $newId]);
             if (column_exists('users', 'initials')) db()->prepare('UPDATE users SET initials=? WHERE id=?')->execute([$initials, $newId]);
             audit('create', 'user', $newId, $email);
-            flash('User created.');
+            $msg = 'User created.';
+            if (!empty($_POST['sendmail'])) {
+                $msg .= staff_email($email, $name, $pass) ? ' Login emailed to ' . $email . '.' : ' (Email could not be sent — check mail settings.)';
+            }
+            flash($msg);
             redirect('users.php');
         }
     } elseif ($action === 'update' && $uid) {
@@ -74,6 +100,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $st->execute([password_hash($pass, PASSWORD_BCRYPT), $uid]);
         audit('reset_password', 'user', $uid);
         flash('Password reset.');
+        redirect('users.php');
+    } elseif ($action === 'emaillogin' && $uid) {
+        $st = db()->prepare('SELECT * FROM users WHERE id=?'); $st->execute([$uid]); $u = $st->fetch();
+        if ($u) {
+            $new = bin2hex(random_bytes(4)); // fresh password (old one is unrecoverable)
+            db()->prepare('UPDATE users SET password=?, updated_at=NOW() WHERE id=?')->execute([password_hash($new, PASSWORD_BCRYPT), $uid]);
+            $ok = staff_email($u['email'], $u['name'], $new);
+            audit('email_login', 'user', $uid, $u['email']);
+            flash($ok ? ('New password generated and emailed to ' . $u['email'] . '.') : 'Password was reset but the email failed to send.', $ok ? 'ok' : 'err');
+        }
         redirect('users.php');
     }
     if ($errors) { flash(implode(' ', $errors), 'err'); }
@@ -119,6 +155,7 @@ settings_nav('users');
     <label style="display:flex;gap:8px;align-items:center;font-size:13px;color:var(--mut);margin:2px 0 4px"><input type="checkbox" name="can_sign" value="1" <?= !empty($edit['can_sign']) ? 'checked' : '' ?>> Signing mandate — can sign &amp; finalise reports</label>
     <?php if (!$edit): ?>
       <div class="f"><label class="f">Password</label><input type="password" name="password" required minlength="6"></div>
+      <label style="display:flex;gap:8px;align-items:center;font-size:13px;color:var(--mut);margin:2px 0 4px"><input type="checkbox" name="sendmail" value="1" checked> Email the login link &amp; credentials to this address</label>
     <?php endif; ?>
     <div style="margin-top:12px">
       <button class="btn" type="submit"><?= $edit ? 'Save changes' : 'Create user' ?></button>
@@ -155,6 +192,7 @@ settings_nav('users');
                 </form>
               <?php endif; ?>
               <button class="rbtn" type="button" style="cursor:pointer" onclick="resetPw(<?= (int)$usr['id'] ?>,'<?= e($usr['name']) ?>')">Reset PW</button>
+              <form method="post" style="display:inline" onsubmit="return confirm('Generate a new password and email the login to <?= e($usr['email']) ?>?')"><?= csrf_field() ?><input type="hidden" name="action" value="emaillogin"><input type="hidden" name="id" value="<?= (int)$usr['id'] ?>"><button class="rbtn" type="submit"><i data-lucide="mail"></i> Email login</button></form>
             <?php endif; ?>
           </td>
         </tr>
