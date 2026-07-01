@@ -142,6 +142,28 @@ function deny_unavailable(): void {
 function require_login(): void {
     if (!current_user()) redirect('login.php');
     if (system_locked() && !is_superadmin()) { logout(); deny_unavailable(); }
+    touch_activity();
+}
+
+/** Record that the current user is online and what they're doing. */
+function touch_activity(?string $activity = null): void {
+    $u = current_user();
+    if (!$u) return;
+    if ($activity === null) {
+        $map = ['dashboard.php'=>'Dashboard','bank_list.php'=>'Bank Valuations','insurance_list.php'=>'Insurance Valuations',
+            'analytics.php'=>'Analytics','users.php'=>'Users','settings.php'=>'Settings','audit.php'=>'Audit Log',
+            'recycle.php'=>'Recycle Bin','clients.php'=>'Clients','insurers.php'=>'Insurers','types.php'=>'Valuation Types',
+            'profile.php'=>'Profile','bank_form.php'=>'Bank valuation form','insurance_form.php'=>'Insurance valuation form'];
+        $base = basename($_SERVER['SCRIPT_NAME'] ?? '');
+        $activity = $map[$base] ?? ucwords(str_replace(['_', '.php'], [' ', ''], $base));
+    }
+    $loginAt = (int)($_SESSION['login_at'] ?? time());
+    try {
+        db()->prepare("INSERT INTO user_activity (user_id,name,login_at,last_seen,activity)
+                       VALUES (?,?,FROM_UNIXTIME(?),NOW(),?)
+                       ON DUPLICATE KEY UPDATE last_seen=NOW(), activity=VALUES(activity), name=VALUES(name)")
+           ->execute([$u['id'], $u['name'], $loginAt, mb_substr($activity, 0, 250)]);
+    } catch (Throwable $e) { /* table may not exist yet */ }
 }
 function require_admin(): void {
     require_login();
@@ -189,6 +211,7 @@ function attempt_login(string $email, string $password) {
         unset($u['password']);
         session_regenerate_id(true);
         $_SESSION['user'] = $u;
+        $_SESSION['login_at'] = time();
         audit('login', 'user', $u['id']);
         return true;
     }
@@ -196,7 +219,10 @@ function attempt_login(string $email, string $password) {
 }
 
 function logout(): void {
-    if ($u = current_user()) audit('logout', 'user', $u['id']);
+    if ($u = current_user()) {
+        audit('logout', 'user', $u['id']);
+        try { db()->prepare('DELETE FROM user_activity WHERE user_id=?')->execute([$u['id']]); } catch (Throwable $e) {}
+    }
     $_SESSION = []; session_destroy();
 }
 

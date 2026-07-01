@@ -20,6 +20,7 @@ if ($id && !empty($row['signed_at']) && !is_admin()) {
     flash('This report is signed and can only be edited by an admin.', 'err');
     redirect('bank_list.php');
 }
+touch_activity(($id ? 'Editing' : 'New') . ' bank valuation' . (!empty($row['reg_no']) ? ' — ' . $row['reg_no'] : ''));
 
 $errors = [];
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {

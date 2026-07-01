@@ -33,6 +33,12 @@ try {
     $topClients = $st->fetchAll();
 } catch (Throwable $e) {}
 
+$online = [];
+if (is_admin()) {
+    try { $online = db()->query("SELECT * FROM user_activity WHERE last_seen > (NOW() - INTERVAL 5 MINUTE) ORDER BY last_seen DESC")->fetchAll(); }
+    catch (Throwable $e) {}
+}
+
 $cur = setting('currency', CURRENCY);
 $hour = (int)date('G');
 $greet = $hour < 12 ? 'Good morning' : ($hour < 17 ? 'Good afternoon' : 'Good evening');
@@ -105,6 +111,32 @@ layout_header('Dashboard', 'dashboard');
   </div>
   <?php endif; ?>
 </div>
+
+<?php if (is_admin()): ?>
+<div class="panel" style="margin-top:18px">
+  <div class="panel-h"><span><i data-lucide="radio" style="width:16px;height:16px;vertical-align:-3px;color:#3ddc84"></i> Currently Online</span> <span class="muted" style="font-weight:400;font-size:12px">active in the last 5 minutes</span></div>
+  <table class="list">
+    <thead><tr><th>User</th><th>Working on</th><th>Logged in for</th><th>Last active</th></tr></thead>
+    <tbody>
+    <?php if (!$online): ?>
+      <tr><td colspan="4" class="muted">No one is online right now.</td></tr>
+    <?php else: foreach ($online as $o):
+        $mins = max(0, (int)floor((time() - strtotime($o['login_at'])) / 60));
+        $dur  = $mins >= 60 ? intdiv($mins, 60) . 'h ' . ($mins % 60) . 'm' : $mins . 'm';
+        $seen = max(0, time() - strtotime($o['last_seen']));
+        $seenTxt = $seen < 60 ? $seen . 's ago' : (int)floor($seen / 60) . 'm ago';
+    ?>
+      <tr>
+        <td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#3ddc84;margin-right:7px"></span><?= e($o['name']) ?></td>
+        <td><?= e($o['activity']) ?></td>
+        <td><?= e($dur) ?></td>
+        <td class="muted"><?= e($seenTxt) ?></td>
+      </tr>
+    <?php endforeach; endif; ?>
+    </tbody>
+  </table>
+</div>
+<?php endif; ?>
 
 <style>
   .hero{display:flex;justify-content:space-between;align-items:center;gap:18px;flex-wrap:wrap;padding:24px 26px;border-radius:18px;margin-bottom:20px;border:1px solid var(--line);position:relative;overflow:hidden;
