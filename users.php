@@ -2,7 +2,7 @@
 require_once __DIR__ . '/layout.php';
 require_admin();
 
-$ROLES = ['admin' => 'Admin', 'valuer' => 'Valuer', 'viewer' => 'Viewer (read-only)'];
+$ROLES = ['admin' => 'Admin', 'coordinator' => 'Coordinator (assign only)', 'valuer' => 'Valuer / Officer', 'viewer' => 'Viewer (read-only)'];
 $me = current_user();
 
 /** Email a staff member their system login link and credentials. */

@@ -99,6 +99,15 @@ function can_sign(): bool {
     $u = current_user();
     return $u && (is_admin() || (int)($u['can_sign'] ?? 0) === 1);
 }
+/** Kennet coordinator: triages requests and assigns them, but no settings/edit/sign. */
+function is_coordinator(): bool { return user_role() === 'coordinator'; }
+/** May see all requests and assign them to officers. */
+function can_assign(): bool { return is_admin() || is_coordinator(); }
+/** Admins & coordinators see every valuation; officers (valuers) are scoped to their own. */
+function sees_all_valuations(): bool { return is_admin() || is_coordinator(); }
+
+/** Portal user is a client-side admin (manages their company's portal). */
+function client_is_admin(): bool { $c = current_client(); return $c && ($c['role'] ?? 'officer') === 'admin'; }
 
 /** Availability cut-off timestamp (date or date+time). */
 function banner_until_ts(): ?int {

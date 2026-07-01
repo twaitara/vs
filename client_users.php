@@ -42,6 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email  = trim($_POST['email'] ?? '');
     $cid    = (int)($_POST['client_id'] ?? 0);
     $uid    = (int)($_POST['id'] ?? 0);
+    $prole  = ($_POST['role'] ?? 'officer') === 'admin' ? 'admin' : 'officer';
     $errors = [];
 
     if ($action === 'create') {
@@ -56,7 +57,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!$errors) {
             $st = db()->prepare('INSERT INTO client_users (client_id,name,email,password,active,created_at,updated_at) VALUES (?,?,?,?,1,NOW(),NOW())');
             $st->execute([$cid, $name, $email, password_hash($pass, PASSWORD_BCRYPT)]);
-            audit('create', 'client_user', db()->lastInsertId(), $email);
+            $nid = (int)db()->lastInsertId();
+            if (column_exists('client_users', 'role')) db()->prepare('UPDATE client_users SET role=? WHERE id=?')->execute([$prole, $nid]);
+            audit('create', 'client_user', $nid, $email);
             $msg = 'Portal login created.';
             if (!empty($_POST['sendmail'])) {
                 $msg .= portal_email($email, $name, $pass) ? ' Credentials emailed to ' . $email . '.' : ' (Email could not be sent — check mail settings.)';
@@ -69,6 +72,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!$errors) {
             $st = db()->prepare('UPDATE client_users SET client_id=?, name=?, email=?, updated_at=NOW() WHERE id=?');
             $st->execute([$cid, $name, $email, $uid]);
+            if (column_exists('client_users', 'role')) db()->prepare('UPDATE client_users SET role=? WHERE id=?')->execute([$prole, $uid]);
             audit('update', 'client_user', $uid, $email);
             flash('Portal login updated.'); redirect('client_users.php');
         }
@@ -118,6 +122,10 @@ settings_nav('portal');
       <?php foreach ($clients as $id => $nm): ?><option value="<?= $id ?>" <?= (int)($edit['client_id'] ?? 0) === $id ? 'selected' : '' ?>><?= e($nm) ?></option><?php endforeach; ?>
     </select></div>
     <div class="f"><label class="f">Contact Name</label><input name="name" value="<?= e($edit['name'] ?? '') ?>"></div>
+    <div class="f"><label class="f">Portal Role</label><select name="role">
+      <option value="officer" <?= ($edit['role'] ?? 'officer') === 'officer' ? 'selected' : '' ?>>Officer (requests &amp; sees own)</option>
+      <option value="admin" <?= ($edit['role'] ?? '') === 'admin' ? 'selected' : '' ?>>Portal Admin (manages company)</option>
+    </select></div>
     <div class="f"><label class="f">Email (login)</label><input type="email" name="email" required value="<?= e($edit['email'] ?? '') ?>"></div>
     <?php if (!$edit): ?>
       <div class="f"><label class="f">Password</label><input type="password" name="password" required minlength="6"></div>
@@ -132,13 +140,14 @@ settings_nav('portal');
   <div class="card">
     <h3 style="margin-top:0">Portal Logins</h3>
     <table class="list">
-      <thead><tr><th>Client</th><th>Contact</th><th>Email</th><th>Status</th><th>Actions</th></tr></thead>
+      <thead><tr><th>Client</th><th>Contact</th><th>Role</th><th>Email</th><th>Status</th><th>Actions</th></tr></thead>
       <tbody>
-      <?php if (!$rows): ?><tr><td colspan="5" class="muted">No portal logins yet.</td></tr>
+      <?php if (!$rows): ?><tr><td colspan="6" class="muted">No portal logins yet.</td></tr>
       <?php else: foreach ($rows as $r): ?>
         <tr>
           <td><?= e($clients[$r['client_id']] ?? ('#' . $r['client_id'])) ?></td>
           <td><?= e($r['name']) ?></td>
+          <td><?= ($r['role'] ?? 'officer') === 'admin' ? '<span class="badge b-green">Portal Admin</span>' : 'Officer' ?></td>
           <td><?= e($r['email']) ?></td>
           <td><?= ((int)$r['active'] === 1) ? '<span style="color:#36a35f">Active</span>' : '<span style="color:#d41d1d">Disabled</span>' ?></td>
           <td class="actions">
