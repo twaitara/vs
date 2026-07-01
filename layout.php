@@ -616,8 +616,9 @@ function form_assets(): void { ?>
     var saved=localStorage.getItem(key);
     if(saved){ try{
       var prev=JSON.parse(saved); var when=prev.t?new Date(prev.t):null;
+      var reg=(prev.d&&prev.d.reg_no)?(''+prev.d.reg_no).replace(/[<>&"]/g,''):'';
       var bar=document.createElement('div'); bar.className='draft-bar';
-      bar.innerHTML='<span><i data-lucide="rotate-ccw" style="width:15px;height:15px;vertical-align:-3px"></i> Unsaved draft found'+(when?(' from '+clock(when)):'')+'.</span> <a id="dRestore">Restore</a> <a id="dDiscard">Discard</a>';
+      bar.innerHTML='<span><i data-lucide="rotate-ccw" style="width:15px;height:15px;vertical-align:-3px"></i> Unsaved draft found'+(reg?(' for Reg No <b>'+reg+'</b>'):'')+(when?(' from '+clock(when)):'')+'.</span> <a id="dRestore">Restore</a> <a id="dDiscard">Discard</a>';
       df.parentNode.insertBefore(bar, df); if(window.refreshIcons)refreshIcons();
       bar.querySelector('#dRestore').onclick=function(){var o=prev.d||prev;fields().forEach(function(el){if(o[el.name]!=null){if(el.type==='radio'){el.checked=(el.value===o[el.name]);}else el.value=o[el.name];}});
         df.querySelectorAll('input.money').forEach(function(m){m.dispatchEvent(new Event('input'));}); bar.remove(); note.textContent='Draft restored';};
@@ -625,6 +626,8 @@ function form_assets(): void { ?>
     }catch(e){} }
 
     function save(){
+      var reg=df.querySelector('[name="reg_no"]');
+      if(!reg || reg.value.trim()===''){ note.classList.remove('ok'); note.textContent='Autosave starts once you enter the Reg No'; return; }
       var o={}; fields().forEach(function(el){ if(el.type==='radio'){ if(el.checked)o[el.name]=el.value; } else o[el.name]=el.value; });
       try{ localStorage.setItem(key, JSON.stringify({t:Date.now(), d:o})); note.textContent='Draft saved '+clock(new Date()); note.classList.add('ok'); }catch(e){}
     }

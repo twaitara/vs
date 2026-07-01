@@ -16,6 +16,11 @@ $COLUMNS = [
 $id  = $_GET['id'] ?? ($_POST['id'] ?? null);
 $row = load_row('bankvaluations', $id);
 
+if ($id && !empty($row['signed_at']) && !is_admin()) {
+    flash('This report is signed and can only be edited by an admin.', 'err');
+    redirect('bank_list.php');
+}
+
 $errors = [];
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     csrf_verify();

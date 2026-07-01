@@ -214,7 +214,7 @@ function render_list(array $cfg): void {
             <td><?php $cb = $r['created_by'] ?? 0; $ini = $userInitials[$cb] ?? ''; $nm = $userNames[$cb] ?? '';
               echo $ini !== '' ? '<span class="badge b-grey" title="' . e($nm) . '">' . e($ini) . '</span>' : '<span class="muted">—</span>'; ?></td>
             <td class="actions">
-              <?php if (can_edit()): ?>
+              <?php if (can_edit() && (empty($r['signed_at']) || is_admin())): ?>
                 <a class="rbtn ico" href="<?= url($cfg['form_page'].'?id='.$r['id']) ?>" title="Edit"><i data-lucide="pencil"></i></a>
               <?php endif; ?>
               <a class="rbtn ico" href="#" onclick="openPreview(<?= (int)$r['id'] ?>,'<?= e($cfg['nav']) ?>');return false;" title="Preview report"><i data-lucide="eye"></i></a>
