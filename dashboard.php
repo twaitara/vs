@@ -34,8 +34,13 @@ try {
 } catch (Throwable $e) {}
 
 $online = [];
-try { $online = db()->query("SELECT * FROM user_activity WHERE last_seen > (NOW() - INTERVAL 5 MINUTE) ORDER BY last_seen DESC")->fetchAll(); }
-catch (Throwable $e) {}
+try {
+    $rows = db()->query("SELECT user_id, name, activity,
+                TIMESTAMPDIFF(MINUTE, login_at, NOW()) AS mins_online
+              FROM user_activity WHERE last_seen > (NOW() - INTERVAL 5 MINUTE) ORDER BY last_seen DESC")->fetchAll();
+    $seen = []; // one line per user
+    foreach ($rows as $r) { if (isset($seen[$r['user_id']])) continue; $seen[$r['user_id']] = 1; $online[] = $r; }
+} catch (Throwable $e) {}
 
 $cur = setting('currency', CURRENCY);
 $hour = (int)date('G');
@@ -88,50 +93,39 @@ layout_header('Dashboard', 'dashboard');
     <div id="recentPager" class="recent-pager"></div>
   </div>
 
-  <?php if (is_admin()): ?>
-  <div class="panel">
-    <div class="panel-h">Top Clients</div>
-    <table class="list">
-      <thead><tr><th>Client</th><th>Valuations</th></tr></thead>
-      <tbody>
-      <?php if (!$topClients): ?><tr><td colspan="2" class="muted">No data.</td></tr>
-      <?php else: foreach ($topClients as $c): ?>
-        <tr><td><?= e(lookup_name('clients', $c['client'])) ?: '<span class="muted">—</span>' ?></td><td><?= (int)$c['c'] ?></td></tr>
-      <?php endforeach; endif; ?>
-      </tbody>
-    </table>
-    <?php if (can_edit()): ?>
-    <div class="quick">
-      <a class="btn" href="<?= url('bank_form.php') ?>">+ New Bank Valuation</a>
-      <a class="btn blue" href="<?= url('insurance_form.php') ?>">+ New Insurance Valuation</a>
+  <div class="rightcol">
+    <?php if (is_admin()): ?>
+    <div class="panel">
+      <div class="panel-h">Top Clients</div>
+      <table class="list">
+        <thead><tr><th>Client</th><th>Valuations</th></tr></thead>
+        <tbody>
+        <?php if (!$topClients): ?><tr><td colspan="2" class="muted">No data.</td></tr>
+        <?php else: foreach ($topClients as $c): ?>
+          <tr><td><?= e(lookup_name('clients', $c['client'])) ?: '<span class="muted">—</span>' ?></td><td><?= (int)$c['c'] ?></td></tr>
+        <?php endforeach; endif; ?>
+        </tbody>
+      </table>
+      <?php if (can_edit()): ?>
+      <div class="quick">
+        <a class="btn" href="<?= url('bank_form.php') ?>">+ New Bank Valuation</a>
+        <a class="btn blue" href="<?= url('insurance_form.php') ?>">+ New Insurance Valuation</a>
+      </div>
+      <?php endif; ?>
     </div>
     <?php endif; ?>
-  </div>
-  <?php endif; ?>
-</div>
 
-<div class="panel" style="margin-top:18px">
-  <div class="panel-h"><span><i data-lucide="radio" style="width:16px;height:16px;vertical-align:-3px;color:#3ddc84"></i> Currently Online</span> <span class="muted" style="font-weight:400;font-size:12px">active in the last 5 minutes</span></div>
-  <table class="list">
-    <thead><tr><th>User</th><th>Working on</th><th>Logged in for</th><th>Last active</th></tr></thead>
-    <tbody>
-    <?php if (!$online): ?>
-      <tr><td colspan="4" class="muted">No one is online right now.</td></tr>
-    <?php else: foreach ($online as $o):
-        $mins = max(0, (int)floor((time() - strtotime($o['login_at'])) / 60));
-        $dur  = $mins >= 60 ? intdiv($mins, 60) . 'h ' . ($mins % 60) . 'm' : $mins . 'm';
-        $seen = max(0, time() - strtotime($o['last_seen']));
-        $seenTxt = $seen < 60 ? $seen . 's ago' : (int)floor($seen / 60) . 'm ago';
-    ?>
-      <tr>
-        <td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#3ddc84;margin-right:7px"></span><?= e($o['name']) ?></td>
-        <td><?= e($o['activity']) ?></td>
-        <td><?= e($dur) ?></td>
-        <td class="muted"><?= e($seenTxt) ?></td>
-      </tr>
-    <?php endforeach; endif; ?>
-    </tbody>
-  </table>
+    <div class="panel online-widget">
+      <div class="ow-h"><i data-lucide="radio"></i> Currently Online</div>
+      <?php if (!$online): ?>
+        <div class="ow-empty">No one else online.</div>
+      <?php else: foreach ($online as $o):
+          $m = max(0, (int)$o['mins_online']); $dur = $m >= 60 ? intdiv($m, 60) . 'h ' . ($m % 60) . 'm' : $m . 'm';
+      ?>
+        <div class="ow-row"><span class="ow-dot"></span><span class="ow-name"><?= e($o['name']) ?></span><span class="ow-meta"><?= e($o['activity']) ?> · <?= e($dur) ?></span></div>
+      <?php endforeach; endif; ?>
+    </div>
+  </div>
 </div>
 
 <style>
@@ -149,8 +143,18 @@ layout_header('Dashboard', 'dashboard');
   .ic-amber{background:rgba(122,92,28,.2);color:#f5d79a}.ic-red{background:rgba(212,29,29,.16);color:#ff6b6b}
   .kpi-label{color:var(--mut);font-size:13px;margin-bottom:4px}
   .kpi-num{font-size:28px;font-weight:800;letter-spacing:-.02em} .kpi-num.sm{font-size:20px}
-  .dash-grid{display:grid;grid-template-columns:2fr 1fr;gap:18px}
+  .dash-grid{display:grid;grid-template-columns:2fr 1fr;gap:18px;align-items:start}
   @media(max-width:900px){.dash-grid{grid-template-columns:1fr}}
+  .rightcol{display:flex;flex-direction:column;gap:18px}
+  .online-widget{padding:14px 16px}
+  .ow-h{font-size:14px;font-weight:600;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+  .ow-h i{width:15px;height:15px;color:#3ddc84}
+  .ow-row{display:flex;align-items:center;gap:7px;font-size:12px;padding:5px 0;border-top:1px solid var(--line)}
+  .ow-row:first-of-type{border-top:0}
+  .ow-dot{width:7px;height:7px;border-radius:50%;background:#3ddc84;flex:0 0 7px}
+  .ow-name{font-weight:600;white-space:nowrap}
+  .ow-meta{color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ow-empty{font-size:12px;color:var(--mut)}
   @media(max-width:860px){.hide-mobile{display:none!important}}
   .panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px}
   .panel-h{display:flex;justify-content:space-between;align-items:center;font-weight:600;margin-bottom:12px}
