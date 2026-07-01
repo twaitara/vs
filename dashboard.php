@@ -34,10 +34,8 @@ try {
 } catch (Throwable $e) {}
 
 $online = [];
-if (is_admin()) {
-    try { $online = db()->query("SELECT * FROM user_activity WHERE last_seen > (NOW() - INTERVAL 5 MINUTE) ORDER BY last_seen DESC")->fetchAll(); }
-    catch (Throwable $e) {}
-}
+try { $online = db()->query("SELECT * FROM user_activity WHERE last_seen > (NOW() - INTERVAL 5 MINUTE) ORDER BY last_seen DESC")->fetchAll(); }
+catch (Throwable $e) {}
 
 $cur = setting('currency', CURRENCY);
 $hour = (int)date('G');
@@ -112,7 +110,6 @@ layout_header('Dashboard', 'dashboard');
   <?php endif; ?>
 </div>
 
-<?php if (is_admin()): ?>
 <div class="panel" style="margin-top:18px">
   <div class="panel-h"><span><i data-lucide="radio" style="width:16px;height:16px;vertical-align:-3px;color:#3ddc84"></i> Currently Online</span> <span class="muted" style="font-weight:400;font-size:12px">active in the last 5 minutes</span></div>
   <table class="list">
@@ -136,7 +133,6 @@ layout_header('Dashboard', 'dashboard');
     </tbody>
   </table>
 </div>
-<?php endif; ?>
 
 <style>
   .hero{display:flex;justify-content:space-between;align-items:center;gap:18px;flex-wrap:wrap;padding:24px 26px;border-radius:18px;margin-bottom:20px;border:1px solid var(--line);position:relative;overflow:hidden;
