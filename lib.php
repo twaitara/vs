@@ -82,6 +82,16 @@ function csrf_verify(): void {
     }
 }
 
+/** Token as a query-string fragment for state-changing GET links. */
+function csrf_query(): string { return '_csrf=' . urlencode(csrf_token()); }
+/** Verify CSRF on a GET link; aborts on mismatch. */
+function csrf_verify_get(): void {
+    if (!hash_equals($_SESSION['csrf'] ?? '', $_GET['_csrf'] ?? '')) {
+        http_response_code(403);
+        exit('Invalid or expired link. Go back, refresh, and try again.');
+    }
+}
+
 // ---------------- Auth & roles ----------------
 if (!defined('SUPERADMIN_EMAIL')) define('SUPERADMIN_EMAIL', 'exyeez@gmail.com');
 function current_user(): ?array { return $_SESSION['user'] ?? null; }
@@ -108,6 +118,65 @@ function sees_all_valuations(): bool { return is_admin() || is_coordinator(); }
 
 /** Portal user is a client-side admin (manages their company's portal). */
 function client_is_admin(): bool { $c = current_client(); return $c && ($c['role'] ?? 'officer') === 'admin'; }
+
+/** Simple request lifecycle statuses shown to portal & Kennet staff. */
+function request_statuses(): array {
+    return ['requested' => 'Requested', 'assigned' => 'Assigned', 'in_progress' => 'In progress', 'complete' => 'Complete', 'cancelled' => 'Cancelled'];
+}
+function request_status_label(string $s): string { return request_statuses()[$s] ?? ucfirst(str_replace('_', ' ', $s)); }
+/** Coloured pill for a request status (uses the .badge / .b-* classes). */
+function request_badge(string $s): string {
+    $cls = ['requested' => 'b-amber', 'assigned' => 'b-blue', 'in_progress' => 'b-blue', 'complete' => 'b-green', 'cancelled' => 'b-grey'][$s] ?? 'b-grey';
+    return '<span class="badge ' . $cls . '">' . e(request_status_label($s)) . '</span>';
+}
+
+// ---------------- Notifications (request workflow) ----------------
+/** Send a plain-text email via PHP mail(). Best-effort; returns false silently on failure. */
+function send_mail($to, string $subject, string $body): bool {
+    $to = is_array($to) ? array_values(array_filter(array_unique($to))) : [$to];
+    if (!$to) return false;
+    $from = setting('mail_from', 'no-reply@' . ($_SERVER['HTTP_HOST'] ?? 'localhost'));
+    $name = setting('company_name', 'Kennet Automobile Valuers');
+    $headers = 'From: ' . $name . ' <' . $from . ">\r\n" .
+               "Content-Type: text/plain; charset=UTF-8\r\n" .
+               'X-Mailer: KennetVS';
+    $ok = false;
+    foreach ($to as $addr) { if (@mail($addr, $subject, $body, $headers)) $ok = true; }
+    return $ok;
+}
+/** Emails of all Kennet staff who can assign requests (admins + coordinators). */
+function assigner_emails(): array {
+    try {
+        $rows = db()->query("SELECT email FROM users WHERE email <> '' AND (role='admin' OR role='coordinator') AND (active=1 OR active IS NULL)")->fetchAll(PDO::FETCH_COLUMN);
+        return $rows ?: [];
+    } catch (Throwable $e) { return []; }
+}
+function user_email(?int $uid): ?string {
+    if (!$uid) return null;
+    try { $st = db()->prepare('SELECT email FROM users WHERE id=?'); $st->execute([$uid]); return $st->fetchColumn() ?: null; }
+    catch (Throwable $e) { return null; }
+}
+/** New request raised by a portal officer -> notify Kennet assigners. */
+function notify_new_request(int $rid, string $reg, string $type, ?array $client): void {
+    $co = lookup_name('clients', $client['client_id'] ?? null) ?: 'A client';
+    $who = $client['name'] ?? 'A portal user';
+    send_mail(assigner_emails(),
+        "New valuation request: $reg",
+        "$who ($co) requested a " . ($type === 'bank' ? 'bank' : 'insurance') . " valuation.\n\nReg No: $reg\n\nLog in to assign a valuer.");
+}
+/** Request assigned to a Kennet officer -> notify that officer. */
+function notify_assigned(int $rid, string $reg, ?int $officerId): void {
+    $email = user_email($officerId);
+    if (!$email) return;
+    send_mail($email, "Valuation assigned to you: $reg",
+        "A valuation has been assigned to you.\n\nReg No: $reg\n\nOpen the system to complete it.");
+}
+/** Request completed -> notify the portal officer who raised it. */
+function notify_complete(int $rid, string $reg, ?string $requesterEmail): void {
+    if (!$requesterEmail) return;
+    send_mail($requesterEmail, "Valuation ready: $reg",
+        "The valuation you requested for $reg is complete.\n\nLog in to your client portal to view the report.");
+}
 
 /** Availability cut-off timestamp (date or date+time). */
 function banner_until_ts(): ?int {

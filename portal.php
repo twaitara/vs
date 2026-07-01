@@ -28,7 +28,7 @@ try {
 
 $cur = setting('currency', CURRENCY);
 
-portal_header('My Valuations');
+portal_header('My Valuations', 'valuations');
 ?>
 <h1 class="pt">Welcome<?= $c['name'] ? ', ' . e($c['name']) : '' ?></h1>
 <p class="psub">Vehicle valuations carried out for your company by Kennet Automobile Valuers.</p>

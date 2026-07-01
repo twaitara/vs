@@ -2,7 +2,7 @@
 require_once __DIR__ . '/lib.php';
 
 /** Minimal, branded shell for the client portal (no staff nav). */
-function portal_header(string $title): void {
+function portal_header(string $title, string $nav = ''): void {
     $c = current_client();
     $company = lookup_name('clients', $c['client_id'] ?? null);
     $fl = flash();
@@ -52,7 +52,15 @@ function portal_header(string $title): void {
   .ppager .pgb{background:var(--panel);border:1px solid var(--line);color:var(--txt);padding:6px 11px;border-radius:6px;font-size:12px;cursor:pointer}
   .ppager .pgb:hover:not(:disabled){background:var(--hover)} .ppager .pgb.cur{background:var(--accent);border-color:var(--accent);color:#fff} .ppager .pgb:disabled{opacity:.4;cursor:default}
   .muted{color:var(--mut)} .badge{display:inline-block;font-size:11px;padding:2px 7px;border-radius:10px}
-  .b-red{background:#3d0f0f;color:#f5a3a3}.b-amber{background:#3d2f0f;color:#f5d79a}.b-green{background:#0f3d24;color:#b8f5d0}.b-grey{background:#2b3340;color:#cdd5e0}
+  .b-red{background:#3d0f0f;color:#f5a3a3}.b-amber{background:#3d2f0f;color:#f5d79a}.b-green{background:#0f3d24;color:#b8f5d0}.b-grey{background:#2b3340;color:#cdd5e0}.b-blue{background:#0f2440;color:#a3c8f5}
+  .pnav{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:20px}
+  .pnav a{padding:9px 15px;border-radius:8px;font-size:13px;color:var(--mut);background:var(--chip);display:inline-flex;align-items:center;gap:7px}
+  .pnav a i{width:15px;height:15px}
+  .pnav a.on{background:var(--accent);color:#fff}
+  .btn{display:inline-flex;align-items:center;gap:7px;background:var(--accent);color:#fff;border:0;padding:10px 18px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer}
+  .btn.sec{background:var(--chip);color:var(--txt)} .btn i{width:15px;height:15px}
+  .f{display:block;margin-bottom:12px} label.f{font-size:12px;color:var(--mut);margin-bottom:5px;display:block}
+  .f input,.f select,.f textarea{width:100%;background:var(--input);border:1px solid var(--line);color:var(--txt);padding:10px 12px;border-radius:8px;font-size:13px;font-family:inherit}
   /* preview modal */
   .modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:1000;align-items:center;justify-content:center}
   .modal-bg.open{display:flex}
@@ -82,6 +90,19 @@ function portal_header(string $title): void {
   <a class="out" href="<?= url('portal_logout.php') ?>"><i data-lucide="log-out"></i> Log out</a>
 </div>
 <div class="wrap">
+  <?php
+  $navItems = [
+      'valuations' => ['portal.php', 'folder', 'My Valuations'],
+      'request'    => ['portal_request.php', 'plus-circle', 'Request Valuation'],
+      'requests'   => ['portal_requests.php', 'list-checks', client_is_admin() ? 'Company Requests' : 'My Requests'],
+  ];
+  if (client_is_admin()) $navItems['team'] = ['portal_team.php', 'users', 'My Team'];
+  ?>
+  <nav class="pnav">
+    <?php foreach ($navItems as $k => $it): ?>
+      <a class="<?= $nav === $k ? 'on' : '' ?>" href="<?= url($it[0]) ?>"><i data-lucide="<?= $it[1] ?>"></i><?= e($it[2]) ?></a>
+    <?php endforeach; ?>
+  </nav>
   <?php if ($fl): ?><div class="flash <?= ($fl['type'] ?? 'ok') === 'err' ? 'err' : '' ?>"><?= e($fl['msg'] ?? '') ?></div><?php endif; ?>
   <?php if (!empty($_SESSION['avail_notice_pending']) && setting('banner_enabled') === '1'): unset($_SESSION['avail_notice_pending']); ?>
     <div class="modal-bg open" id="availModal" style="z-index:5000">
