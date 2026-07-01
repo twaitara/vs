@@ -87,7 +87,7 @@ portal_header('My Team', 'team');
 
   <div class="card">
     <h3 style="margin:0 0 12px">Team members</h3>
-    <table class="list">
+    <table data-paginate="25" class="list">
       <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th></th></tr></thead>
       <tbody>
       <?php foreach ($rows as $r): $isAdmin = ($r['role'] ?? 'officer') === 'admin'; ?>

@@ -30,7 +30,7 @@ portal_header('My Requests', 'requests');
 <h1 class="pt"><?= $mine ? 'My Requests' : 'Company Requests' ?></h1>
 <p class="psub"><?= $mine ? 'Valuations you have requested.' : 'All valuation requests raised by your company.' ?> <a href="<?= url('portal_request.php') ?>" style="color:#5b9bff">+ New request</a></p>
 
-<table class="list">
+<table data-paginate="25" class="list">
   <thead><tr>
     <th>Reg No.</th><th>Type</th>
     <?php if (!$mine): ?><th>Requested by</th><?php endif; ?>

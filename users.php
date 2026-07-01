@@ -166,7 +166,7 @@ settings_nav('users');
   <!-- Users list -->
   <div class="card">
     <h3 style="margin-top:0">All Users</h3>
-    <table class="list">
+    <table data-paginate="25" class="list">
       <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Signing</th><th>Status</th><th>Actions</th></tr></thead>
       <tbody>
       <?php foreach ($users as $usr): ?>

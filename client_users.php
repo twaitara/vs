@@ -139,7 +139,7 @@ settings_nav('portal');
 
   <div class="card">
     <h3 style="margin-top:0">Portal Logins</h3>
-    <table class="list">
+    <table data-paginate="25" class="list">
       <thead><tr><th>Client</th><th>Contact</th><th>Role</th><th>Email</th><th>Status</th><th>Actions</th></tr></thead>
       <tbody>
       <?php if (!$rows): ?><tr><td colspan="6" class="muted">No portal logins yet.</td></tr>

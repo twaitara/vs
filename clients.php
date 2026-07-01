@@ -50,7 +50,7 @@ settings_nav('clients');
     <?php if ($edit): ?><a class="btn sec" href="<?= url('clients.php') ?>">Cancel</a><?php endif; ?>
   </div>
 </form>
-<table class="list">
+<table data-paginate="25" class="list">
   <thead><tr><th>ID</th><th>Name</th><th>Type</th><th>Actions</th></tr></thead>
   <tbody>
   <?php if (!$rows): ?><tr><td colspan="4" class="muted">None yet.</td></tr>

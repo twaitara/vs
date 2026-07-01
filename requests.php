@@ -71,7 +71,7 @@ layout_header('Valuation Requests', 'requests');
   <?php endforeach; ?>
 </div>
 
-<table class="list">
+<table data-paginate="25" class="list">
   <thead><tr>
     <th>Reg No.</th><th>Company</th><th>Type</th><th>Requested by</th><th>Status</th><th>Valuer</th><th>Requested</th><th>Action</th>
   </tr></thead>

@@ -39,7 +39,7 @@ settings_nav('recycle');
 <?php foreach (['bank' => 'Bank Valuations', 'insurance' => 'Insurance Valuations'] as $type => $label):
     $rows = deleted_rows($tables[$type]); ?>
   <h3><?= e($label) ?></h3>
-  <table class="list" style="margin-bottom:24px">
+  <table data-paginate="25" class="list" style="margin-bottom:24px">
     <thead><tr><th>ID</th><th>Reg No.</th><th>Make/Model</th><th>Customer</th><th>Deleted</th><th>Actions</th></tr></thead>
     <tbody>
     <?php if (!$rows): ?><tr><td colspan="6" class="muted">Nothing here.</td></tr>

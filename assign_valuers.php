@@ -90,7 +90,7 @@ layout_header('Assign Valuers', '');
   <?php else: ?>
     <div class="flash">Done. <?= count($results['created']) ?> account(s) created, <?= count($results['existing']) ?> already existed.</div>
     <p class="muted" style="font-size:12px"><b>Copy these passwords now — they are not stored anywhere and won't be shown again.</b></p>
-    <table class="list">
+    <table data-paginate="25" class="list">
       <thead><tr><th>Name</th><th>Initials</th><th>Username (email)</th><th>Password</th><th>Valuations assigned</th></tr></thead>
       <tbody>
       <?php foreach ($defs as $d): $c = null; foreach ($results['created'] as $x) if ($x['name'] === $d['name']) $c = $x; ?>

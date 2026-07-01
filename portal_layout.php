@@ -123,6 +123,28 @@ function portal_footer(): void { ?>
 <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 <script>
 if(window.lucide)lucide.createIcons();
+(function(){
+  document.querySelectorAll('table[data-paginate]').forEach(function(tbl){
+    var per=parseInt(tbl.getAttribute('data-paginate'),10)||25;
+    var body=tbl.tBodies[0]; if(!body) return;
+    var rows=Array.prototype.slice.call(body.rows).filter(function(tr){return !tr.querySelector('td[colspan]');});
+    if(rows.length<=per) return;
+    var pager=document.createElement('div'); pager.className='ppager';
+    tbl.parentNode.insertBefore(pager, tbl.nextSibling);
+    var page=1;
+    function render(){
+      var pages=Math.max(1,Math.ceil(rows.length/per)); if(page>pages)page=pages;
+      rows.forEach(function(tr,i){tr.style.display=(i>=(page-1)*per&&i<page*per)?'':'none';});
+      pager.innerHTML='';
+      if(pages<=1)return;
+      var mk=function(label,p,dis,cur){var b=document.createElement('button');b.textContent=label;b.className='pgb'+(cur?' cur':'');if(dis)b.disabled=true;else b.onclick=function(){page=p;render();window.scrollTo(0,0);};pager.appendChild(b);};
+      mk('‹',page-1,page===1,false);
+      for(var i=1;i<=pages;i++){ if(pages>9&&Math.abs(i-page)>2&&i>1&&i<pages){ if(i===2||i===pages-1)mk('…',page,true,false); continue; } mk(i,i,false,i===page); }
+      mk('›',page+1,page===pages,false);
+    }
+    render();
+  });
+})();
 (function(){var L={'log-out':'Log out','eye':'View report','printer':'Download PDF','landmark':'Bank Valuations','shield-check':'Insurance Valuations','mail':'Email','lock':'Password','arrow-right':'Sign in'};
  document.querySelectorAll('.lucide').forEach(function(svg){var n='';svg.classList.forEach(function(c){if(c.indexOf('lucide-')===0)n=c.slice(7);});var el=svg.closest('a,button');if(!el||el.getAttribute('title'))return;var t=(el.textContent||'').trim();el.setAttribute('title',t||L[n]||n.replace(/-/g,' '));});})();
 (function(){

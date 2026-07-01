@@ -49,7 +49,7 @@ function lookup_admin(string $table, string $title, string $subkey): void {
         <?php if ($editRow): ?><a class="btn sec" href="<?= url(basename($_SERVER['PHP_SELF'])) ?>">Cancel</a><?php endif; ?>
       </div>
     </form>
-    <table class="list">
+    <table data-paginate="25" class="list">
       <thead><tr><th>ID</th><th>Name</th><th>Actions</th></tr></thead>
       <tbody>
       <?php if (!$rows): ?><tr><td colspan="3" class="muted">None yet.</td></tr>

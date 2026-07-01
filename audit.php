@@ -36,7 +36,7 @@ settings_nav('audit');
     <button class="btn sec" type="submit">Filter</button>
   </form>
 </div>
-<table class="list">
+<table data-paginate="25" class="list">
   <thead><tr><th>When</th><th>User</th><th>Action</th><th>Entity</th><th>Ref</th><th>Details</th><th>IP</th></tr></thead>
   <tbody>
   <?php if (!$rows): ?><tr><td colspan="7" class="muted">No audit entries.</td></tr>

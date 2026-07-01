@@ -212,6 +212,9 @@ function layout_header(string $title, string $active = ''): void {
   .b-grey{background:#2b3340;color:#cdd5e0}
   .b-green{background:#0f3d24;color:#b8f5d0;border:1px solid #1c7a47}
   .b-blue{background:#0f2440;color:#a3c8f5;border:1px solid #1c4a7a}
+  .ppager{display:flex;gap:5px;justify-content:center;flex-wrap:wrap;margin-top:14px}
+  .ppager .pgb{background:var(--panel);border:1px solid var(--line);color:var(--txt);padding:6px 11px;border-radius:6px;font-size:12px;cursor:pointer}
+  .ppager .pgb:hover:not(:disabled){background:var(--hover,#2b3340)} .ppager .pgb.cur{background:var(--accent);border-color:var(--accent);color:#fff} .ppager .pgb:disabled{opacity:.4;cursor:default}
   .listfoot{display:flex;justify-content:space-between;align-items:center;margin-top:14px;flex-wrap:wrap;gap:10px}
   .listfoot .pp{color:var(--mut);font-size:12px}
   .listfoot .pp select{background:var(--panel);border:1px solid var(--line);color:var(--txt);padding:5px 8px;border-radius:6px;margin-left:6px}
@@ -696,6 +699,29 @@ window.kInstall = function(){
 };
 </script>
 <script>
+(function(){
+  // ---- Generic client-side paginator: any <table data-paginate="25"> gets paged ----
+  document.querySelectorAll('table[data-paginate]').forEach(function(tbl){
+    var per=parseInt(tbl.getAttribute('data-paginate'),10)||25;
+    var body=tbl.tBodies[0]; if(!body) return;
+    var rows=Array.prototype.slice.call(body.rows).filter(function(tr){return !tr.querySelector('td[colspan]');});
+    if(rows.length<=per) return;
+    var pager=document.createElement('div'); pager.className='ppager';
+    tbl.parentNode.insertBefore(pager, tbl.nextSibling);
+    var page=1;
+    function render(){
+      var pages=Math.max(1,Math.ceil(rows.length/per)); if(page>pages)page=pages;
+      rows.forEach(function(tr,i){tr.style.display=(i>=(page-1)*per&&i<page*per)?'':'none';});
+      pager.innerHTML='';
+      if(pages<=1)return;
+      var mk=function(label,p,dis,cur){var b=document.createElement('button');b.textContent=label;b.className='pgb'+(cur?' cur':'');if(dis)b.disabled=true;else b.onclick=function(){page=p;render();window.scrollTo(0,0);};pager.appendChild(b);};
+      mk('‹',page-1,page===1,false);
+      for(var i=1;i<=pages;i++){ if(pages>9&&Math.abs(i-page)>2&&i>1&&i<pages){ if(i===2||i===pages-1)mk('…',page,true,false); continue; } mk(i,i,false,i===page); }
+      mk('›',page+1,page===pages,false);
+    }
+    render();
+  });
+})();
 (function(){
   var t=document.getElementById('menuToggle'), s=document.getElementById('sidebar'), o=document.getElementById('navOverlay');
   if(!t||!s||!o) return;
