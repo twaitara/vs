@@ -19,9 +19,10 @@ $insCount  = pcount('valuations', $cid);
 $del = column_exists($table, 'deleted_at') ? ' AND deleted_at IS NULL' : '';
 $statSel = column_exists($table, 'status') ? 'status' : "'' AS status";
 $repSel  = column_exists($table, 'report_no') ? 'report_no' : "'' AS report_no";
+$serSel  = column_exists($table, 'serial_no') ? 'serial_no' : "'' AS serial_no";
 $rows = [];
 try {
-    $st = db()->prepare("SELECT id, $repSel, reg_no, make, manufacture_year, insurance_exp, $statSel, `$vf` AS val, created_at
+    $st = db()->prepare("SELECT id, $repSel, $serSel, reg_no, make, manufacture_year, insurance_exp, $statSel, `$vf` AS val, created_at
                          FROM `$table` WHERE client = ?$del ORDER BY id DESC LIMIT 1000");
     $st->execute([$cid]); $rows = $st->fetchAll();
 } catch (Throwable $e) {}
@@ -45,12 +46,13 @@ portal_header('My Valuations', 'valuations');
 
 <input type="search" id="psearch" placeholder="Search your vehicles (reg no, make)…" autocomplete="off">
 <table class="list" id="ptable">
-  <thead><tr><th>Report No</th><th>Reg No.</th><th>Make/Model</th><th>YOM</th><th>Status</th><th><?= $tab==='insurance'?'Assessed':'Market' ?> Value</th><th>Date</th><th>Report</th></tr></thead>
+  <thead><tr><th>Serial</th><th>Report No</th><th>Reg No.</th><th>Make/Model</th><th>YOM</th><th>Status</th><th><?= $tab==='insurance'?'Assessed':'Market' ?> Value</th><th>Date</th><th>Report</th></tr></thead>
   <tbody>
   <?php if (!$rows): ?>
-    <tr><td colspan="8" class="muted">No valuations on record yet.</td></tr>
+    <tr><td colspan="9" class="muted">No valuations on record yet.</td></tr>
   <?php else: foreach ($rows as $r): ?>
     <tr>
+      <td><?= e(serial_display($r['serial_no'])) ?: '—' ?></td>
       <td><?= e($r['report_no']) ?: '—' ?></td>
       <td><?= e($r['reg_no']) ?></td>
       <td><?= e($r['make']) ?></td>
