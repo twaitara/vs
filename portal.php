@@ -86,7 +86,7 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')pClose();});
 (function(){
   var PER=25, s=document.getElementById('psearch'), tb=document.querySelector('#ptable tbody'), pager=document.getElementById('ppager');
   if(!tb||!pager) return;
-  var all=Array.prototype.slice.call(tb.querySelectorAll('tr')).filter(function(tr){return !tr.querySelector('td.muted');});
+  var all=Array.prototype.slice.call(tb.querySelectorAll('tr')).filter(function(tr){return !tr.querySelector('td[colspan]');});
   var page=1;
   function render(){
     var q=(s?s.value:'').toLowerCase();
