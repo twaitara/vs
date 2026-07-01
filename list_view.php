@@ -203,14 +203,14 @@ function render_list(array $cfg): void {
             <td class="muted"><?= e(ddate($r['created_at'])) ?></td>
             <td class="actions">
               <?php if (can_edit()): ?>
-                <a class="rbtn" href="<?= url($cfg['form_page'].'?id='.$r['id']) ?>"><i data-lucide="pencil"></i>Edit</a>
+                <a class="rbtn ico" href="<?= url($cfg['form_page'].'?id='.$r['id']) ?>" title="Edit"><i data-lucide="pencil"></i></a>
               <?php endif; ?>
-              <a class="rbtn" href="#" onclick="openPreview(<?= (int)$r['id'] ?>,'<?= e($cfg['nav']) ?>');return false;"><i data-lucide="eye"></i>Preview</a>
-              <a class="rbtn" href="<?= url('print.php?type='.$cfg['nav'].'&id='.$r['id']) ?>"><i data-lucide="printer"></i>Print</a>
+              <a class="rbtn ico" href="#" onclick="openPreview(<?= (int)$r['id'] ?>,'<?= e($cfg['nav']) ?>');return false;" title="Preview report"><i data-lucide="eye"></i></a>
+              <a class="rbtn ico" href="<?= url('print.php?type='.$cfg['nav'].'&id='.$r['id']) ?>" title="Print / Download PDF"><i data-lucide="printer"></i></a>
               <?php if (can_sign() && empty($r['signed_at'])): ?>
-                <a class="rbtn sign-due" href="<?= url('sign.php?type='.$cfg['nav'].'&id='.$r['id'].'&_csrf='.csrf_token()) ?>" onclick="return confirm('Sign this report? It will be marked Complete and stamped with today’s date.')"><i data-lucide="pen-tool"></i>Sign</a>
+                <a class="rbtn ico sign-due" href="<?= url('sign.php?type='.$cfg['nav'].'&id='.$r['id'].'&_csrf='.csrf_token()) ?>" onclick="return confirm('Sign this report? It will be marked Complete and stamped with today’s date.')" title="Sign report"><i data-lucide="pen-tool"></i></a>
               <?php elseif (!empty($r['signed_at'])): ?>
-                <span class="rbtn" style="border-color:#1c7a47;color:#3ddc84;cursor:default" title="Signed <?= e(ddate($r['signed_at'])) ?>"><i data-lucide="check"></i>Signed</span>
+                <span class="rbtn ico" style="border-color:#1c7a47;color:#3ddc84;cursor:default" title="Signed <?= e(ddate($r['signed_at'])) ?>"><i data-lucide="check"></i></span>
               <?php endif; ?>
             </td>
           </tr>

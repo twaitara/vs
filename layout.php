@@ -125,6 +125,7 @@ function layout_header(string $title, string $active = ''): void {
   .btn:active{transform:translateY(0)}
   .btn.sec:hover,.btn.blue:hover{box-shadow:0 6px 18px rgba(0,0,0,.25)}
   .btn i,.rbtn i{width:15px;height:15px;vertical-align:-3px;margin-right:5px}
+  .rbtn.ico{padding:6px 8px} .rbtn.ico i{margin-right:0;width:16px;height:16px}
   table.list tr{transition:background .12s}
   .rbtn{transition:background .15s,transform .15s} .rbtn:hover{transform:translateY(-1px)}
   .rbtn.sign-due{background:linear-gradient(135deg,#f5a623,#f7b733);color:#3a2a00!important;border-color:#f5a623;font-weight:700;animation:signpulse 1.5s infinite}
