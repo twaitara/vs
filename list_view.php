@@ -189,7 +189,7 @@ function render_list(array $cfg): void {
           <th>Status</th>
           <?= $sortHeader('value', $cfg['value_label']) ?>
           <?= $sortHeader('created','Created') ?>
-          <th>Valuer</th>
+          <th>Officer</th>
           <th>Actions</th>
         </tr></thead>
         <tbody>

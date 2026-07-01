@@ -157,7 +157,7 @@ layout_header($id ? 'Edit Insurance Valuation' : 'New Insurance Valuation', 'ins
       <?php foreach (valuation_statuses() as $k => $l): ?><option value="<?= $k ?>" <?= ($row['status'] ?? 'draft') === $k ? 'selected' : '' ?>><?= e($l) ?></option><?php endforeach; ?>
     </select></div>
     <?php if (is_admin()): ?>
-    <div class="f"><label class="f">Valuer (assign)</label><select name="valuer_id">
+    <div class="f"><label class="f">Officer (assign)</label><select name="valuer_id">
       <option value="">-- keep current --</option>
       <?php foreach (user_list_for_valuer() as $vid => $vn): ?><option value="<?= $vid ?>" <?= (int)($row['created_by'] ?? 0) === $vid ? 'selected' : '' ?>><?= e($vn) ?></option><?php endforeach; ?>
     </select></div>
