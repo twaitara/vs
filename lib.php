@@ -314,6 +314,19 @@ function lookup(string $table): array {
 }
 function lookup_name(string $table, $id): string { $m = lookup($table); return $m[$id] ?? ''; }
 
+/** id => "Name (INI)" for assigning the valuer of a record. */
+function user_list_for_valuer(): array {
+    $out = [];
+    try {
+        $cols = 'id, name' . (column_exists('users', 'initials') ? ', initials' : '');
+        foreach (db()->query("SELECT $cols FROM users ORDER BY name")->fetchAll() as $u) {
+            $ini = (isset($u['initials']) && $u['initials'] !== '') ? ' (' . $u['initials'] . ')' : '';
+            $out[$u['id']] = $u['name'] . $ini;
+        }
+    } catch (Throwable $e) {}
+    return $out;
+}
+
 /** True if a column exists on a table (cached). Lets the app work pre/post migration. */
 function column_exists(string $table, string $col): bool {
     static $cache = [];

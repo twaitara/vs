@@ -92,7 +92,7 @@ function save_row(string $table, array $columns, array $post, $id = null, array 
         return (int)$id;
     }
     $data['created_at'] = $now;
-    if (column_exists($table, 'created_by')) $data['created_by'] = $uid;
+    if (column_exists($table, 'created_by') && !array_key_exists('created_by', $data)) $data['created_by'] = $uid;
     $cols = implode(', ', array_map(fn($c) => "`$c`", array_keys($data)));
     $ph   = implode(', ', array_fill(0, count($data), '?'));
     db()->prepare("INSERT INTO `$table` ($cols) VALUES ($ph)")->execute(array_values($data));

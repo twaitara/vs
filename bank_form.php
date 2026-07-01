@@ -30,6 +30,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!$errors) {
         $files = handle_uploads($_POST['reg_no'] ?? '', $row);
         if (!$id && column_exists('bankvaluations', 'report_no')) $files['report_no'] = next_report_no('bankvaluations');
+        if (is_admin() && !empty($_POST['valuer_id'])) $files['created_by'] = (int)$_POST['valuer_id'];
         $newId = save_row('bankvaluations', $COLUMNS, $_POST, $id, $files);
         audit($id ? 'update' : 'create', 'bankvaluation', $newId, $_POST['reg_no'] ?? '');
         flash($id ? 'Bank valuation updated.' : 'Bank valuation saved.');
@@ -103,6 +104,12 @@ layout_header($id ? 'Edit Bank Valuation' : 'New Bank Valuation', 'bank');
     <div class="f"><label class="f">Status</label><select name="status">
       <?php foreach (valuation_statuses() as $k => $l): ?><option value="<?= $k ?>" <?= ($row['status'] ?? 'draft') === $k ? 'selected' : '' ?>><?= e($l) ?></option><?php endforeach; ?>
     </select></div>
+    <?php if (is_admin()): ?>
+    <div class="f"><label class="f">Valuer (assign)</label><select name="valuer_id">
+      <option value="">-- keep current --</option>
+      <?php foreach (user_list_for_valuer() as $vid => $vn): ?><option value="<?= $vid ?>" <?= (int)($row['created_by'] ?? 0) === $vid ? 'selected' : '' ?>><?= e($vn) ?></option><?php endforeach; ?>
+    </select></div>
+    <?php endif; ?>
   </div></fieldset>
 
   <fieldset><legend>Extra Information</legend><div class="grid">

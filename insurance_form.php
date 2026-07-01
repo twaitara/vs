@@ -47,6 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     foreach ($required as $f => $lbl) if (trim((string)($_POST[$f] ?? '')) === '') $errors[$f] = 'Required';
     if (!$errors) {
         $extra = (!$id && column_exists('valuations', 'report_no')) ? ['report_no' => next_report_no('valuations')] : [];
+        if (is_admin() && !empty($_POST['valuer_id'])) $extra['created_by'] = (int)$_POST['valuer_id'];
         $newId = save_row('valuations', $COLUMNS, $_POST, $id, $extra);
         audit($id ? 'update' : 'create', 'valuation', $newId, $_POST['reg_no'] ?? '');
         flash($id ? 'Insurance valuation updated.' : 'Valuation added successfully.');
@@ -154,6 +155,12 @@ layout_header($id ? 'Edit Insurance Valuation' : 'New Insurance Valuation', 'ins
     <div class="f"><label class="f">Status</label><select name="status">
       <?php foreach (valuation_statuses() as $k => $l): ?><option value="<?= $k ?>" <?= ($row['status'] ?? 'draft') === $k ? 'selected' : '' ?>><?= e($l) ?></option><?php endforeach; ?>
     </select></div>
+    <?php if (is_admin()): ?>
+    <div class="f"><label class="f">Valuer (assign)</label><select name="valuer_id">
+      <option value="">-- keep current --</option>
+      <?php foreach (user_list_for_valuer() as $vid => $vn): ?><option value="<?= $vid ?>" <?= (int)($row['created_by'] ?? 0) === $vid ? 'selected' : '' ?>><?= e($vn) ?></option><?php endforeach; ?>
+    </select></div>
+    <?php endif; ?>
     <?= f_text('note_value','Note Value',$row,'W/S value estimated at 00000/= R/CD/TV value estimated at 00000/= REMARKS:') ?>
     <?= f_text('notes','N.B.',$row) ?>
     <?= f_text('extras','Extras',$row) ?>
