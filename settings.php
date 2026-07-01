@@ -13,6 +13,7 @@ $FIELDS = [
     'currency'        => ['Currency Code', 'text'],
     'default_valuer'  => ['Default Valuer Name', 'text'],
     'signatory_name'  => ['Authorizing Signatory Name (e.g. George Mwangi)', 'text'],
+    'serial_prefix'   => ['Serial Number Prefix (optional, e.g. KEN → KEN/079/06/2026)', 'text'],
     'per_page'        => ['Rows Per Page', 'number'],
 ];
 

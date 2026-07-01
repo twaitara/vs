@@ -310,7 +310,8 @@ function next_serial(): string {
         $st->execute([$y, $m]);
         $seq = (int)$st->fetchColumn() + 1;
     } catch (Throwable $e) { $seq = 1; }
-    return sprintf('%03d/%02d/%04d', $seq, $m, $y);
+    $prefix = trim(setting('serial_prefix', ''));
+    return ($prefix !== '' ? $prefix . '/' : '') . sprintf('%03d/%02d/%04d', $seq, $m, $y);
 }
 
 /** Generate next sequential report number, e.g. KEN/2026/0007. */
