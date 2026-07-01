@@ -35,11 +35,16 @@ try {
 
 $online = [];
 try {
-    $rows = db()->query("SELECT user_id, name, activity,
-                TIMESTAMPDIFF(MINUTE, login_at, NOW()) AS mins_online
-              FROM user_activity WHERE last_seen > (NOW() - INTERVAL 5 MINUTE) ORDER BY last_seen DESC")->fetchAll();
-    $seen = []; // one line per user
-    foreach ($rows as $r) { if (isset($seen[$r['user_id']])) continue; $seen[$r['user_id']] = 1; $online[] = $r; }
+    $rows = db()->query("SELECT ua.user_id, ua.name, ua.activity, u.role,
+                TIMESTAMPDIFF(MINUTE, ua.login_at, NOW()) AS mins_online
+              FROM user_activity ua LEFT JOIN users u ON u.id = ua.user_id
+              WHERE ua.last_seen > (NOW() - INTERVAL 5 MINUTE) ORDER BY ua.last_seen DESC")->fetchAll();
+    $seen = []; // one line per user; non-admins never see admins
+    foreach ($rows as $r) {
+        if (isset($seen[$r['user_id']])) continue;
+        if (!is_admin() && ($r['role'] ?? '') === 'admin') continue;
+        $seen[$r['user_id']] = 1; $online[] = $r;
+    }
 } catch (Throwable $e) {}
 
 $cur = setting('currency', CURRENCY);
