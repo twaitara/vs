@@ -122,8 +122,9 @@ layout_header('Dashboard', 'dashboard');
         <div class="ow-empty">No one else online.</div>
       <?php else: foreach ($online as $o):
           $m = max(0, (int)$o['mins_online']); $dur = $m >= 60 ? intdiv($m, 60) . 'h ' . ($m % 60) . 'm' : $m . 'm';
+          $act = stripos((string)$o['activity'], 'valuation') !== false ? e($o['activity']) . ' · ' : '';
       ?>
-        <div class="ow-row"><span class="ow-dot"></span><span class="ow-name"><?= e($o['name']) ?></span><span class="ow-meta"><?= e($o['activity']) ?> · <?= e($dur) ?></span></div>
+        <div class="ow-row"><span class="ow-dot"></span><span class="ow-name"><?= e($o['name']) ?></span><span class="ow-meta"><?= $act ?><?= e($dur) ?></span></div>
       <?php endforeach; endif; ?>
       </div>
     </div>
