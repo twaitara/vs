@@ -202,7 +202,7 @@ function render_list(array $cfg): void {
             <?php if (can_edit()): ?><td><input type="checkbox" class="rowchk" name="ids[]" value="<?= (int)$r['id'] ?>"></td><?php endif; ?>
             <td><?= e($r['id']) ?></td>
             <td><?= e($r['reg_no']) ?></td>
-            <?php if ($hasSerial) echo '<td>' . e($r['serial_no'] ?? '') . '</td>'; ?>
+            <?php if ($hasSerial) echo '<td>' . e(serial_display($r['serial_no'] ?? '')) . '</td>'; ?>
             <td><?= e($r['make']) ?></td>
             <td><?= e($r['customer_name']) ?></td>
             <td><?= e(lookup_name('clients', $r['client'])) ?></td>

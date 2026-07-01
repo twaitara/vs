@@ -314,6 +314,15 @@ function next_serial(): string {
     return ($prefix !== '' ? $prefix . '/' : '') . sprintf('%03d/%02d/%04d', $seq, $m, $y);
 }
 
+/** Show a serial with the configured prefix (adds it to bare NNN/MM/YYYY serials). */
+function serial_display(?string $s): string {
+    $s = trim((string)$s);
+    $p = trim(setting('serial_prefix', ''));
+    if ($s === '' || $p === '') return $s;
+    if (preg_match('#^\d{1,4}/\d{2}/\d{4}$#', $s)) return $p . '/' . $s; // bare auto serial
+    return $s; // already prefixed or legacy text
+}
+
 /** Generate next sequential report number, e.g. KEN/2026/0007. */
 function next_report_no(string $table): string {
     $prefix = setting('report_prefix', 'KEN');
