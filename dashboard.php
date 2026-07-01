@@ -55,6 +55,21 @@ try {
     }
 } catch (Throwable $e) {}
 
+// Requests relevant to my role: assigners see what's awaiting assignment; officers see what's on them.
+$myRequests = []; $reqTitle = ''; $reqLink = '';
+try {
+    if (can_assign()) {
+        $reqTitle = 'New Requests'; $reqLink = 'requests.php';
+        $st = db()->query("SELECT * FROM valuation_requests WHERE status='requested' ORDER BY id DESC LIMIT 10");
+        $myRequests = $st->fetchAll();
+    } elseif (user_role() === 'valuer') {
+        $reqTitle = 'Assigned to Me'; $reqLink = '';
+        $st = db()->prepare("SELECT * FROM valuation_requests WHERE assigned_to=? AND status IN ('assigned','in_progress') ORDER BY id DESC LIMIT 10");
+        $st->execute([(int)(current_user()['id'] ?? 0)]);
+        $myRequests = $st->fetchAll();
+    }
+} catch (Throwable $e) {}
+
 $cur = setting('currency', CURRENCY);
 $hour = (int)date('G');
 $greet = $hour < 12 ? 'Good morning' : ($hour < 17 ? 'Good afternoon' : 'Good evening');
@@ -80,6 +95,41 @@ layout_header('Dashboard', 'dashboard');
   <div class="kpi"><div class="kpi-ic ic-green"><i data-lucide="shield-check"></i></div><div><div class="kpi-label">Insurance Valuations</div><div class="kpi-num" data-count="<?= (int)$insTotal ?>">0</div></div></div>
   <div class="kpi"><div class="kpi-ic ic-amber"><i data-lucide="calendar-plus"></i></div><div><div class="kpi-label">New This Month</div><div class="kpi-num" data-count="<?= (int)$bankMonth ?>">0</div></div></div>
   <div class="kpi"><div class="kpi-ic ic-red"><i data-lucide="coins"></i></div><div><div class="kpi-label">Total Value (<?= e($cur) ?>)</div><div class="kpi-num sm" data-count="<?= (int)$totalValue ?>">0</div></div></div>
+</div>
+<?php endif; ?>
+
+<?php if ($reqTitle): ?>
+<div class="panel reqpanel">
+  <div class="panel-h"><i data-lucide="inbox" style="width:16px;height:16px;vertical-align:-2px;color:#38bdf8"></i>
+    <?= e($reqTitle) ?> <span class="reqcount"><?= count($myRequests) ?></span>
+    <?php if ($reqLink): ?><a href="<?= url($reqLink) ?>" class="lnk">Open inbox →</a><?php endif; ?>
+  </div>
+  <?php if (!$myRequests): ?>
+    <p class="muted" style="margin:6px 0 0;font-size:13px"><?= can_assign() ? 'No requests awaiting assignment.' : 'Nothing assigned to you right now.' ?></p>
+  <?php else: ?>
+  <table class="list">
+    <thead><tr><th>Reg No.</th><th>Company</th><th>Type</th><th>Requested by</th><th>Status</th><th>When</th><th></th></tr></thead>
+    <tbody>
+    <?php foreach ($myRequests as $r): ?>
+      <tr>
+        <td><b><?= e($r['reg_no']) ?></b></td>
+        <td><?= e(lookup_name('clients', $r['client_id']) ?: ('#' . $r['client_id'])) ?></td>
+        <td><?= $r['type'] === 'insurance' ? 'Insurance' : 'Bank' ?></td>
+        <td class="muted"><?= e($r['requester_name'] ?: '—') ?></td>
+        <td><?= request_badge($r['status']) ?></td>
+        <td class="muted"><?= e(ddate($r['created_at'])) ?></td>
+        <td class="actions">
+          <?php if (can_assign()): ?>
+            <a class="rbtn" href="<?= url('requests.php?status=requested') ?>"><i data-lucide="user-check"></i>Assign</a>
+          <?php elseif (!empty($r['valuation_id'])): ?>
+            <a class="rbtn" href="<?= url(($r['valuation_table'] === 'valuations' ? 'insurance_form.php' : 'bank_form.php') . '?id=' . (int)$r['valuation_id']) ?>"><i data-lucide="pencil"></i>Open</a>
+          <?php endif; ?>
+        </td>
+      </tr>
+    <?php endforeach; ?>
+    </tbody>
+  </table>
+  <?php endif; ?>
 </div>
 <?php endif; ?>
 
@@ -176,6 +226,11 @@ layout_header('Dashboard', 'dashboard');
   .panel-h{display:flex;justify-content:space-between;align-items:center;font-weight:600;margin-bottom:12px}
   .panel-h .lnk{font-size:13px;color:var(--accent2)}
   .quick{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}
+  .reqpanel{margin-bottom:20px;border-color:#1c4a7a}
+  .reqpanel .panel-h{gap:8px;justify-content:flex-start}
+  .reqpanel .panel-h .lnk{margin-left:auto}
+  .reqcount{background:var(--accent);color:#fff;font-size:12px;font-weight:700;min-width:20px;height:20px;line-height:20px;text-align:center;border-radius:10px;padding:0 6px}
+  .reqpanel .lucide-user-check{color:#22c55e}.reqpanel .lucide-pencil{color:#5b9bff}
 </style>
 <?php preview_modal(); ?>
 <script>
