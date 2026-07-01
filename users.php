@@ -25,9 +25,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
+    $initials = strtoupper(trim($_POST['initials'] ?? ''));
     if ($action === 'create') {
         $pass = $_POST['password'] ?? '';
         if ($name === '') $errors[] = 'Name is required.';
+        if ($initials === '') $errors[] = 'Initials are required.';
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) $errors[] = 'A valid email is required.';
         if (strlen($pass) < 6) $errors[] = 'Password must be at least 6 characters.';
         if (!$errors) {
@@ -39,18 +41,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $st->execute([$name, $email, $role, password_hash($pass, PASSWORD_BCRYPT)]);
             $newId = (int)db()->lastInsertId();
             if (column_exists('users', 'can_sign')) db()->prepare('UPDATE users SET can_sign=? WHERE id=?')->execute([!empty($_POST['can_sign']) ? 1 : 0, $newId]);
+            if (column_exists('users', 'initials')) db()->prepare('UPDATE users SET initials=? WHERE id=?')->execute([$initials, $newId]);
             audit('create', 'user', $newId, $email);
             flash('User created.');
             redirect('users.php');
         }
     } elseif ($action === 'update' && $uid) {
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) $errors[] = 'A valid email is required.';
+        if ($initials === '') $errors[] = 'Initials are required.';
         // Don't let an admin lock themselves out.
         if ($uid === (int)$me['id'] && $role !== 'admin') $errors[] = 'You cannot remove your own admin role.';
         if (!$errors) {
             $st = db()->prepare('UPDATE users SET name=?, email=?, role=?, updated_at=NOW() WHERE id=?');
             $st->execute([$name, $email, $role, $uid]);
             if (column_exists('users', 'can_sign')) db()->prepare('UPDATE users SET can_sign=? WHERE id=?')->execute([!empty($_POST['can_sign']) ? 1 : 0, $uid]);
+            if (column_exists('users', 'initials')) db()->prepare('UPDATE users SET initials=? WHERE id=?')->execute([$initials, $uid]);
             audit('update', 'user', $uid, $email);
             flash('User updated.');
             redirect('users.php');
@@ -104,6 +109,7 @@ settings_nav('users');
     <?php if ($edit): ?><input type="hidden" name="id" value="<?= (int)$edit['id'] ?>"><?php endif; ?>
     <h3 style="margin-top:0"><?= $edit ? 'Edit User' : 'Add User' ?></h3>
     <div class="f"><label class="f">Name</label><input name="name" required value="<?= e($edit['name'] ?? '') ?>"></div>
+    <div class="f"><label class="f">Initials (required)</label><input name="initials" required maxlength="10" placeholder="e.g. GM" value="<?= e($edit['initials'] ?? '') ?>" style="text-transform:uppercase"></div>
     <div class="f"><label class="f">Email</label><input type="email" name="email" required value="<?= e($edit['email'] ?? '') ?>"></div>
     <div class="f"><label class="f">Role</label><select name="role">
       <?php foreach ($ROLES as $k => $lbl): ?>

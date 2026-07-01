@@ -107,6 +107,11 @@ function render_list(array $cfg): void {
         }
         return $p;
     };
+    // Map user id => initials, for the "Valuer" column.
+    $userInitials = [];
+    if (column_exists('users', 'initials')) {
+        foreach (db()->query('SELECT id, initials FROM users')->fetchAll() as $u) $userInitials[$u['id']] = $u['initials'];
+    }
 
     // Params to preserve across sort/pagination links.
     $base = $cfg['nav'] === 'bank' ? 'bank_list.php' : 'insurance_list.php';
@@ -180,11 +185,12 @@ function render_list(array $cfg): void {
           <th>Status</th>
           <?= $sortHeader('value', $cfg['value_label']) ?>
           <?= $sortHeader('created','Created') ?>
+          <th>Valuer</th>
           <th>Actions</th>
         </tr></thead>
         <tbody>
         <?php if (!$rows): ?>
-          <tr><td colspan="10" class="muted">No valuations found.</td></tr>
+          <tr><td colspan="11" class="muted">No valuations found.</td></tr>
         <?php else: foreach ($rows as $r): ?>
           <tr>
             <?php if (can_edit()): ?><td><input type="checkbox" class="rowchk" name="ids[]" value="<?= (int)$r['id'] ?>"></td><?php endif; ?>
@@ -201,6 +207,7 @@ function render_list(array $cfg): void {
               else { foreach ($pend as $ab) echo '<span class="stagebox" title="' . e($STAGE_NAMES[$ab] ?? $ab) . ' — incomplete">' . $ab . '</span>'; } ?></td>
             <td><?= isset($r[$vf]) && $r[$vf] !== null && $r[$vf] !== '' ? number_format((float)$r[$vf]) : '' ?></td>
             <td class="muted"><?= e(ddate($r['created_at'])) ?></td>
+            <td><?php $ini = $userInitials[$r['created_by'] ?? 0] ?? ''; echo $ini !== '' ? '<span class="badge b-grey">' . e($ini) . '</span>' : '<span class="muted">—</span>'; ?></td>
             <td class="actions">
               <?php if (can_edit()): ?>
                 <a class="rbtn ico" href="<?= url($cfg['form_page'].'?id='.$r['id']) ?>" title="Edit"><i data-lucide="pencil"></i></a>
