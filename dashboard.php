@@ -117,6 +117,7 @@ layout_header('Dashboard', 'dashboard');
 
     <div class="panel online-widget">
       <div class="ow-h"><i data-lucide="radio"></i> Currently Online</div>
+      <div id="owBody">
       <?php if (!$online): ?>
         <div class="ow-empty">No one else online.</div>
       <?php else: foreach ($online as $o):
@@ -124,6 +125,7 @@ layout_header('Dashboard', 'dashboard');
       ?>
         <div class="ow-row"><span class="ow-dot"></span><span class="ow-name"><?= e($o['name']) ?></span><span class="ow-meta"><?= e($o['activity']) ?> · <?= e($dur) ?></span></div>
       <?php endforeach; endif; ?>
+      </div>
     </div>
   </div>
 </div>
@@ -192,6 +194,13 @@ layout_header('Dashboard', 'dashboard');
   }
   if (s) s.addEventListener('input', function(){ page = 1; render(); });
   render();
+})();
+// Auto-refresh the Currently Online widget every 30s
+(function(){
+  var body=document.getElementById('owBody'); if(!body) return;
+  setInterval(function(){
+    fetch('<?= url('online.php') ?>').then(function(r){return r.text();}).then(function(h){ body.innerHTML=h; }).catch(function(){});
+  }, 30000);
 })();
 // Animated count-up for KPI numbers
 document.querySelectorAll('.kpi-num[data-count]').forEach(function(el){
