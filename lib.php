@@ -452,6 +452,25 @@ function user_list_for_valuer(): array {
     return $out;
 }
 
+/** Kennet officers (valuers) available to receive an assignment: id => "Name (INI)". */
+function officer_list(): array {
+    $out = [];
+    try {
+        $cols = 'id, name' . (column_exists('users', 'initials') ? ', initials' : '');
+        $act  = column_exists('users', 'active') ? ' AND (active=1 OR active IS NULL)' : '';
+        foreach (db()->query("SELECT $cols FROM users WHERE role='valuer'$act ORDER BY name")->fetchAll() as $u) {
+            $ini = (isset($u['initials']) && $u['initials'] !== '') ? ' (' . $u['initials'] . ')' : '';
+            $out[$u['id']] = $u['name'] . $ini;
+        }
+    } catch (Throwable $e) {}
+    return $out;
+}
+/** Count of requests awaiting assignment (for the nav badge). */
+function pending_request_count(): int {
+    try { return (int)db()->query("SELECT COUNT(*) FROM valuation_requests WHERE status='requested'")->fetchColumn(); }
+    catch (Throwable $e) { return 0; }
+}
+
 /** True if a column exists on a table (cached). Lets the app work pre/post migration. */
 function column_exists(string $table, string $col): bool {
     static $cache = [];

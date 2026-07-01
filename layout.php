@@ -9,6 +9,10 @@ function layout_header(string $title, string $active = ''): void {
         'bank'      => ['label' => 'Bank Valuations',      'href' => 'bank_list.php',       'icon' => 'landmark'],
         'insurance' => ['label' => 'Insurance Valuations', 'href' => 'insurance_list.php',  'icon' => 'shield-check'],
     ];
+    if (can_assign()) {
+        $pend = pending_request_count();
+        $nav['requests'] = ['label' => 'Requests', 'href' => 'requests.php', 'icon' => 'inbox', 'badge' => $pend];
+    }
     if (is_admin()) $nav['analytics'] = ['label' => 'Analytics', 'href' => 'analytics.php', 'icon' => 'bar-chart-3'];
     // Settings hub is admin-only.
     if (is_admin()) $nav['settings'] = ['label' => 'Settings', 'href' => 'settings.php', 'icon' => 'settings'];
@@ -207,6 +211,7 @@ function layout_header(string $title, string $active = ''): void {
   .b-amber{background:#3d2f0f;color:#f5d79a;border:1px solid #7a5c1c}
   .b-grey{background:#2b3340;color:#cdd5e0}
   .b-green{background:#0f3d24;color:#b8f5d0;border:1px solid #1c7a47}
+  .b-blue{background:#0f2440;color:#a3c8f5;border:1px solid #1c4a7a}
   .listfoot{display:flex;justify-content:space-between;align-items:center;margin-top:14px;flex-wrap:wrap;gap:10px}
   .listfoot .pp{color:var(--mut);font-size:12px}
   .listfoot .pp select{background:var(--panel);border:1px solid var(--line);color:var(--txt);padding:5px 8px;border-radius:6px;margin-left:6px}
@@ -262,6 +267,9 @@ function layout_header(string $title, string $active = ''): void {
   .nav .lucide-shield-check{color:#22c55e}
   .nav .lucide-bar-chart-3{color:#b18cff}
   .nav .lucide-settings{color:#f5b14a}
+  .nav .lucide-inbox{color:#38bdf8}
+  .nav a{position:relative}
+  .navbadge{margin-left:auto;background:var(--accent);color:#fff;font-size:11px;font-weight:700;min-width:18px;height:18px;line-height:18px;text-align:center;border-radius:9px;padding:0 5px}
   #navInstall{display:none}
   #navInstall .lucide-download{color:#27c46f}
   #navInstall.installable{background:linear-gradient(90deg,rgba(39,196,111,.16),transparent)}
@@ -285,6 +293,7 @@ function layout_header(string $title, string $active = ''): void {
       <?php foreach ($nav as $k => $item): ?>
         <a href="<?= url($item['href']) ?>" class="<?= $active===$k?'on':'' ?>" style="animation-delay:<?= (0.04 * array_search($k, array_keys($nav))) ?>s">
           <i data-lucide="<?= e($item['icon']) ?>"></i><span><?= e($item['label']) ?></span>
+          <?php if (!empty($item['badge'])): ?><b class="navbadge"><?= (int)$item['badge'] ?></b><?php endif; ?>
         </a>
       <?php endforeach; ?>
       <a href="#" id="navInstall" onclick="return kInstall();" style="animation-delay:<?= (0.04 * count($nav)) ?>s">
