@@ -378,8 +378,37 @@ function sign_records(string $table, array $ids): int {
     $in = implode(',', array_fill(0, count($ids), '?'));
     db()->prepare("UPDATE `$table` SET " . implode(', ', $sets) . " WHERE id IN ($in)")
         ->execute(array_merge($params, $ids));
+    request_complete_for($table, $ids); // advance linked requests + notify portal officer
     return count($ids);
 }
+/** A linked request moves assigned -> in_progress the moment its valuation is worked on. */
+function request_touch_progress(string $table, int $vid): void {
+    if (!$vid) return;
+    try {
+        db()->prepare("UPDATE valuation_requests SET status='in_progress', updated_at=NOW()
+                       WHERE valuation_table=? AND valuation_id=? AND status='assigned'")
+            ->execute([$table, $vid]);
+    } catch (Throwable $e) {}
+}
+/** Mark any linked requests complete and email the portal officer who raised them. */
+function request_complete_for(string $table, array $ids): void {
+    $ids = array_values(array_filter(array_map('intval', $ids)));
+    if (!$ids) return;
+    try {
+        $in = implode(',', array_fill(0, count($ids), '?'));
+        $st = db()->prepare("SELECT vr.id, vr.reg_no, vr.status, cu.email
+                             FROM valuation_requests vr
+                             LEFT JOIN client_users cu ON cu.id = vr.requested_by
+                             WHERE vr.valuation_table=? AND vr.valuation_id IN ($in)
+                               AND vr.status NOT IN ('complete','cancelled')");
+        $st->execute(array_merge([$table], $ids));
+        foreach ($st->fetchAll() as $r) {
+            db()->prepare("UPDATE valuation_requests SET status='complete', updated_at=NOW() WHERE id=?")->execute([$r['id']]);
+            notify_complete((int)$r['id'], (string)$r['reg_no'], $r['email'] ?? null);
+        }
+    } catch (Throwable $e) {}
+}
+
 /** Generate the next serial, e.g. 079/06/2026 = running number this month / month / year. */
 function next_serial(): string {
     $y = date('Y'); $m = (int)date('m');

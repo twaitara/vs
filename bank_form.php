@@ -35,6 +35,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!$id && column_exists('bankvaluations', 'report_no')) $files['report_no'] = next_report_no('bankvaluations');
         if (is_admin() && !empty($_POST['valuer_id'])) $files['created_by'] = (int)$_POST['valuer_id'];
         $newId = save_row('bankvaluations', $COLUMNS, $_POST, $id, $files);
+        request_touch_progress('bankvaluations', (int)$newId);
+        if (($_POST['status'] ?? '') === 'complete') request_complete_for('bankvaluations', [(int)$newId]);
         audit($id ? 'update' : 'create', 'bankvaluation', $newId, $_POST['reg_no'] ?? '');
         flash($id ? 'Bank valuation updated.' : 'Bank valuation saved.');
         redirect('bank_list.php');
