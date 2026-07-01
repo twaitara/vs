@@ -21,6 +21,7 @@ if ($id && !empty($row['signed_at']) && !is_admin()) {
     redirect('bank_list.php');
 }
 touch_activity(($id ? 'Editing' : 'New') . ' bank valuation' . (!empty($row['reg_no']) ? ' — ' . $row['reg_no'] : ''));
+if (!$id && empty($row['serial_no'])) $row['serial_no'] = next_serial(); // auto serial: NNN/MM/YYYY
 
 $errors = [];
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -51,7 +52,7 @@ layout_header($id ? 'Edit Bank Valuation' : 'New Bank Valuation', 'bank');
   <fieldset><legend>Vehicle & Ownership Details</legend><div class="grid">
     <?= f_input('reg_no','Reg Number',$row,'text',true) ?>
     <?= f_input('country_of_origin','Country of Origin',$row) ?>
-    <?= f_input('serial_no','Serial No.',$row) ?>
+    <?= f_input('serial_no','Serial No. (auto)',$row,'text',false,'readonly') ?>
     <?= f_input('make','Make/Model',$row,'text',false) ?>
     <?= f_input('chasis_no','Chasis No.',$row) ?>
     <?= f_input('body_type','Body Type',$row) ?>

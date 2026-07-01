@@ -45,6 +45,7 @@ function render_list(array $cfg): void {
     $status = $_GET['status'] ?? '';
     $ins    = $_GET['ins'] ?? '';
     $hasStatus = column_exists($table, 'status');
+    $hasSerial = column_exists($table, 'serial_no');
     $dfrom  = $_GET['dfrom'] ?? '';
     $dto    = $_GET['dto'] ?? '';
     $vmin   = $_GET['vmin'] ?? '';
@@ -183,6 +184,7 @@ function render_list(array $cfg): void {
           <?php if (can_edit()): ?><th style="width:28px"></th><?php endif; ?>
           <?= $sortHeader('id','ID') ?>
           <?= $sortHeader('reg_no','Reg No.') ?>
+          <?php if ($hasSerial) echo '<th>Serial</th>'; ?>
           <?= $sortHeader('make','Make/Model') ?>
           <?= $sortHeader('customer_name','Customer') ?>
           <th>Client</th>
@@ -194,12 +196,13 @@ function render_list(array $cfg): void {
         </tr></thead>
         <tbody>
         <?php if (!$rows): ?>
-          <tr><td colspan="11" class="muted">No valuations found.</td></tr>
+          <tr><td colspan="12" class="muted">No valuations found.</td></tr>
         <?php else: foreach ($rows as $r): ?>
           <tr>
             <?php if (can_edit()): ?><td><input type="checkbox" class="rowchk" name="ids[]" value="<?= (int)$r['id'] ?>"></td><?php endif; ?>
             <td><?= e($r['id']) ?></td>
             <td><?= e($r['reg_no']) ?></td>
+            <?php if ($hasSerial) echo '<td>' . e($r['serial_no'] ?? '') . '</td>'; ?>
             <td><?= e($r['make']) ?></td>
             <td><?= e($r['customer_name']) ?></td>
             <td><?= e(lookup_name('clients', $r['client'])) ?></td>

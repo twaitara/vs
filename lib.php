@@ -302,6 +302,17 @@ function sign_records(string $table, array $ids): int {
         ->execute(array_merge($params, $ids));
     return count($ids);
 }
+/** Generate the next serial, e.g. 079/06/2026 = running number this month / month / year. */
+function next_serial(): string {
+    $y = date('Y'); $m = (int)date('m');
+    try {
+        $st = db()->prepare("SELECT COUNT(*) FROM bankvaluations WHERE YEAR(created_at)=? AND MONTH(created_at)=?");
+        $st->execute([$y, $m]);
+        $seq = (int)$st->fetchColumn() + 1;
+    } catch (Throwable $e) { $seq = 1; }
+    return sprintf('%03d/%02d/%04d', $seq, $m, $y);
+}
+
 /** Generate next sequential report number, e.g. KEN/2026/0007. */
 function next_report_no(string $table): string {
     $prefix = setting('report_prefix', 'KEN');
