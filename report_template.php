@@ -69,6 +69,8 @@ function render_bank_report(array $val): string {
     $sig        = ($signed && is_file($sigFile)) ? report_img_data($sigFile) : null;
     $signedDate = $signed ? date('d M Y', strtotime($val['signed_at'])) : '';
     $signatoryName = setting('signatory_name', 'George Mwangi');
+    $stampFile  = __DIR__ . '/' . ltrim(setting('stamp_image', 'storage/stamp.png'), '/');
+    $stamp      = ($signed && is_file($stampFile)) ? report_img_data($stampFile) : null;
 
     ob_start(); ?>
 <!DOCTYPE html>
@@ -215,7 +217,8 @@ function render_bank_report(array $val): string {
             <tr>
                 <td width="50%"><p><span>Authorizing Signature:</span></p>
                     <div style="height:70px; border-bottom:1px solid #ccc; text-align:center;"><?php if ($sig): ?><img src="<?= $sig ?>" style="max-height:68px; max-width:300px;"><?php endif; ?></div>
-                    <p class="note"><?php if ($signed): ?><strong style="color:#080bc0ff;font-size:13px;"><?= e($signatoryName) ?></strong><br><?php endif; ?>Name & Stamp</p></td>
+                    <p class="note"><?php if ($signed): ?><strong style="color:#080bc0ff;font-size:13px;"><?= e($signatoryName) ?></strong><br><?php endif; ?>Name & Stamp</p>
+                    <?php if ($stamp): ?><img src="<?= $stamp ?>" style="max-height:85px;max-width:170px;"><?php endif; ?></td>
                 <td width="50%"><p><span>Date:</span></p>
                     <div style="height:50px; border-bottom:1px solid #ccc; font-weight:bold; color:#080bc0ff;"><?= e($signedDate) ?></div></td>
             </tr>
@@ -289,6 +292,8 @@ function render_insurance_report(array $val): string {
     $sig        = ($signed && is_file($sigFile)) ? report_img_data($sigFile) : null;
     $signedDate = $signed ? date('d M Y', strtotime($val['signed_at'])) : '';
     $signatoryName = setting('signatory_name', 'George Mwangi');
+    $stampFile  = __DIR__ . '/' . ltrim(setting('stamp_image', 'storage/stamp.png'), '/');
+    $stamp      = ($signed && is_file($stampFile)) ? report_img_data($stampFile) : null;
 
     // Checklist groups (field => question). Values stored as "1"/"0".
     $groups = [
@@ -383,7 +388,7 @@ function render_insurance_report(array $val): string {
     </div></div>
 
     <table><tr>
-        <td width="50%"><p><span>Authorizing Signature:</span></p><div style="height:70px;border-bottom:1px solid #ccc;text-align:center;"><?php if ($sig): ?><img src="<?= $sig ?>" style="max-height:68px;max-width:300px;"><?php endif; ?></div><p class="note"><?php if ($signed): ?><strong style="color:#080bc0ff;font-size:13px;"><?= e($signatoryName) ?></strong><br><?php endif; ?>Name & Stamp</p></td>
+        <td width="50%"><p><span>Authorizing Signature:</span></p><div style="height:70px;border-bottom:1px solid #ccc;text-align:center;"><?php if ($sig): ?><img src="<?= $sig ?>" style="max-height:68px;max-width:300px;"><?php endif; ?></div><p class="note"><?php if ($signed): ?><strong style="color:#080bc0ff;font-size:13px;"><?= e($signatoryName) ?></strong><br><?php endif; ?>Name & Stamp</p><?php if ($stamp): ?><img src="<?= $stamp ?>" style="max-height:85px;max-width:170px;"><?php endif; ?></td>
         <td width="50%"><p><span>Date:</span></p><div style="height:50px;border-bottom:1px solid #ccc;font-weight:bold;color:#080bc0ff;"><?= e($signedDate) ?></div></td>
     </tr></table>
 

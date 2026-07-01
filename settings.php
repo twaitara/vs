@@ -44,6 +44,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             set_setting('signature_image', 'storage/signature.png');
         }
     }
+    if (!empty($_FILES['stamp']['name']) && is_uploaded_file($_FILES['stamp']['tmp_name'])) {
+        @mkdir(__DIR__ . '/storage', 0775, true);
+        if (@move_uploaded_file($_FILES['stamp']['tmp_name'], __DIR__ . '/storage/stamp.png')) {
+            set_setting('stamp_image', 'storage/stamp.png');
+        }
+    }
     audit('update', 'settings');
     flash('Settings saved.');
     redirect('settings.php');
@@ -79,6 +85,13 @@ settings_nav('general');
       <img src="data:image/png;base64,<?= base64_encode(file_get_contents($sigp)) ?>" style="max-height:70px;background:#fff;padding:6px;border-radius:6px">
     <?php else: ?>
       <p class="muted" style="font-size:12px;margin-top:10px">No signature uploaded yet.</p>
+    <?php endif; ?>
+    <div class="f" style="margin-top:14px"><label class="f">Company Stamp (PNG, transparent works best)</label><input type="file" name="stamp" accept="image/png"></div>
+    <?php $stp = __DIR__ . '/storage/stamp.png'; if (is_file($stp)): ?>
+      <p class="muted" style="font-size:12px;margin-top:10px">Current stamp on file:</p>
+      <img src="data:image/png;base64,<?= base64_encode(file_get_contents($stp)) ?>" style="max-height:80px;background:#fff;padding:6px;border-radius:6px">
+    <?php else: ?>
+      <p class="muted" style="font-size:12px;margin-top:10px">No stamp uploaded yet.</p>
     <?php endif; ?>
   </fieldset>
 
