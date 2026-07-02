@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/layout.php';
 require_login();
+if (can_assign()) { try { dispatch_email_queue(); } catch (Throwable $e) {} } // drain any queued email that now fits
 
 /** Helper: scalar query with graceful fallback. */
 function dash_scalar(string $sql, array $p = []) {

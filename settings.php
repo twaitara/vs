@@ -42,6 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (trim((string)($_POST['smtp_pass'] ?? '')) !== '') set_setting('smtp_pass', (string)$_POST['smtp_pass']); // blank = keep existing
         set_setting('mail_from', trim((string)($_POST['mail_from'] ?? '')));
         set_setting('mail_from_name', trim((string)($_POST['mail_from_name'] ?? '')));
+        set_setting('email_hourly_cap', (string)max(0, (int)($_POST['email_hourly_cap'] ?? 30)));
     }
     // Optional logo uploads (header logo + watermark).
     @mkdir(__DIR__ . '/assets', 0775, true);
@@ -166,6 +167,12 @@ settings_nav('general');
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
     <div class="f"><label class="f">From address</label><input type="email" name="mail_from" placeholder="no-reply@customer.com" value="<?= e(setting('mail_from')) ?>"></div>
     <div class="f"><label class="f">From name</label><input type="text" name="mail_from_name" placeholder="Company Valuations" value="<?= e(setting('mail_from_name')) ?>"></div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 2fr;gap:12px;align-items:end">
+    <div class="f"><label class="f">Max emails per hour</label><input type="number" name="email_hourly_cap" min="0" value="<?= e(setting('email_hourly_cap', '30')) ?>"></div>
+    <div class="muted" style="font-size:12px;padding-bottom:12px">Beyond this, emails are queued and sent automatically in the following hour(s). Set 0 for no limit.
+    <?php $qp = 0; try { $qp = (int)db()->query("SELECT COUNT(*) FROM email_queue WHERE status='pending'")->fetchColumn(); } catch (Throwable $e) {} ?>
+    <?php if ($qp > 0): ?><br><b style="color:#c98a1a"><?= $qp ?> email(s) currently queued.</b><?php endif; ?></div>
   </div>
   <div style="display:flex;gap:10px;align-items:center;margin-top:6px">
     <button class="btn" type="submit"><i data-lucide="save"></i>Save SMTP</button>

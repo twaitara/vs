@@ -184,11 +184,76 @@ function smtp_send(array $cfg, array $to, string $data): bool {
     return $ok($r, '250');
 }
 
+/** Max emails the system may send per rolling hour (super-admin editable). 0 = unlimited. */
+function email_hourly_cap(): int { $n = (int)setting('email_hourly_cap', '30'); return max(0, $n); }
+/** Count of emails actually sent in the last rolling hour. */
+function emails_sent_last_hour(): int {
+    if (!table_exists('email_queue')) return 0;
+    try {
+        $s = db()->query("SELECT COUNT(*) FROM email_queue WHERE status='sent' AND sent_at > (NOW() - INTERVAL 1 HOUR)");
+        return (int)$s->fetchColumn();
+    } catch (Throwable $e) { return 0; }
+}
+/** Log a lightweight 'sent' row (for hourly counting). */
+function email_log_sent(array $to, string $subject): void {
+    if (!table_exists('email_queue')) return;
+    try { db()->prepare("INSERT INTO email_queue (recipients,subject,status,created_at,sent_at) VALUES (?,?, 'sent', NOW(), NOW())")
+        ->execute([implode(',', $to), mb_substr($subject, 0, 250)]); } catch (Throwable $e) {}
+}
+/** Hold an email for later delivery (over the hourly cap). */
+function email_enqueue(array $to, string $subject, string $body, bool $html, array $attachments): void {
+    $atts = [];
+    foreach ($attachments as $a) $atts[] = ['name' => $a['name'], 'type' => $a['type'] ?? 'application/octet-stream', 'data' => base64_encode($a['data'])];
+    try { db()->prepare("INSERT INTO email_queue (recipients,subject,body,is_html,attachments,status,created_at) VALUES (?,?,?,?,?, 'pending', NOW())")
+        ->execute([implode(',', $to), $subject, $body, $html ? 1 : 0, $atts ? json_encode($atts) : null]); } catch (Throwable $e) {}
+}
+/** Deliver queued emails while there is remaining hourly capacity. Returns number sent. */
+function dispatch_email_queue(int $max = 0): int {
+    if (!table_exists('email_queue')) return 0;
+    $cap = email_hourly_cap();
+    $sent = 0;
+    try {
+        $room = $cap === 0 ? 200 : ($cap - emails_sent_last_hour());
+        if ($room <= 0) return 0;
+        if ($max > 0) $room = min($room, $max);
+        $rows = db()->query("SELECT * FROM email_queue WHERE status='pending' ORDER BY id ASC LIMIT $room")->fetchAll();
+        foreach ($rows as $r) {
+            $atts = $r['attachments'] ? (json_decode($r['attachments'], true) ?: []) : [];
+            foreach ($atts as &$a) { if (isset($a['data'])) $a['data'] = base64_decode($a['data']); } unset($a);
+            $to = array_values(array_filter(array_map('trim', explode(',', $r['recipients']))));
+            $ok = mail_deliver($to, (string)$r['subject'], (string)$r['body'], (int)$r['is_html'] === 1, $atts);
+            if ($ok) { db()->prepare("UPDATE email_queue SET status='sent', sent_at=NOW(), attempts=attempts+1, body=NULL, attachments=NULL WHERE id=?")->execute([$r['id']]); $sent++; }
+            else     { db()->prepare("UPDATE email_queue SET attempts=attempts+1, status=IF(attempts>=9,'failed','pending') WHERE id=?")->execute([$r['id']]); }
+            if ($cap !== 0 && emails_sent_last_hour() >= $cap) break;
+        }
+    } catch (Throwable $e) {}
+    return $sent;
+}
+
 /**
- * Send an email through the customer's SMTP (if configured) or PHP mail() otherwise.
- * $attachments: list of ['name'=>, 'data'=>, 'type'=>].
+ * Public mailer: rate-limited (per hour) with a queue for overflow.
+ * Sends now if under the cap, otherwise queues for a later hour. Returns true if sent or queued.
  */
 function app_mail($to, string $subject, string $body, bool $html = false, array $attachments = []): bool {
+    $to = is_array($to) ? array_values(array_filter(array_unique($to))) : [$to];
+    if (!$to) return false;
+    // Opportunistically flush any backlog that now fits within capacity.
+    dispatch_email_queue();
+    $cap = email_hourly_cap();
+    if ($cap > 0 && table_exists('email_queue') && emails_sent_last_hour() >= $cap) {
+        email_enqueue($to, $subject, $body, $html, $attachments); // cued for the next hour
+        return true;
+    }
+    $ok = mail_deliver($to, $subject, $body, $html, $attachments);
+    if ($ok) email_log_sent($to, $subject);
+    return $ok;
+}
+
+/**
+ * Actually build & deliver an email through the customer's SMTP (if configured) or PHP mail().
+ * $attachments: list of ['name'=>, 'data'=>, 'type'=>].
+ */
+function mail_deliver($to, string $subject, string $body, bool $html = false, array $attachments = []): bool {
     $to = is_array($to) ? array_values(array_filter(array_unique($to))) : [$to];
     if (!$to) return false;
     $cfg = mail_settings();
