@@ -70,41 +70,50 @@ function dev_credit(): string {
          . '<a href="https://www.nineonetwo.co.ke" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline">www.nineonetwo.co.ke</a> · '
          . '<a href="tel:+254722974970" style="color:inherit;text-decoration:none">0722 974 970</a>';
 }
-/** Full branded developer footer bar shown at the bottom of every page. */
+/** Full branded developer footer bar shown fixed at the bottom of every page (super-admin editable). */
 function dev_footer(): string {
     $logoFile = __DIR__ . '/assets/logo912.png';
     $logo = is_file($logoFile)
         ? '<img src="' . url('assets/logo912.png') . '" alt="Nine One Two Holdings" class="df-img">'
         : '<span class="df-912">912</span><span class="df-cap">NINE ONE TWO<br>HOLDINGS LTD</span>';
-    $services = ['Enterprise Business Systems', 'Custom Software', 'AI & Automation', 'WhatsApp Integrations',
-        'IT Security', 'IT Infrastructure', 'Network Solutions', 'Cloud Services', 'CCTV & Access Control', 'VoIP & PBX', 'Managed IT Services'];
+
+    $devName  = setting('footer_dev_name', 'Nine One Two Holdings Ltd');
+    $website  = trim(setting('footer_website', 'www.nineonetwo.co.ke'));
+    $phone    = trim(setting('footer_phone', '+254 722 974 970'));
+    $servicesRaw = setting('footer_services', 'Enterprise Business Systems, Custom Software, AI & Automation, WhatsApp Integrations, IT Security, IT Infrastructure, Network Solutions, Cloud Services, CCTV & Access Control, VoIP & PBX, Managed IT Services');
+    $services = array_filter(array_map('trim', preg_split('/[\n,]+/', $servicesRaw)));
     $links = implode('<span class="df-sep">·</span>', array_map(fn($s) => '<span>' . e($s) . '</span>', $services));
+
+    $webHref = $website === '' ? '' : (preg_match('#^https?://#i', $website) ? $website : 'https://' . $website);
+    $telHref = 'tel:' . preg_replace('/[^0-9+]/', '', $phone);
+    $contact = '';
+    if ($website !== '') $contact .= '<a href="' . e($webHref) . '" target="_blank" rel="noopener"><i data-lucide="globe"></i>' . e($website) . '</a>';
+    if ($phone !== '')   $contact .= '<a href="' . e($telHref) . '"><i data-lucide="phone"></i>' . e($phone) . '</a>';
+
     return '<style>
-      .site-footer{margin-top:34px;background:#0c0f13;border-top:3px solid #d41d1d;color:#c7ccd4}
-      .df-inner{max-width:1800px;margin:0 auto;padding:16px 22px;display:flex;align-items:center;gap:22px;flex-wrap:wrap}
+      .site-footer{background:#0c0f13;border-top:3px solid #d41d1d;color:#c7ccd4}
+      .df-inner{max-width:1800px;margin:0 auto;padding:12px 22px;display:flex;align-items:center;gap:22px;flex-wrap:wrap}
       .df-brand{display:flex;align-items:center;gap:12px;flex:0 0 auto}
-      .df-img{height:48px;width:auto}
-      .df-912{font-size:30px;font-weight:900;color:#d41d1d;letter-spacing:1px;line-height:1}
+      .df-img{height:44px;width:auto}
+      .df-912{font-size:28px;font-weight:900;color:#d41d1d;letter-spacing:1px;line-height:1}
       .df-cap{font-size:9px;letter-spacing:1.5px;color:#9aa4b2;line-height:1.25}
-      .df-mid{flex:1 1 340px;min-width:260px}
-      .df-dev{font-size:13px;color:#e6e9ee;margin-bottom:4px}.df-dev b{color:#fff}
-      .df-links{font-size:11px;color:#8a93a0;line-height:1.7}
+      .df-mid{flex:1 1 340px;min-width:220px;min-width:0}
+      .df-dev{font-size:13px;color:#e6e9ee;margin-bottom:3px}.df-dev b{color:#fff}
+      .df-links{font-size:11px;color:#8a93a0;line-height:1.6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
       .df-links .df-sep{margin:0 6px;color:#3a4048}
-      .df-contact{display:flex;flex-direction:column;gap:4px;font-size:12.5px;flex:0 0 auto;text-align:right}
+      .df-contact{display:flex;flex-direction:column;gap:3px;font-size:12.5px;flex:0 0 auto;text-align:right}
       .df-contact a{color:#c7ccd4;text-decoration:none;display:inline-flex;align-items:center;gap:7px;justify-content:flex-end}
       .df-contact a:hover{color:#fff} .df-contact i{width:15px;height:15px;color:#d41d1d}
-      @media(max-width:860px){.df-inner{flex-direction:column;align-items:flex-start;gap:12px}.df-contact{text-align:left}.df-contact a{justify-content:flex-start}}
+      @media(min-width:861px){ .site-footer{position:fixed;left:0;right:0;bottom:0;z-index:500} body{padding-bottom:88px} .fab{bottom:100px} }
+      @media(max-width:860px){.site-footer{margin-top:24px}.df-inner{flex-direction:column;align-items:flex-start;gap:10px}.df-links{white-space:normal}.df-contact{text-align:left}.df-contact a{justify-content:flex-start}}
     </style>
     <footer class="site-footer"><div class="df-inner">
       <div class="df-brand">' . $logo . '</div>
       <div class="df-mid">
-        <div class="df-dev">Developed by <b>Nine One Two Holdings Ltd</b></div>
+        <div class="df-dev">Developed by <b>' . e($devName) . '</b></div>
         <div class="df-links">' . $links . '</div>
       </div>
-      <div class="df-contact">
-        <a href="https://www.nineonetwo.co.ke" target="_blank" rel="noopener"><i data-lucide="globe"></i>www.nineonetwo.co.ke</a>
-        <a href="tel:+254722974970"><i data-lucide="phone"></i>+254 722 974 970</a>
-      </div>
+      <div class="df-contact">' . $contact . '</div>
     </div></footer>';
 }
 

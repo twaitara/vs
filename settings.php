@@ -33,6 +33,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (is_superadmin() && isset($_POST['_signall_form'])) {
         set_setting('sign_all_enabled', !empty($_POST['sign_all_enabled']) ? '1' : '0');
     }
+    if (is_superadmin() && isset($_POST['_footer_form'])) {
+        set_setting('footer_dev_name', trim((string)($_POST['footer_dev_name'] ?? '')));
+        set_setting('footer_website',  trim((string)($_POST['footer_website'] ?? '')));
+        set_setting('footer_phone',    trim((string)($_POST['footer_phone'] ?? '')));
+        set_setting('footer_services', trim((string)($_POST['footer_services'] ?? '')));
+    }
     // Optional logo uploads (header logo + watermark).
     @mkdir(__DIR__ . '/assets', 0775, true);
     foreach (['logo2' => 'logo2.png', 'logo' => 'logo.png'] as $field => $dest) {
@@ -121,6 +127,20 @@ settings_nav('general');
   <p class="muted" style="font-size:13px">Controls the green <b>Sign all matching</b> button on the valuation lists, which signs every unsigned report in the current filter at once. Turn it off when you're done with the one-time bulk signing.</p>
   <label style="display:flex;gap:8px;align-items:center;font-size:14px;margin:6px 0"><input type="checkbox" name="sign_all_enabled" value="1" <?= sign_all_enabled() ? 'checked' : '' ?>> Enable the “Sign all matching” button</label>
   <button class="btn" type="submit" style="margin-top:10px"><i data-lucide="save"></i>Save</button>
+</form>
+
+<form class="card" method="post" style="max-width:680px;border-color:#7a5c1c">
+  <?= csrf_field() ?><input type="hidden" name="_footer_form" value="1">
+  <h3 style="margin-top:0">Page Footer <span class="muted" style="font-size:12px;font-weight:400">(super admin only)</span></h3>
+  <p class="muted" style="font-size:13px">The developer footer shown at the bottom of every page. To use the 912 logo image, upload it to <code>assets/logo912.png</code> on the server.</p>
+  <div class="f"><label class="f">“Developed by” name</label><input type="text" name="footer_dev_name" value="<?= e(setting('footer_dev_name', 'Nine One Two Holdings Ltd')) ?>"></div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+    <div class="f"><label class="f">Website</label><input type="text" name="footer_website" value="<?= e(setting('footer_website', 'www.nineonetwo.co.ke')) ?>"></div>
+    <div class="f"><label class="f">Phone</label><input type="text" name="footer_phone" value="<?= e(setting('footer_phone', '+254 722 974 970')) ?>"></div>
+  </div>
+  <div class="f"><label class="f">Services (comma or line separated)</label>
+    <textarea name="footer_services" rows="3"><?= e(setting('footer_services', 'Enterprise Business Systems, Custom Software, AI & Automation, WhatsApp Integrations, IT Security, IT Infrastructure, Network Solutions, Cloud Services, CCTV & Access Control, VoIP & PBX, Managed IT Services')) ?></textarea></div>
+  <button class="btn" type="submit" style="margin-top:6px"><i data-lucide="save"></i>Save footer</button>
 </form>
 <?php endif; ?>
 
