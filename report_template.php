@@ -37,6 +37,16 @@ function report_words($number): string {
     return implode(' ', $words) . ' Shillings';
 }
 
+/** The date shown by the signature/stamp: the inspection date (falls back to the sign date). */
+function report_sign_date(array $val): string {
+    if (empty($val['signed_at'])) return '';
+    foreach (['inspection_date', 'assesment_date'] as $fld) { // insurance uses inspection_date; bank/machine use assesment_date
+        $d = trim((string)($val[$fld] ?? ''));
+        if ($d !== '' && $d !== '0000-00-00') return date('d M Y', strtotime($d));
+    }
+    return date('d M Y', strtotime((string)$val['signed_at']));
+}
+
 /** Read an image file and return a data URI, or null if missing. */
 function report_img_data(string $absPath): ?string {
     if (!is_file($absPath)) return null;
@@ -67,7 +77,7 @@ function render_bank_report(array $val): string {
     $sigFile    = __DIR__ . '/' . ltrim(setting('signature_image', 'storage/signature.png'), '/');
     $signed     = !empty($val['signed_at']);
     $sig        = ($signed && is_file($sigFile)) ? report_img_data($sigFile) : null;
-    $signedDate = $signed ? date('d M Y', strtotime($val['signed_at'])) : '';
+    $signedDate = report_sign_date($val);
     $signatoryName = setting('signatory_name', 'George Mwangi');
     $stampFile  = __DIR__ . '/' . ltrim(setting('stamp_image', 'storage/stamp.png'), '/');
     $stamp      = ($signed && is_file($stampFile)) ? report_img_data($stampFile) : null;
@@ -290,7 +300,7 @@ function render_insurance_report(array $val): string {
     $sigFile    = __DIR__ . '/' . ltrim(setting('signature_image', 'storage/signature.png'), '/');
     $signed     = !empty($val['signed_at']);
     $sig        = ($signed && is_file($sigFile)) ? report_img_data($sigFile) : null;
-    $signedDate = $signed ? date('d M Y', strtotime($val['signed_at'])) : '';
+    $signedDate = report_sign_date($val);
     $signatoryName = setting('signatory_name', 'George Mwangi');
     $stampFile  = __DIR__ . '/' . ltrim(setting('stamp_image', 'storage/stamp.png'), '/');
     $stamp      = ($signed && is_file($stampFile)) ? report_img_data($stampFile) : null;
@@ -425,7 +435,7 @@ function render_machine_report(array $val): string {
     $sigFile    = __DIR__ . '/' . ltrim(setting('signature_image', 'storage/signature.png'), '/');
     $signed     = !empty($val['signed_at']);
     $sig        = ($signed && is_file($sigFile)) ? report_img_data($sigFile) : null;
-    $signedDate = $signed ? date('d M Y', strtotime($val['signed_at'])) : '';
+    $signedDate = report_sign_date($val);
     $signatoryName = setting('signatory_name', 'George Mwangi');
     $stampFile  = __DIR__ . '/' . ltrim(setting('stamp_image', 'storage/stamp.png'), '/');
     $stamp      = ($signed && is_file($stampFile)) ? report_img_data($stampFile) : null;
