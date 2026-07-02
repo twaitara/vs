@@ -24,11 +24,11 @@ function layout_header(string $title, string $active = ''): void {
             $bk = db()->query("SELECT created_at, user_name FROM audit_log WHERE action='backup' ORDER BY id DESC LIMIT 1")->fetch();
             if ($bk) {
                 $t = strtotime($bk['created_at']);
-                $u = trim((string)($bk['user_name'] ?? ''));
+                $bkUser = trim((string)($bk['user_name'] ?? ''));
                 $days = $t ? (int)floor((time() - $t) / 86400) : 999;
                 $bkOverdue = $days > 10;
                 $lastBackup = 'Last: ' . ($t ? date('j M y', $t) : '')
-                    . ($u !== '' ? ' · ' . strtok($u, ' ') : '')
+                    . ($bkUser !== '' ? ' · ' . strtok($bkUser, ' ') : '')
                     . ($bkOverdue ? ' · ' . $days . 'd ago' : '');
             } else {
                 $bkOverdue = true;
