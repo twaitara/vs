@@ -45,7 +45,7 @@ function portal_header(string $title, string $nav = ''): void {
   .pbar .whoami{display:inline-flex;align-items:center;gap:7px;font-size:13px;color:var(--txt)}
   .pbar .whoami i{width:16px;height:16px;color:#5b9bff}
   @media(max-width:860px){.pbar .whoami span{display:none}}
-  .wrap{max-width:1200px;margin:0 auto;padding:24px;animation:fadeUp .45s ease}
+  .wrap{max-width:1800px;width:96%;margin:0 auto;padding:24px;animation:fadeUp .45s ease}
   @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
   h1.pt{font-size:22px;font-weight:800;letter-spacing:-.02em;margin:0 0 4px}
   .psub{color:var(--mut);font-size:13px;margin:0 0 20px}
