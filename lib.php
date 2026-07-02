@@ -54,6 +54,16 @@ function e($v): string { return htmlspecialchars((string)($v ?? ''), ENT_QUOTES,
 
 /** Build an app URL. */
 function url(string $path = ''): string { return BASE_URL . '/' . ltrim($path, '/'); }
+/** Online-widget label: the registration/machine being valued if on a valuation form, else "online". */
+function online_meta(?string $activity): string {
+    $a = (string)$activity;
+    if (stripos($a, 'valuation') !== false && mb_strpos($a, '—') !== false) {
+        $reg = trim(mb_substr($a, mb_strpos($a, '—') + 1));
+        if ($reg !== '') return '<b>' . e($reg) . '</b>';
+    }
+    return '<span class="muted">online</span>';
+}
+
 /** Developer credit line shown at the bottom of every page. */
 function dev_credit(): string {
     return 'Developed by <b>Nine One Two Holdings Limited</b> · '
