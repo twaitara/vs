@@ -35,7 +35,7 @@ function portal_header(string $title, string $nav = ''): void {
   .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:22px}
   .kpi{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px;display:flex;align-items:center;gap:14px;position:relative;overflow:hidden}
   .kpi::before{content:"";position:absolute;left:0;right:0;top:0;height:3px;background:linear-gradient(90deg,var(--accent),#ff8a5c)}
-  .kpi-ic{width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex:0 0 46px;background:rgba(37,99,235,.15);color:#5b9bff}.kpi-ic.g{background:rgba(28,122,71,.18);color:#3ddc84}
+  .kpi-ic{width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex:0 0 46px;background:rgba(37,99,235,.15);color:#5b9bff}.kpi-ic.g{background:rgba(28,122,71,.18);color:#3ddc84}.kpi-ic.a{background:rgba(245,177,74,.16);color:#f5b14a}
   .kpi-ic i{width:22px;height:22px}.kpi-label{color:var(--mut);font-size:13px}.kpi-num{font-size:26px;font-weight:800}
   input[type=search]{width:100%;background:var(--input);border:1px solid var(--line);color:var(--txt);padding:10px 12px;border-radius:8px;font-size:13px;margin-bottom:14px}
   table.list{width:100%;border-collapse:collapse;background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden;box-shadow:0 10px 28px rgba(0,0,0,.07)}

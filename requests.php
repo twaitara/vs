@@ -22,15 +22,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!$officerId || !isset($officers[$officerId])) {
             flash('Choose a valuer to assign.', 'err'); redirect('requests.php');
         }
-        $table = $req['type'] === 'insurance' ? 'valuations' : 'bankvaluations';
+        $table = ['insurance' => 'valuations', 'machine' => 'machinevaluations'][$req['type']] ?? 'bankvaluations';
 
         // Create the pre-filled valuation record owned by the assigned officer.
         $extra = ['created_by' => $officerId];
         if (column_exists($table, 'status'))    $extra['status'] = 'draft';
         if (column_exists($table, 'serial_no'))  $extra['serial_no'] = next_serial();
         if (column_exists($table, 'report_no'))  $extra['report_no'] = next_report_no($table);
-        $post = ['reg_no' => $req['reg_no'], 'client' => (int)$req['client_id']];
-        $vid  = save_row($table, ['reg_no', 'client'], $post, null, $extra);
+        // Machines have no reg_no — the requested identifier is the machine name.
+        if ($table === 'machinevaluations') { $post = ['machine_name' => $req['reg_no'], 'client' => (int)$req['client_id']]; $cols = ['machine_name', 'client']; }
+        else                                { $post = ['reg_no' => $req['reg_no'], 'client' => (int)$req['client_id']]; $cols = ['reg_no', 'client']; }
+        $vid  = save_row($table, $cols, $post, null, $extra);
 
         db()->prepare("UPDATE valuation_requests SET status='assigned', assigned_to=?, valuation_id=?, valuation_table=?, updated_at=NOW() WHERE id=?")
             ->execute([$officerId, $vid, $table, $rid]);
@@ -82,7 +84,7 @@ layout_header('Valuation Requests', 'requests');
     <tr>
       <td><b><?= e($r['reg_no']) ?></b></td>
       <td><?= e($clients[$r['client_id']] ?? ('#' . $r['client_id'])) ?></td>
-      <td><?= $r['type'] === 'insurance' ? 'Insurance' : 'Bank' ?></td>
+      <td><?= ucfirst($r['type']) ?></td>
       <td class="muted"><?= e($r['requester_name'] ?: '—') ?></td>
       <td><?= request_badge($r['status']) ?></td>
       <td class="muted"><?= $r['assigned_to'] ? e($unames[$r['assigned_to']] ?? ('#' . $r['assigned_to'])) : '—' ?></td>
@@ -100,9 +102,9 @@ layout_header('Valuation Requests', 'requests');
             <button class="rbtn" type="submit"><i data-lucide="user-check"></i>Assign</button>
           </form>
         <?php elseif (in_array($r['status'], ['assigned', 'in_progress'], true) && !empty($r['valuation_id'])): ?>
-          <a class="rbtn" href="<?= url(($r['valuation_table'] === 'valuations' ? 'insurance_form.php' : 'bank_form.php') . '?id=' . (int)$r['valuation_id']) ?>"><i data-lucide="pencil"></i>Open</a>
+          <a class="rbtn" href="<?= url(table_form($r['valuation_table']) . '?id=' . (int)$r['valuation_id']) ?>"><i data-lucide="pencil"></i>Open</a>
         <?php elseif ($r['status'] === 'complete' && !empty($r['valuation_id'])): ?>
-          <a class="rbtn" href="<?= url('preview.php?type=' . ($r['valuation_table'] === 'valuations' ? 'insurance' : 'bank') . '&id=' . (int)$r['valuation_id']) ?>" target="_blank"><i data-lucide="eye"></i>View</a>
+          <a class="rbtn" href="<?= url('preview.php?type=' . table_type($r['valuation_table']) . '&id=' . (int)$r['valuation_id']) ?>" target="_blank"><i data-lucide="eye"></i>View</a>
         <?php else: ?>
           <span class="muted" style="font-size:12px">—</span>
         <?php endif; ?>

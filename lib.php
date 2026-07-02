@@ -491,6 +491,15 @@ function require_own_valuation(array $row): void {
     }
 }
 
+/** Map a valuation table to its report type key (bank|insurance|machine). */
+function table_type(?string $t): string {
+    return ['valuations' => 'insurance', 'machinevaluations' => 'machine'][$t] ?? 'bank';
+}
+/** Map a valuation table to its edit-form page. */
+function table_form(?string $t): string {
+    return ['valuations' => 'insurance_form.php', 'machinevaluations' => 'machine_form.php'][$t] ?? 'bank_form.php';
+}
+
 /** Kennet officers (valuers) available to receive an assignment: id => "Name (INI)". */
 function officer_list(): array {
     $out = [];

@@ -20,6 +20,8 @@ $insWhere  = dash_where('valuations', $own);
 
 $bankTotal = (int)dash_scalar("SELECT COUNT(*) FROM bankvaluations" . $bankWhere);
 $insTotal  = (int)dash_scalar("SELECT COUNT(*) FROM valuations" . $insWhere);
+$machWhere = dash_where('machinevaluations', $own);
+$machTotal = column_exists('machinevaluations', 'id') ? (int)dash_scalar("SELECT COUNT(*) FROM machinevaluations" . $machWhere) : 0;
 $monthCond = "YEAR(created_at)=YEAR(CURDATE()) AND MONTH(created_at)=MONTH(CURDATE())";
 $bankMonth = (int)dash_scalar("SELECT COUNT(*) FROM bankvaluations" . ($bankWhere ? $bankWhere . " AND " : " WHERE ") . $monthCond);
 $totalValue = (float)dash_scalar("SELECT COALESCE(SUM(market_value),0) FROM bankvaluations" . $bankWhere);
@@ -93,6 +95,7 @@ layout_header('Dashboard', 'dashboard');
 <div class="kpis">
   <div class="kpi"><div class="kpi-ic ic-blue"><i data-lucide="landmark"></i></div><div><div class="kpi-label">Bank Valuations</div><div class="kpi-num" data-count="<?= (int)$bankTotal ?>">0</div></div></div>
   <div class="kpi"><div class="kpi-ic ic-green"><i data-lucide="shield-check"></i></div><div><div class="kpi-label">Insurance Valuations</div><div class="kpi-num" data-count="<?= (int)$insTotal ?>">0</div></div></div>
+  <div class="kpi"><div class="kpi-ic ic-amber"><i data-lucide="cog"></i></div><div><div class="kpi-label">Machine Valuations</div><div class="kpi-num" data-count="<?= (int)$machTotal ?>">0</div></div></div>
   <div class="kpi"><div class="kpi-ic ic-amber"><i data-lucide="calendar-plus"></i></div><div><div class="kpi-label">New This Month</div><div class="kpi-num" data-count="<?= (int)$bankMonth ?>">0</div></div></div>
   <div class="kpi"><div class="kpi-ic ic-red"><i data-lucide="coins"></i></div><div><div class="kpi-label">Total Value (<?= e($cur) ?>)</div><div class="kpi-num sm" data-count="<?= (int)$totalValue ?>">0</div></div></div>
 </div>
@@ -114,7 +117,7 @@ layout_header('Dashboard', 'dashboard');
       <tr>
         <td><b><?= e($r['reg_no']) ?></b></td>
         <td><?= e(lookup_name('clients', $r['client_id']) ?: ('#' . $r['client_id'])) ?></td>
-        <td><?= $r['type'] === 'insurance' ? 'Insurance' : 'Bank' ?></td>
+        <td><?= ucfirst($r['type']) ?></td>
         <td class="muted"><?= e($r['requester_name'] ?: '—') ?></td>
         <td><?= request_badge($r['status']) ?></td>
         <td class="muted"><?= e(ddate($r['created_at'])) ?></td>
@@ -122,7 +125,7 @@ layout_header('Dashboard', 'dashboard');
           <?php if (can_assign()): ?>
             <a class="rbtn" href="<?= url('requests.php?status=requested') ?>"><i data-lucide="user-check"></i>Assign</a>
           <?php elseif (!empty($r['valuation_id'])): ?>
-            <a class="rbtn" href="<?= url(($r['valuation_table'] === 'valuations' ? 'insurance_form.php' : 'bank_form.php') . '?id=' . (int)$r['valuation_id']) ?>"><i data-lucide="pencil"></i>Open</a>
+            <a class="rbtn" href="<?= url(table_form($r['valuation_table']) . '?id=' . (int)$r['valuation_id']) ?>"><i data-lucide="pencil"></i>Open</a>
           <?php endif; ?>
         </td>
       </tr>

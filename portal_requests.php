@@ -18,7 +18,7 @@ function load_own_request(int $id, int $cid, bool $mine, array $c): ?array {
 function drop_linked_valuation(array $r): void {
     if (empty($r['valuation_id']) || empty($r['valuation_table'])) return;
     $t = $r['valuation_table'];
-    if (!in_array($t, ['bankvaluations', 'valuations'], true)) return;
+    if (!in_array($t, ['bankvaluations', 'valuations', 'machinevaluations'], true)) return;
     if (column_exists($t, 'deleted_at')) {
         $cond = column_exists($t, 'signed_at') ? ' AND signed_at IS NULL' : '';
         db()->prepare("UPDATE `$t` SET deleted_at=NOW() WHERE id=?$cond")->execute([(int)$r['valuation_id']]);
@@ -81,7 +81,7 @@ portal_header('My Requests', 'requests');
       <td class="muted"><?= e(ddate($r['created_at'])) ?></td>
       <td class="ract">
         <?php if ($r['status'] === 'complete' && !empty($r['valuation_id'])): ?>
-          <a class="rbtn" href="<?= url('portal_pdf.php?type=' . ($r['valuation_table'] === 'valuations' ? 'insurance' : 'bank') . '&id=' . (int)$r['valuation_id']) ?>"><i data-lucide="printer"></i>Report</a>
+          <a class="rbtn" href="<?= url('portal_pdf.php?type=' . table_type($r['valuation_table']) . '&id=' . (int)$r['valuation_id']) ?>"><i data-lucide="printer"></i>Report</a>
         <?php endif; ?>
         <?php if ($active): ?>
           <form method="post" style="display:inline" onsubmit="return confirm('Revoke this request? Any valuation started for it will be withdrawn.')">

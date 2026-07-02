@@ -4,25 +4,33 @@ require_client();
 
 $c   = current_client();
 $cid = (int)$c['client_id'];
-$tab = ($_GET['tab'] ?? 'bank') === 'insurance' ? 'insurance' : 'bank';
-$table = $tab === 'insurance' ? 'valuations' : 'bankvaluations';
+$tab = $_GET['tab'] ?? 'bank';
+if (!in_array($tab, ['bank', 'insurance', 'machine'], true)) $tab = 'bank';
+$table = ['insurance' => 'valuations', 'machine' => 'machinevaluations'][$tab] ?? 'bankvaluations';
 $vf    = $tab === 'insurance' ? 'assessed_value' : 'market_value';
 
 function pcount(string $table, int $cid): int {
+    if (!column_exists($table, 'id')) return 0;
     $w = column_exists($table, 'deleted_at') ? ' AND deleted_at IS NULL' : '';
     try { $st = db()->prepare("SELECT COUNT(*) FROM `$table` WHERE client = ?$w"); $st->execute([$cid]); return (int)$st->fetchColumn(); }
     catch (Throwable $e) { return 0; }
 }
 $bankCount = pcount('bankvaluations', $cid);
 $insCount  = pcount('valuations', $cid);
+$machCount = pcount('machinevaluations', $cid);
 
 $del = column_exists($table, 'deleted_at') ? ' AND deleted_at IS NULL' : '';
 $statSel = column_exists($table, 'status') ? 'status' : "'' AS status";
 $repSel  = column_exists($table, 'report_no') ? 'report_no' : "'' AS report_no";
 $serSel  = column_exists($table, 'serial_no') ? 'serial_no' : "'' AS serial_no";
+// Machines have no reg_no/make/YOM columns — alias so the shared table markup still works.
+$regSel  = $tab === 'machine' ? 'machine_name AS reg_no' : 'reg_no';
+$makeSel = $tab === 'machine' ? "'' AS make" : 'make';
+$yomSel  = $tab === 'machine' ? "'' AS manufacture_year" : 'manufacture_year';
+$expSel  = $tab === 'machine' ? "'' AS insurance_exp" : 'insurance_exp';
 $rows = [];
 try {
-    $st = db()->prepare("SELECT id, $repSel, $serSel, reg_no, make, manufacture_year, insurance_exp, $statSel, `$vf` AS val, created_at
+    $st = db()->prepare("SELECT id, $repSel, $serSel, $regSel, $makeSel, $yomSel, $expSel, $statSel, `$vf` AS val, created_at
                          FROM `$table` WHERE client = ?$del ORDER BY id DESC LIMIT 1000");
     $st->execute([$cid]); $rows = $st->fetchAll();
 } catch (Throwable $e) {}
@@ -37,11 +45,13 @@ portal_header('My Valuations', 'valuations');
 <div class="kpis">
   <div class="kpi"><div class="kpi-ic"><i data-lucide="landmark"></i></div><div><div class="kpi-label">Bank Valuations</div><div class="kpi-num"><?= number_format($bankCount) ?></div></div></div>
   <div class="kpi"><div class="kpi-ic g"><i data-lucide="shield-check"></i></div><div><div class="kpi-label">Insurance Valuations</div><div class="kpi-num"><?= number_format($insCount) ?></div></div></div>
+  <div class="kpi"><div class="kpi-ic a"><i data-lucide="cog"></i></div><div><div class="kpi-label">Machine Valuations</div><div class="kpi-num"><?= number_format($machCount) ?></div></div></div>
 </div>
 
 <div class="tabs">
   <a class="<?= $tab==='bank'?'on':'' ?>" href="?tab=bank">Bank Valuations</a>
   <a class="<?= $tab==='insurance'?'on':'' ?>" href="?tab=insurance">Insurance Valuations</a>
+  <a class="<?= $tab==='machine'?'on':'' ?>" href="?tab=machine">Machine Valuations</a>
 </div>
 
 <input type="search" id="psearch" placeholder="Search your vehicles (reg no, make)…" autocomplete="off">
