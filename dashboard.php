@@ -88,6 +88,7 @@ layout_header('Dashboard', 'dashboard');
   <div class="hero-actions">
     <a class="btn" href="<?= url('bank_form.php') ?>"><i data-lucide="plus"></i>New Bank Valuation</a>
     <a class="btn blue" href="<?= url('insurance_form.php') ?>"><i data-lucide="plus"></i>Insurance</a>
+    <a class="btn sec" href="<?= url('machine_form.php') ?>"><i data-lucide="plus"></i>Machine</a>
   </div>
   <?php endif; ?>
 </div>
@@ -176,6 +177,7 @@ layout_header('Dashboard', 'dashboard');
       <div class="quick">
         <a class="btn" href="<?= url('bank_form.php') ?>">+ New Bank Valuation</a>
         <a class="btn blue" href="<?= url('insurance_form.php') ?>">+ New Insurance Valuation</a>
+        <a class="btn sec" href="<?= url('machine_form.php') ?>">+ New Machine Valuation</a>
       </div>
       <?php endif; ?>
     </div>

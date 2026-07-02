@@ -656,9 +656,9 @@ function form_assets(): void { ?>
   // ---------- online-activity heartbeat: report the reg being worked on ----------
   var hf=document.querySelector('form[data-draft]');
   if(hf){
-    var hreg=hf.querySelector('[name="reg_no"]');
+    var hreg=hf.querySelector('[name="reg_no"]')||hf.querySelector('[name="machine_name"]');
     if(hreg){
-      var hd=hf.dataset.draft||''; var htype=hd.indexOf('ins')===0?'insurance':'bank'; var hmode=/[0-9]/.test(hd)?'Editing':'New'; var hbt;
+      var hd=hf.dataset.draft||''; var htype=hd.indexOf('machine')===0?'machine':(hd.indexOf('ins')===0?'insurance':'bank'); var hmode=/[0-9]/.test(hd)?'Editing':'New'; var hbt;
       function hping(){ var fd=new FormData(); fd.append('_csrf',CSRF); fd.append('type',htype); fd.append('mode',hmode); fd.append('reg',hreg.value.trim()); fetch('<?= url('activity.php') ?>',{method:'POST',body:fd}).catch(function(){}); }
       hreg.addEventListener('input',function(){clearTimeout(hbt);hbt=setTimeout(hping,800);});
       setInterval(hping,25000); hping();

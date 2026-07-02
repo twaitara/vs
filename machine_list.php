@@ -35,7 +35,10 @@ layout_header('Machine Valuations', 'machine');
     <input type="search" name="q" value="<?= e($q) ?>" placeholder="Search machine, customer or serial…" autocomplete="off"
            style="width:100%;max-width:420px;background:var(--input);border:1px solid var(--line);color:var(--txt);padding:10px 12px;border-radius:8px;font-size:13px">
   </form>
-  <?php if (can_edit()): ?><a class="btn" href="<?= url('machine_form.php') ?>"><i data-lucide="plus"></i>New Machine Valuation</a><?php endif; ?>
+  <div style="display:flex;gap:8px">
+    <a class="btn sec" href="<?= url('export.php?type=machine' . ($q !== '' ? '&q=' . urlencode($q) : '')) ?>"><i data-lucide="download"></i>Export CSV</a>
+    <?php if (can_edit()): ?><a class="btn" href="<?= url('machine_form.php') ?>"><i data-lucide="plus"></i>New Machine Valuation</a><?php endif; ?>
+  </div>
 </div>
 
 <table data-paginate="25" class="list">

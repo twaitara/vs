@@ -14,6 +14,9 @@ $cur = setting('currency', CURRENCY);
 $totBank = (int)q_one("SELECT COUNT(*) FROM bankvaluations" . $bankWhere);
 $sumVal  = (float)q_one("SELECT COALESCE(SUM(market_value),0) FROM bankvaluations" . $bankWhere);
 $avgVal  = (float)q_one("SELECT COALESCE(AVG(market_value),0) FROM bankvaluations" . $bankWhere);
+$totIns  = (int)q_one("SELECT COUNT(*) FROM valuations" . not_deleted_sql('valuations'));
+$totMach = column_exists('machinevaluations', 'id')
+    ? (int)q_one("SELECT COUNT(*) FROM machinevaluations" . not_deleted_sql('machinevaluations')) : 0;
 
 $monthly = q_all("SELECT DATE_FORMAT(created_at,'%Y-%m') m, COUNT(*) c, COALESCE(SUM(market_value),0) s
                   FROM bankvaluations" . ($bankWhere ? $bankWhere . " AND" : " WHERE") . " created_at IS NOT NULL
@@ -44,9 +47,12 @@ layout_header('Analytics', '');
 ?>
 <div class="kpis" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-bottom:22px">
   <div class="kpi"><div class="kpi-ic ic-blue"><i data-lucide="landmark"></i></div><div><div class="kpi-label">Bank Valuations</div><div class="kpi-num"><?= number_format($totBank) ?></div></div></div>
-  <div class="kpi"><div class="kpi-ic ic-red"><i data-lucide="coins"></i></div><div><div class="kpi-label">Total Value (<?= e($cur) ?>)</div><div class="kpi-num sm"><?= number_format($sumVal) ?></div></div></div>
-  <div class="kpi"><div class="kpi-ic ic-green"><i data-lucide="trending-up"></i></div><div><div class="kpi-label">Average Value (<?= e($cur) ?>)</div><div class="kpi-num sm"><?= number_format($avgVal) ?></div></div></div>
+  <div class="kpi"><div class="kpi-ic ic-green"><i data-lucide="shield-check"></i></div><div><div class="kpi-label">Insurance Valuations</div><div class="kpi-num"><?= number_format($totIns) ?></div></div></div>
+  <div class="kpi"><div class="kpi-ic ic-amber"><i data-lucide="cog"></i></div><div><div class="kpi-label">Machine Valuations</div><div class="kpi-num"><?= number_format($totMach) ?></div></div></div>
+  <div class="kpi"><div class="kpi-ic ic-red"><i data-lucide="coins"></i></div><div><div class="kpi-label">Bank Total Value (<?= e($cur) ?>)</div><div class="kpi-num sm"><?= number_format($sumVal) ?></div></div></div>
+  <div class="kpi"><div class="kpi-ic ic-green"><i data-lucide="trending-up"></i></div><div><div class="kpi-label">Bank Average (<?= e($cur) ?>)</div><div class="kpi-num sm"><?= number_format($avgVal) ?></div></div></div>
 </div>
+<p class="muted" style="margin:-8px 0 18px;font-size:12px">Charts below cover Bank valuations (value &amp; valuer trends).</p>
 
 <div class="panel"><div class="panel-h">Valuations per Month (last 12)</div>
   <?php $m = []; foreach ($monthly as $r) $m[$r['m']] = (int)$r['c']; bars($m); ?>
@@ -67,7 +73,7 @@ layout_header('Analytics', '');
   .kpi{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px;display:flex;align-items:center;gap:14px}
   .kpi-ic{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex:0 0 48px}
   .kpi-ic i{width:24px;height:24px}
-  .ic-blue{background:rgba(37,99,235,.15);color:#5b9bff}.ic-green{background:rgba(28,122,71,.18);color:#3ddc84}.ic-red{background:rgba(212,29,29,.16);color:#ff6b6b}
+  .ic-blue{background:rgba(37,99,235,.15);color:#5b9bff}.ic-green{background:rgba(28,122,71,.18);color:#3ddc84}.ic-red{background:rgba(212,29,29,.16);color:#ff6b6b}.ic-amber{background:rgba(245,177,74,.16);color:#f5b14a}
   .kpi-label{color:var(--mut);font-size:13px;margin-bottom:4px}.kpi-num{font-size:26px;font-weight:800;letter-spacing:-.02em}.kpi-num.sm{font-size:19px}
   .panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px}
   .panel-h{font-weight:600;margin-bottom:14px}

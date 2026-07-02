@@ -6,16 +6,19 @@ header('Content-Type: application/json');
 if (!current_user() || !can_edit()) { echo json_encode(['ok' => false, 'error' => 'Not allowed']); exit; }
 csrf_verify();
 
-$type = ($_POST['type'] ?? 'bank') === 'insurance' ? 'insurance' : 'bank';
+$type = $_POST['type'] ?? 'bank';
+if (!in_array($type, ['bank', 'insurance', 'machine'], true)) $type = 'bank';
 $id   = (int)($_POST['id'] ?? 0);
 $to   = trim($_POST['to'] ?? '');
 
 if (!filter_var($to, FILTER_VALIDATE_EMAIL)) { echo json_encode(['ok' => false, 'error' => 'Invalid email address']); exit; }
 
-$val = $type === 'insurance' ? load_insurance_valuation($id) : load_bank_valuation($id);
+if ($type === 'insurance')   { $val = load_insurance_valuation($id); $render = 'render_insurance_report'; }
+elseif ($type === 'machine') { $val = load_machine_valuation($id);   $render = 'render_machine_report'; }
+else                         { $val = load_bank_valuation($id);      $render = 'render_bank_report'; }
 if (!$val) { echo json_encode(['ok' => false, 'error' => 'Valuation not found']); exit; }
 
-$html = $type === 'insurance' ? render_insurance_report($val) : render_bank_report($val);
+$html = $render($val);
 try {
     $pdf = make_pdf($html);
 } catch (Throwable $e) {
@@ -24,9 +27,9 @@ try {
 
 $company  = setting('company_name', 'Kennet Valuers');
 $from     = setting('company_email', 'no-reply@' . ($_SERVER['SERVER_NAME'] ?? 'localhost'));
-$reg      = $val['reg_no'] ?? $id;
+$reg      = $val['reg_no'] ?? ($val['machine_name'] ?? $id);
 $filename = 'valuation-report-' . preg_replace('/[^A-Za-z0-9_-]/', '', (string)$reg) . '.pdf';
-$subject  = ($type === 'insurance' ? 'Insurance' : 'Bank') . ' Valuation Report — ' . $reg;
+$subject  = ucfirst($type) . ' Valuation Report — ' . $reg;
 
 $body = "Dear Sir/Madam,\r\n\r\n"
       . "Please find attached the valuation report for vehicle $reg.\r\n\r\n"

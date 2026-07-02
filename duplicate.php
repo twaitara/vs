@@ -5,6 +5,7 @@ require_can_edit();
 $map = [
     'bank'      => ['table' => 'bankvaluations', 'form' => 'bank_form.php',      'entity' => 'bankvaluation'],
     'insurance' => ['table' => 'valuations',     'form' => 'insurance_form.php', 'entity' => 'valuation'],
+    'machine'   => ['table' => 'machinevaluations', 'form' => 'machine_form.php', 'entity' => 'machinevaluation'],
 ];
 $type = $_GET['type'] ?? '';
 $id   = (int)($_GET['id'] ?? 0);
