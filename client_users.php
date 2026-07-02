@@ -29,8 +29,7 @@ function portal_email(string $to, ?string $name, string $password): bool {
         . '<tr><td style="padding:4px 0"><b>Password:</b></td><td style="padding:4px 0 4px 12px">' . htmlspecialchars($password) . '</td></tr></table>'
         . '<p>Please keep these details secure. You can sign in any time using the link above.</p>'
         . '<p>Regards,<br>' . htmlspecialchars($company) . '</p></div>';
-    $headers = "From: $company <$from>\r\nReply-To: $from\r\nMIME-Version: 1.0\r\nContent-Type: text/html; charset=UTF-8\r\n";
-    return @mail($to, $subject, $body, $headers);
+    return app_mail($to, $subject, $body, true);
 }
 
 $clients = lookup('clients'); // id => name

@@ -132,19 +132,102 @@ function request_badge(string $s): string {
     return '<span class="badge ' . $cls . '">' . e(request_status_label($s)) . '</span>';
 }
 
-// ---------------- Notifications (request workflow) ----------------
-/** Send a plain-text email via PHP mail(). Best-effort; returns false silently on failure. */
-function send_mail($to, string $subject, string $body): bool {
+// ---------------- Email (SMTP-aware) ----------------
+/** Current mail configuration (customer SMTP + From identity). */
+function mail_settings(): array {
+    return [
+        'host'     => trim(setting('smtp_host', '')),
+        'port'     => (int)(setting('smtp_port', '587') ?: 587),
+        'secure'   => strtolower(trim(setting('smtp_secure', 'tls'))), // tls | ssl | none
+        'user'     => trim(setting('smtp_user', '')),
+        'pass'     => (string)setting('smtp_pass', ''),
+        'from'     => trim(setting('mail_from', '')) ?: trim(setting('company_email', '')) ?: ('no-reply@' . ($_SERVER['HTTP_HOST'] ?? 'localhost')),
+        'fromname' => trim(setting('mail_from_name', '')) ?: setting('company_name', 'Kennet Automobile Valuers'),
+    ];
+}
+/** True when a customer SMTP server has been configured. */
+function smtp_configured(): bool { return mail_settings()['host'] !== ''; }
+
+/** Low-level SMTP delivery of a pre-built message. Returns true on a 250 after DATA. */
+function smtp_send(array $cfg, array $to, string $data): bool {
+    $host = $cfg['host']; $port = $cfg['port'] ?: 587; $secure = $cfg['secure'];
+    $timeout = 20;
+    $remote = ($secure === 'ssl' ? 'ssl://' : '') . $host . ':' . $port;
+    $ctx = stream_context_create(['ssl' => ['verify_peer' => false, 'verify_peer_name' => false, 'allow_self_signed' => true]]);
+    $fp = @stream_socket_client($remote, $errno, $errstr, $timeout, STREAM_CLIENT_CONNECT, $ctx);
+    if (!$fp) return false;
+    stream_set_timeout($fp, $timeout);
+    $read = function () use ($fp) { $d = ''; while (($line = fgets($fp, 515)) !== false) { $d .= $line; if (isset($line[3]) && $line[3] === ' ') break; } return $d; };
+    $cmd = function ($s) use ($fp, $read) { fwrite($fp, $s . "\r\n"); return $read(); };
+    $ok = fn($r, $code) => strpos($r, $code) === 0;
+    $read(); // greeting
+    $ehlo = 'EHLO ' . ($_SERVER['SERVER_NAME'] ?? 'localhost');
+    $cmd($ehlo);
+    if ($secure === 'tls') {
+        if (!$ok($cmd('STARTTLS'), '220')) { fclose($fp); return false; }
+        $crypto = STREAM_CRYPTO_METHOD_TLS_CLIENT;
+        if (defined('STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT')) $crypto |= STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT | STREAM_CRYPTO_METHOD_TLSv1_1_CLIENT;
+        if (!@stream_socket_enable_crypto($fp, true, $crypto)) { fclose($fp); return false; }
+        $cmd($ehlo);
+    }
+    if ($cfg['user'] !== '') {
+        $cmd('AUTH LOGIN'); $cmd(base64_encode($cfg['user']));
+        if (!$ok($cmd(base64_encode($cfg['pass'])), '235')) { fclose($fp); return false; }
+    }
+    if (!$ok($cmd('MAIL FROM:<' . $cfg['from'] . '>'), '250')) { fclose($fp); return false; }
+    foreach ($to as $addr) $cmd('RCPT TO:<' . $addr . '>');
+    if (!$ok($cmd('DATA'), '354')) { fclose($fp); return false; }
+    $data = preg_replace('/^\./m', '..', $data); // dot-stuffing
+    fwrite($fp, $data . "\r\n.\r\n");
+    $r = $read();
+    $cmd('QUIT'); fclose($fp);
+    return $ok($r, '250');
+}
+
+/**
+ * Send an email through the customer's SMTP (if configured) or PHP mail() otherwise.
+ * $attachments: list of ['name'=>, 'data'=>, 'type'=>].
+ */
+function app_mail($to, string $subject, string $body, bool $html = false, array $attachments = []): bool {
     $to = is_array($to) ? array_values(array_filter(array_unique($to))) : [$to];
     if (!$to) return false;
-    $from = setting('mail_from', 'no-reply@' . ($_SERVER['HTTP_HOST'] ?? 'localhost'));
-    $name = setting('company_name', 'Kennet Automobile Valuers');
-    $headers = 'From: ' . $name . ' <' . $from . ">\r\n" .
-               "Content-Type: text/plain; charset=UTF-8\r\n" .
-               'X-Mailer: KennetVS';
-    $ok = false;
-    foreach ($to as $addr) { if (@mail($addr, $subject, $body, $headers)) $ok = true; }
-    return $ok;
+    $cfg = mail_settings();
+    $eol = "\r\n";
+    $ctype = ($html ? 'text/html' : 'text/plain') . '; charset=UTF-8';
+    $headers = ['MIME-Version: 1.0'];
+    if ($attachments) {
+        $b = '=_' . md5(uniqid('', true));
+        $headers[] = 'Content-Type: multipart/mixed; boundary="' . $b . '"';
+        $msg  = '--' . $b . $eol . 'Content-Type: ' . $ctype . $eol . 'Content-Transfer-Encoding: 8bit' . $eol . $eol . $body . $eol . $eol;
+        foreach ($attachments as $att) {
+            $msg .= '--' . $b . $eol
+                 . 'Content-Type: ' . ($att['type'] ?? 'application/octet-stream') . '; name="' . $att['name'] . '"' . $eol
+                 . 'Content-Transfer-Encoding: base64' . $eol
+                 . 'Content-Disposition: attachment; filename="' . $att['name'] . '"' . $eol . $eol
+                 . chunk_split(base64_encode($att['data'])) . $eol;
+        }
+        $msg .= '--' . $b . '--';
+        $body = $msg;
+    } else {
+        $headers[] = 'Content-Type: ' . $ctype;
+    }
+    $fromH = 'From: ' . $cfg['fromname'] . ' <' . $cfg['from'] . '>';
+    $replyH = 'Reply-To: ' . $cfg['from'];
+    if (!smtp_configured()) {
+        $h = $fromH . $eol . $replyH . $eol . implode($eol, $headers) . $eol . 'X-Mailer: KennetVS';
+        $ok = false;
+        foreach ($to as $a) { if (@mail($a, $subject, $body, $h)) $ok = true; }
+        return $ok;
+    }
+    $data = $fromH . $eol . 'To: ' . implode(', ', $to) . $eol . 'Subject: ' . $subject . $eol
+          . 'Date: ' . date('r') . $eol . $replyH . $eol . implode($eol, $headers) . $eol . $eol . $body;
+    return smtp_send($cfg, $to, $data);
+}
+
+// ---------------- Notifications (request workflow) ----------------
+/** Send a plain-text email (via customer SMTP if configured, else PHP mail()). */
+function send_mail($to, string $subject, string $body): bool {
+    return app_mail($to, $subject, $body, false);
 }
 /** Emails of all Kennet staff who can assign requests (admins + coordinators). */
 function assigner_emails(): array {

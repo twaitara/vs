@@ -26,33 +26,15 @@ try {
 }
 
 $company  = setting('company_name', 'Kennet Valuers');
-$from     = setting('company_email', 'no-reply@' . ($_SERVER['SERVER_NAME'] ?? 'localhost'));
 $reg      = $val['reg_no'] ?? ($val['machine_name'] ?? $id);
 $filename = 'valuation-report-' . preg_replace('/[^A-Za-z0-9_-]/', '', (string)$reg) . '.pdf';
 $subject  = ucfirst($type) . ' Valuation Report — ' . $reg;
 
 $body = "Dear Sir/Madam,\r\n\r\n"
-      . "Please find attached the valuation report for vehicle $reg.\r\n\r\n"
+      . "Please find attached the valuation report for $reg.\r\n\r\n"
       . "Regards,\r\n$company";
 
-$boundary = '=_' . md5(uniqid('', true));
-$headers  = "From: $company <$from>\r\n"
-          . "Reply-To: $from\r\n"
-          . "MIME-Version: 1.0\r\n"
-          . "Content-Type: multipart/mixed; boundary=\"$boundary\"\r\n";
-
-$message  = "--$boundary\r\n"
-          . "Content-Type: text/plain; charset=UTF-8\r\n"
-          . "Content-Transfer-Encoding: 8bit\r\n\r\n"
-          . $body . "\r\n\r\n"
-          . "--$boundary\r\n"
-          . "Content-Type: application/pdf; name=\"$filename\"\r\n"
-          . "Content-Transfer-Encoding: base64\r\n"
-          . "Content-Disposition: attachment; filename=\"$filename\"\r\n\r\n"
-          . chunk_split(base64_encode($pdf)) . "\r\n"
-          . "--$boundary--";
-
-$ok = @mail($to, $subject, $message, $headers);
+$ok = app_mail($to, $subject, $body, false, [['name' => $filename, 'data' => $pdf, 'type' => 'application/pdf']]);
 if ($ok) {
     audit('email_report', $type, $id, $to);
     echo json_encode(['ok' => true]);

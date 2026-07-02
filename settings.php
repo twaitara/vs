@@ -33,6 +33,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (is_superadmin() && isset($_POST['_signall_form'])) {
         set_setting('sign_all_enabled', !empty($_POST['sign_all_enabled']) ? '1' : '0');
     }
+    // Customer SMTP (super admin only) — send email from the customer's own domain.
+    if (is_superadmin() && isset($_POST['_smtp_form'])) {
+        set_setting('smtp_host', trim((string)($_POST['smtp_host'] ?? '')));
+        set_setting('smtp_port', trim((string)($_POST['smtp_port'] ?? '587')));
+        set_setting('smtp_secure', in_array($_POST['smtp_secure'] ?? 'tls', ['tls', 'ssl', 'none'], true) ? $_POST['smtp_secure'] : 'tls');
+        set_setting('smtp_user', trim((string)($_POST['smtp_user'] ?? '')));
+        if (trim((string)($_POST['smtp_pass'] ?? '')) !== '') set_setting('smtp_pass', (string)$_POST['smtp_pass']); // blank = keep existing
+        set_setting('mail_from', trim((string)($_POST['mail_from'] ?? '')));
+        set_setting('mail_from_name', trim((string)($_POST['mail_from_name'] ?? '')));
+    }
     // Optional logo uploads (header logo + watermark).
     @mkdir(__DIR__ . '/assets', 0775, true);
     foreach (['logo2' => 'logo2.png', 'logo' => 'logo.png'] as $field => $dest) {
@@ -55,6 +65,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     audit('update', 'settings');
     flash('Settings saved.');
+    redirect('settings.php');
+}
+
+// Super-admin: send a test email to yourself to verify SMTP.
+if (is_superadmin() && isset($_GET['smtptest'])) {
+    $me = current_user()['email'] ?? '';
+    if ($me) {
+        $ok = app_mail($me, 'Kennet test email', "This is a test message from the Kennet valuation system.\n\n"
+            . 'Sent via: ' . (smtp_configured() ? ('SMTP ' . setting('smtp_host')) : 'PHP mail()') . "\nTime: " . date('r'));
+        flash($ok ? ('Test email sent to ' . $me . '. Check the inbox (and spam).') : 'Test failed — check the SMTP host, port, security and credentials.', $ok ? 'ok' : 'err');
+    } else {
+        flash('Your account has no email address set.', 'err');
+    }
     redirect('settings.php');
 }
 
@@ -121,6 +144,34 @@ settings_nav('general');
   <p class="muted" style="font-size:13px">Controls the green <b>Sign all matching</b> button on the valuation lists, which signs every unsigned report in the current filter at once. Turn it off when you're done with the one-time bulk signing.</p>
   <label style="display:flex;gap:8px;align-items:center;font-size:14px;margin:6px 0"><input type="checkbox" name="sign_all_enabled" value="1" <?= sign_all_enabled() ? 'checked' : '' ?>> Enable the “Sign all matching” button</label>
   <button class="btn" type="submit" style="margin-top:10px"><i data-lucide="save"></i>Save</button>
+</form>
+
+<form class="card" method="post" style="max-width:680px;border-color:#7a5c1c">
+  <?= csrf_field() ?><input type="hidden" name="_smtp_form" value="1">
+  <h3 style="margin-top:0">Outgoing Email / SMTP <span class="muted" style="font-size:12px;font-weight:400">(super admin only)</span></h3>
+  <p class="muted" style="font-size:13px">Send all system emails through the customer's own mail server, so messages come from their domain (better delivery, no spam). Leave the host blank to use the server's built-in PHP mail instead.</p>
+  <div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:12px">
+    <div class="f"><label class="f">SMTP Host</label><input type="text" name="smtp_host" placeholder="mail.customer.com" value="<?= e(setting('smtp_host')) ?>"></div>
+    <div class="f"><label class="f">Port</label><input type="number" name="smtp_port" value="<?= e(setting('smtp_port', '587')) ?>"></div>
+    <div class="f"><label class="f">Security</label><select name="smtp_secure">
+      <?php foreach (['tls' => 'STARTTLS (587)', 'ssl' => 'SSL/TLS (465)', 'none' => 'None (25)'] as $k => $l): ?>
+        <option value="<?= $k ?>" <?= setting('smtp_secure', 'tls') === $k ? 'selected' : '' ?>><?= e($l) ?></option>
+      <?php endforeach; ?>
+    </select></div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+    <div class="f"><label class="f">Username</label><input type="text" name="smtp_user" autocomplete="off" placeholder="no-reply@customer.com" value="<?= e(setting('smtp_user')) ?>"></div>
+    <div class="f"><label class="f">Password <span class="muted">(blank = keep current)</span></label><input type="password" name="smtp_pass" autocomplete="new-password" placeholder="<?= setting('smtp_pass') !== '' ? '••••••••' : '' ?>"></div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+    <div class="f"><label class="f">From address</label><input type="email" name="mail_from" placeholder="no-reply@customer.com" value="<?= e(setting('mail_from')) ?>"></div>
+    <div class="f"><label class="f">From name</label><input type="text" name="mail_from_name" placeholder="Company Valuations" value="<?= e(setting('mail_from_name')) ?>"></div>
+  </div>
+  <div style="display:flex;gap:10px;align-items:center;margin-top:6px">
+    <button class="btn" type="submit"><i data-lucide="save"></i>Save SMTP</button>
+    <a class="btn sec" href="<?= url('settings.php?smtptest=1') ?>">Send test email to me</a>
+    <span class="muted" style="font-size:12px"><?= smtp_configured() ? 'Currently: sending via ' . e(setting('smtp_host')) : 'Currently: using server PHP mail()' ?></span>
+  </div>
 </form>
 <?php endif; ?>
 
