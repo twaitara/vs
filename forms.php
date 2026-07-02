@@ -25,12 +25,13 @@ function f_input(string $name, string $label, array $row, string $type = 'text',
 }
 
 /** A money input (text + class so JS can add live thousands separators). */
-function f_money(string $name, string $label, array $row, bool $req = false, bool $words = false): string {
+function f_money(string $name, string $label, array $row, bool $req = false, bool $words = false, string $fillWords = ''): string {
     $v = e($row[$name] ?? '');
     $r = $req ? ' required' : '';
     $w = $words ? ' data-words="1"' : '';
+    $fw = $fillWords !== '' ? ' data-words-fill="' . e($fillWords) . '"' : ''; // auto-fill another field with the amount in words
     return '<div class="f' . err_class($name) . '"><label class="f">' . e($label) . '</label>'
-        . '<input type="text" class="money" inputmode="decimal" name="' . e($name) . '" value="' . $v . '"' . $r . $w . '>'
+        . '<input type="text" class="money" inputmode="decimal" name="' . e($name) . '" value="' . $v . '"' . $r . $w . $fw . '>'
         . ($words ? '<small class="words-preview muted"></small>' : '') . field_err($name) . '</div>';
 }
 

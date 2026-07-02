@@ -550,16 +550,22 @@ function form_assets(): void { ?>
 
   // ---------- money fields ----------
   document.querySelectorAll('input.money').forEach(function(inp){
-    function run(){
+    function run(fill){
       var caretEnd = inp.selectionStart===inp.value.length;
       inp.value = fmt(inp.value);
       if(caretEnd) inp.selectionStart=inp.selectionEnd=inp.value.length;
+      var digits = inp.value.replace(/,/g,'');
       if(inp.dataset.words){
         var pv=inp.parentNode.querySelector('.words-preview');
-        if(pv) pv.textContent = inp.value ? words(inp.value.replace(/,/g,'')) : '';
+        if(pv) pv.textContent = inp.value ? words(digits) : '';
+      }
+      // Auto-populate an "amount in words" field as the user types (don't clobber a saved value on load).
+      if(fill && inp.dataset.wordsFill){
+        var tgt=document.querySelector('[name="'+inp.dataset.wordsFill+'"]');
+        if(tgt) tgt.value = inp.value ? (words(digits)+' Only') : '';
       }
     }
-    inp.addEventListener('input',run); run();
+    inp.addEventListener('input',function(){run(true);}); run(false);
   });
   // strip commas before submit
   document.querySelectorAll('form').forEach(function(f){
