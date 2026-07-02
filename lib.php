@@ -53,6 +53,18 @@ function db(): PDO {
 function e($v): string { return htmlspecialchars((string)($v ?? ''), ENT_QUOTES, 'UTF-8'); }
 
 /** Build an app URL. */
+/** System modules the super admin can switch on/off. key => label. */
+function modules_list(): array {
+    return ['bank' => 'Bank Valuations', 'insurance' => 'Insurance Valuations', 'machine' => 'Machine Valuations',
+            'requests' => 'Requests workflow', 'analytics' => 'Analytics', 'portal' => 'Client Portal'];
+}
+/** True if a module is enabled (default on). */
+function module_enabled(string $key): bool { return setting('mod_' . $key, '1') === '1'; }
+/** Guard a page behind a module toggle; redirects if disabled. */
+function require_module(string $key): void {
+    if (!module_enabled($key)) { flash('That section is currently disabled.', 'err'); redirect('dashboard.php'); }
+}
+
 /** Opaque routing: full-page URLs are shown as short codes (…/vs/ab12cd34ef) via r.php. */
 function route_enabled(): bool { return !defined('ROUTE_OBFUSCATE') || ROUTE_OBFUSCATE; }
 /** Pages whose URL is obfuscated. Assets, AJAX endpoints (activity/online/notifications/quick_add),
@@ -670,6 +682,7 @@ function logout(): void {
 // ---------------- Client portal auth (separate from staff) ----------------
 function current_client(): ?array { return $_SESSION['client_user'] ?? null; }
 function require_client(): void {
+    if (!module_enabled('portal')) { if (current_client()) client_logout(); http_response_code(403); exit('The client portal is currently unavailable.'); }
     if (!current_client()) redirect('portal_login.php');
     if (system_locked()) { client_logout(); deny_unavailable(); }
 }

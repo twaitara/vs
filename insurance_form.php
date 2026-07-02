@@ -2,6 +2,7 @@
 require_once __DIR__ . '/layout.php';
 require_once __DIR__ . '/forms.php';
 require_can_edit();
+require_module('insurance');
 
 // All persisted columns for the insurance valuations table.
 $COLUMNS = [

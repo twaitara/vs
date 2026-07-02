@@ -3,6 +3,7 @@ require_once __DIR__ . '/layout.php';
 require_once __DIR__ . '/forms.php';
 require_login();
 if (!can_assign()) { flash('You do not have access to the requests inbox.', 'err'); redirect('dashboard.php'); }
+require_module('requests');
 
 $clients  = lookup('clients');           // id => name
 $officers = officer_list();              // id => label

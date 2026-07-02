@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/layout.php';
 require_admin();
+require_module('analytics');
 
 $bankWhere = not_deleted_sql('bankvaluations');
 function q_all(string $sql, array $p = []): array {

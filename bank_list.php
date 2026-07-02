@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/list_view.php';
+require_module('bank');
 render_list([
     'table'       => 'bankvaluations',
     'title'       => 'Bank Valuations',

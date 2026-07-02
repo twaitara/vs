@@ -33,6 +33,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (is_superadmin() && isset($_POST['_signall_form'])) {
         set_setting('sign_all_enabled', !empty($_POST['sign_all_enabled']) ? '1' : '0');
     }
+    if (is_superadmin() && isset($_POST['_modules_form'])) {
+        foreach (array_keys(modules_list()) as $mk) set_setting('mod_' . $mk, !empty($_POST['mod_' . $mk]) ? '1' : '0');
+    }
     if (is_superadmin() && isset($_POST['_footer_form'])) {
         set_setting('footer_dev_name', trim((string)($_POST['footer_dev_name'] ?? '')));
         set_setting('footer_website',  trim((string)($_POST['footer_website'] ?? '')));
@@ -108,6 +111,16 @@ settings_nav('general');
 </form>
 
 <?php if (is_superadmin()): ?>
+<form class="card" method="post" style="max-width:680px;border-color:#7a5c1c">
+  <?= csrf_field() ?><input type="hidden" name="_modules_form" value="1">
+  <h3 style="margin-top:0">Modules / Sections <span class="muted" style="font-size:12px;font-weight:400">(super admin only)</span></h3>
+  <p class="muted" style="font-size:13px">Turn whole sections of the system on or off. Disabled ones disappear from the menu and can't be opened.</p>
+  <?php foreach (modules_list() as $mk => $mlabel): ?>
+    <label style="display:flex;gap:8px;align-items:center;font-size:14px;margin:6px 0"><input type="checkbox" name="mod_<?= $mk ?>" value="1" <?= module_enabled($mk) ? 'checked' : '' ?>> <?= e($mlabel) ?></label>
+  <?php endforeach; ?>
+  <button class="btn" type="submit" style="margin-top:10px"><i data-lucide="save"></i>Save modules</button>
+</form>
+
 <form class="card" method="post" style="max-width:680px;border-color:#7a5c1c">
   <?= csrf_field() ?><input type="hidden" name="_banner_form" value="1">
   <h3 style="margin-top:0">System Availability Notice <span class="muted" style="font-size:12px;font-weight:400">(super admin only)</span></h3>

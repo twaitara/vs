@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/lib.php';
+if (!module_enabled('portal')) { http_response_code(403); exit('The client portal is currently unavailable.'); }
 if (current_client()) redirect('portal.php');
 
 $error = '';

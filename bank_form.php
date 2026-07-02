@@ -2,6 +2,7 @@
 require_once __DIR__ . '/layout.php';
 require_once __DIR__ . '/forms.php';
 require_can_edit();
+require_module('bank');
 
 // Columns persisted for a bank valuation (spelling matches the existing DB schema).
 $COLUMNS = [

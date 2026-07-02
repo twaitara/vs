@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/list_view.php';
+require_module('insurance');
 render_list([
     'table'       => 'valuations',
     'title'       => 'Insurance Valuations',

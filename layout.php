@@ -4,17 +4,15 @@ require_once __DIR__ . '/lib.php';
 /** Render the page shell opening: <head>, sidebar, top bar, and open <main>. */
 function layout_header(string $title, string $active = ''): void {
     $u = current_user();
-    $nav = [
-        'dashboard' => ['label' => 'Dashboard',            'href' => 'dashboard.php',       'icon' => 'layout-dashboard'],
-        'bank'      => ['label' => 'Bank Valuations',      'href' => 'bank_list.php',       'icon' => 'landmark'],
-        'insurance' => ['label' => 'Insurance Valuations', 'href' => 'insurance_list.php',  'icon' => 'shield-check'],
-        'machine'   => ['label' => 'Machine Valuations',   'href' => 'machine_list.php',    'icon' => 'cog'],
-    ];
-    if (can_assign()) {
+    $nav = ['dashboard' => ['label' => 'Dashboard', 'href' => 'dashboard.php', 'icon' => 'layout-dashboard']];
+    if (module_enabled('bank'))      $nav['bank']      = ['label' => 'Bank Valuations',      'href' => 'bank_list.php',      'icon' => 'landmark'];
+    if (module_enabled('insurance')) $nav['insurance'] = ['label' => 'Insurance Valuations', 'href' => 'insurance_list.php', 'icon' => 'shield-check'];
+    if (module_enabled('machine'))   $nav['machine']   = ['label' => 'Machine Valuations',   'href' => 'machine_list.php',   'icon' => 'cog'];
+    if (can_assign() && module_enabled('requests')) {
         $pend = pending_request_count();
         $nav['requests'] = ['label' => 'Requests', 'href' => 'requests.php', 'icon' => 'inbox', 'badge' => $pend];
     }
-    if (is_admin()) $nav['analytics'] = ['label' => 'Analytics', 'href' => 'analytics.php', 'icon' => 'bar-chart-3'];
+    if (is_admin() && module_enabled('analytics')) $nav['analytics'] = ['label' => 'Analytics', 'href' => 'analytics.php', 'icon' => 'bar-chart-3'];
     // Settings hub is admin-only.
     if (is_admin()) $nav['settings'] = ['label' => 'Settings', 'href' => 'settings.php', 'icon' => 'settings'];
     $fl = flash();
