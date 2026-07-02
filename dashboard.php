@@ -63,7 +63,7 @@ $myRequests = []; $reqTitle = ''; $reqLink = '';
 try {
     if (can_assign()) {
         $reqTitle = 'New Requests'; $reqLink = 'requests.php';
-        $st = db()->query("SELECT * FROM valuation_requests WHERE status='requested' ORDER BY id DESC LIMIT 10");
+        $st = db()->query("SELECT * FROM valuation_requests WHERE status IN ('requested','accepted') ORDER BY id DESC LIMIT 10");
         $myRequests = $st->fetchAll();
     } elseif (user_role() === 'valuer') {
         $reqTitle = 'Assigned to Me'; $reqLink = '';

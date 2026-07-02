@@ -72,12 +72,12 @@ portal_header('My Requests', 'requests');
   <tbody>
   <?php if (!$rows): ?>
     <tr><td colspan="<?= $mine ? 5 : 6 ?>" class="muted">No requests yet. <a href="<?= url('portal_request.php') ?>" style="color:#5b9bff">Make your first request →</a></td></tr>
-  <?php else: foreach ($rows as $r): $active = in_array($r['status'], ['requested', 'assigned', 'in_progress'], true); ?>
+  <?php else: foreach ($rows as $r): $active = in_array($r['status'], ['requested', 'accepted', 'assigned', 'in_progress'], true); ?>
     <tr>
       <td><b><?= e($r['reg_no']) ?></b></td>
-      <td><?= $r['type'] === 'bank' ? 'Bank' : 'Insurance' ?></td>
+      <td><?= ucfirst($r['type']) ?></td>
       <?php if (!$mine): ?><td class="muted"><?= e($r['requester_name'] ?: '—') ?></td><?php endif; ?>
-      <td><?= request_badge($r['status']) ?></td>
+      <td><?= request_badge($r['status']) ?><?php if ($r['status'] === 'denied' && !empty($r['deny_reason'])): ?><div class="muted" style="font-size:11px;margin-top:3px">Reason: <?= e($r['deny_reason']) ?></div><?php endif; ?></td>
       <td class="muted"><?= e(ddate($r['created_at'])) ?></td>
       <td class="ract">
         <?php if ($r['status'] === 'complete' && !empty($r['valuation_id'])): ?>

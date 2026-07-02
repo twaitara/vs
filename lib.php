@@ -123,12 +123,12 @@ function client_is_admin(): bool { $c = current_client(); return $c && ($c['role
 
 /** Simple request lifecycle statuses shown to portal & Kennet staff. */
 function request_statuses(): array {
-    return ['requested' => 'Requested', 'assigned' => 'Assigned', 'in_progress' => 'In progress', 'complete' => 'Complete', 'cancelled' => 'Cancelled'];
+    return ['requested' => 'Requested', 'accepted' => 'Accepted', 'assigned' => 'Assigned', 'in_progress' => 'In progress', 'complete' => 'Complete', 'denied' => 'Denied', 'cancelled' => 'Cancelled'];
 }
 function request_status_label(string $s): string { return request_statuses()[$s] ?? ucfirst(str_replace('_', ' ', $s)); }
 /** Coloured pill for a request status (uses the .badge / .b-* classes). */
 function request_badge(string $s): string {
-    $cls = ['requested' => 'b-amber', 'assigned' => 'b-blue', 'in_progress' => 'b-blue', 'complete' => 'b-green', 'cancelled' => 'b-grey'][$s] ?? 'b-grey';
+    $cls = ['requested' => 'b-amber', 'accepted' => 'b-blue', 'assigned' => 'b-blue', 'in_progress' => 'b-blue', 'complete' => 'b-green', 'denied' => 'b-red', 'cancelled' => 'b-grey'][$s] ?? 'b-grey';
     return '<span class="badge ' . $cls . '">' . e(request_status_label($s)) . '</span>';
 }
 
@@ -337,6 +337,12 @@ function assigner_emails(): array {
 function user_email(?int $uid): ?string {
     if (!$uid) return null;
     try { $st = db()->prepare('SELECT email FROM users WHERE id=?'); $st->execute([$uid]); return $st->fetchColumn() ?: null; }
+    catch (Throwable $e) { return null; }
+}
+/** A portal user's email by id. */
+function client_user_email(?int $id): ?string {
+    if (!$id) return null;
+    try { $s = db()->prepare('SELECT email FROM client_users WHERE id=?'); $s->execute([$id]); return $s->fetchColumn() ?: null; }
     catch (Throwable $e) { return null; }
 }
 /** IDs of Kennet staff who can assign (admins + coordinators). */
@@ -801,7 +807,7 @@ function officer_list(): array {
 }
 /** Count of requests awaiting assignment (for the nav badge). */
 function pending_request_count(): int {
-    try { return (int)db()->query("SELECT COUNT(*) FROM valuation_requests WHERE status='requested'")->fetchColumn(); }
+    try { return (int)db()->query("SELECT COUNT(*) FROM valuation_requests WHERE status IN ('requested','accepted')")->fetchColumn(); }
     catch (Throwable $e) { return 0; }
 }
 
