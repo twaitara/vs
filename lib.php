@@ -230,6 +230,39 @@ function dispatch_email_queue(int $max = 0): int {
     return $sent;
 }
 
+/** Test the SMTP connection & login without sending mail. Returns [ok(bool), message(string)]. */
+function smtp_test(array $cfg): array {
+    $host = $cfg['host'];
+    if ($host === '') return [false, 'No SMTP host is set — the system is using the server’s built-in PHP mail().'];
+    $port = $cfg['port'] ?: 587; $secure = $cfg['secure']; $timeout = 15;
+    $remote = ($secure === 'ssl' ? 'ssl://' : '') . $host . ':' . $port;
+    $ctx = stream_context_create(['ssl' => ['verify_peer' => false, 'verify_peer_name' => false, 'allow_self_signed' => true]]);
+    $fp = @stream_socket_client($remote, $errno, $errstr, $timeout, STREAM_CLIENT_CONNECT, $ctx);
+    if (!$fp) return [false, "Could not connect to $host:$port — " . ($errstr ?: 'no response') . " (#$errno)"];
+    stream_set_timeout($fp, $timeout);
+    $read = function () use ($fp) { $d = ''; while (($line = fgets($fp, 515)) !== false) { $d .= $line; if (isset($line[3]) && $line[3] === ' ') break; } return $d; };
+    $cmd = function ($s) use ($fp, $read) { fwrite($fp, $s . "\r\n"); return $read(); };
+    $ok = fn($r, $code) => strpos($r, $code) === 0;
+    if (!$ok($read(), '220')) { fclose($fp); return [false, 'Connected, but the server did not greet correctly.']; }
+    $ehlo = 'EHLO ' . ($_SERVER['SERVER_NAME'] ?? 'localhost');
+    if (!$ok($cmd($ehlo), '250')) { fclose($fp); return [false, 'Server refused EHLO (handshake).']; }
+    if ($secure === 'tls') {
+        if (!$ok($cmd('STARTTLS'), '220')) { fclose($fp); return [false, 'Server refused STARTTLS — try SSL/TLS (465) or a different port.']; }
+        $crypto = STREAM_CRYPTO_METHOD_TLS_CLIENT;
+        if (defined('STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT')) $crypto |= STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT | STREAM_CRYPTO_METHOD_TLSv1_1_CLIENT;
+        if (!@stream_socket_enable_crypto($fp, true, $crypto)) { fclose($fp); return [false, 'TLS negotiation failed.']; }
+        $cmd($ehlo);
+    }
+    if ($cfg['user'] !== '') {
+        $cmd('AUTH LOGIN'); $cmd(base64_encode($cfg['user']));
+        if (!$ok($cmd(base64_encode($cfg['pass'])), '235')) { fclose($fp); return [false, 'Connected, but authentication was rejected — check the username & password.']; }
+        $cmd('QUIT'); fclose($fp);
+        return [true, "Success — connected to $host:$port and logged in."];
+    }
+    $cmd('QUIT'); fclose($fp);
+    return [true, "Success — connected to $host:$port (no username configured)."];
+}
+
 /**
  * Public mailer: rate-limited (per hour) with a queue for overflow.
  * Sends now if under the cap, otherwise queues for a later hour. Returns true if sent or queued.

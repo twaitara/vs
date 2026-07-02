@@ -69,6 +69,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     redirect('settings.php');
 }
 
+// Super-admin: test the SMTP connection & login (no email sent).
+if (is_superadmin() && isset($_GET['smtpconn'])) {
+    [$ok, $msg] = smtp_test(mail_settings());
+    flash(($ok ? '✓ ' : '✗ ') . $msg, $ok ? 'ok' : 'err');
+    redirect('settings.php');
+}
 // Super-admin: send a test email to a chosen address to verify SMTP.
 if (is_superadmin() && isset($_GET['smtptest'])) {
     $to = trim((string)($_GET['to'] ?? '')) ?: (current_user()['email'] ?? '');
@@ -177,8 +183,10 @@ settings_nav('general');
   </div>
   <div style="display:flex;gap:10px;align-items:center;margin-top:6px">
     <button class="btn" type="submit"><i data-lucide="save"></i>Save SMTP</button>
+    <a class="btn sec" href="<?= url('settings.php?smtpconn=1') ?>"><i data-lucide="plug"></i>Test connection</a>
     <span class="muted" style="font-size:12px"><?= smtp_configured() ? 'Currently: sending via ' . e(setting('smtp_host')) : 'Currently: using server PHP mail()' ?></span>
   </div>
+  <p class="muted" style="font-size:11px;margin:6px 0 0">Test connection checks the saved settings (Save first). It verifies the server, encryption and login — without sending an email.</p>
 </form>
 
 <form class="card" method="get" action="<?= url('settings.php') ?>" style="max-width:680px;border-color:#7a5c1c">
