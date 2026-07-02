@@ -121,6 +121,21 @@ function layout_header(string $title, string $active = ''): void {
   .who{display:flex;align-items:center;gap:10px}
   .who .whoami{display:flex;align-items:center;gap:6px;color:var(--mut);font-size:13px;transition:color .15s}
   .who .whoami:hover{color:var(--txt)} .who .whoami i{width:16px;height:16px}
+  /* notifications bell */
+  .notif-wrap{position:relative;display:inline-block}
+  .notif-bell{background:var(--chip);color:var(--mut);border:0;border-radius:6px;width:30px;height:26px;cursor:pointer;position:relative}
+  .notif-bell:hover{color:var(--txt)} .notif-bell i{width:16px;height:16px;color:#f5b14a}
+  .notif-badge{position:absolute;top:-6px;right:-6px;background:var(--accent);color:#fff;font-size:10px;font-weight:700;min-width:16px;height:16px;line-height:16px;border-radius:8px;padding:0 4px;text-align:center}
+  .notif-panel{display:none;position:absolute;right:0;top:calc(100% + 8px);width:330px;max-width:88vw;background:var(--panel);border:1px solid var(--line);border-radius:10px;box-shadow:0 16px 40px rgba(0,0,0,.4);z-index:200;overflow:hidden}
+  .notif-panel.open{display:block}
+  .notif-head{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-bottom:1px solid var(--line);font-weight:600;font-size:13px;color:var(--txt)}
+  .notif-markall{background:none;border:0;color:var(--accent2,#2563eb);font-size:12px;cursor:pointer}
+  .notif-list{max-height:60vh;overflow:auto}
+  .notif-item{display:block;padding:10px 12px;border-bottom:1px solid var(--line);color:var(--txt);text-decoration:none;font-size:13px}
+  .notif-item:hover{background:var(--hover,#2b3340)}
+  .notif-item.unread{background:rgba(37,99,235,.08);border-left:3px solid var(--accent2,#2563eb)}
+  .notif-title{font-weight:600} .notif-body{color:var(--mut);font-size:12px;margin-top:2px} .notif-time{color:var(--mut);font-size:11px;margin-top:3px}
+  .notif-empty{padding:18px 12px;color:var(--mut);font-size:13px;text-align:center}
   .who .logout{display:inline-flex;color:var(--mut);transition:color .15s,transform .15s} .who .logout:hover{color:var(--accent);transform:translateX(2px)} .who .logout i{width:18px;height:18px}
   .who .role{background:var(--chip);color:var(--mut);font-size:11px;padding:2px 8px;border-radius:10px}
   /* ---- global motion + icon polish ---- */
@@ -326,6 +341,13 @@ function layout_header(string $title, string $active = ''): void {
       <div class="who">
         <?php if (is_admin()): ?><a href="<?= url('backup.php') ?>" class="topbackup<?= $bkOverdue ? ' overdue' : '' ?>" title="Backup database — you are responsible for keeping your own backups" onclick="return confirm('IMPORTANT: You are responsible for backing up and safely keeping your own data.\n\nDownload regular copies and store them off-site (e.g. cloud storage or another computer). No copies are retained on your behalf.\n\nDownload a backup now?');"><i data-lucide="<?= $bkOverdue ? 'alert-triangle' : 'database-backup' ?>"></i><span class="bk-txt"><span class="bk-main"><?= $bkOverdue ? 'Backup now' : 'Backup DB' ?></span><?php if ($lastBackup): ?><span class="bk-meta"><?= e($lastBackup) ?></span><?php endif; ?></span></a><?php endif; ?>
         <button type="button" id="themeBtn" class="themebtn" title="Toggle light/dark"><i data-lucide="sun-moon"></i></button>
+        <div class="notif-wrap">
+          <button type="button" id="notifBell" class="notif-bell" title="Notifications"><i data-lucide="bell"></i><span id="notifBadge" class="notif-badge" style="display:none">0</span></button>
+          <div id="notifPanel" class="notif-panel">
+            <div class="notif-head"><span>Notifications</span><button type="button" id="notifMarkAll" class="notif-markall">Mark all read</button></div>
+            <div id="notifList" class="notif-list"></div>
+          </div>
+        </div>
         <a href="<?= url('profile.php') ?>" class="whoami"><i data-lucide="user-round"></i><span><?= e($u['name'] ?? '') ?></span></a>
         <span class="role"><?= e(ucfirst($u['role'] ?? '')) ?></span>
         <a href="<?= url('logout.php') ?>" class="muted logout" title="Log out"><i data-lucide="log-out"></i></a>
@@ -855,6 +877,8 @@ window.kInstall = function(){
   });
 })();
 </script>
+<script>window.NOTIF_CFG={url:'<?= url('notifications.php') ?>',csrf:'<?= e(csrf_token()) ?>'};</script>
+<script src="<?= url('notif.js') ?>"></script>
 </body>
 </html>
 <?php }

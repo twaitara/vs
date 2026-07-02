@@ -26,6 +26,20 @@ function portal_header(string $title, string $nav = ''): void {
   .pbar .out{display:inline-flex;align-items:center;gap:7px;background:var(--chip);color:var(--txt);padding:8px 14px;border-radius:8px;font-size:13px;transition:background .15s}
   .pbar .out:hover{background:var(--hover)} .pbar .out i{width:16px;height:16px;color:#ff6b6b}
   .pbar-right{display:flex;align-items:center;gap:12px}
+  .notif-wrap{position:relative;display:inline-block}
+  .notif-bell{background:var(--chip);color:var(--txt);border:0;border-radius:6px;width:32px;height:30px;cursor:pointer;position:relative}
+  .notif-bell i{width:16px;height:16px;color:#f5b14a}
+  .notif-badge{position:absolute;top:-5px;right:-5px;background:var(--accent);color:#fff;font-size:10px;font-weight:700;min-width:16px;height:16px;line-height:16px;border-radius:8px;padding:0 4px;text-align:center}
+  .notif-panel{display:none;position:absolute;right:0;top:calc(100% + 8px);width:330px;max-width:88vw;background:var(--panel);border:1px solid var(--line);border-radius:10px;box-shadow:0 16px 40px rgba(0,0,0,.4);z-index:200;overflow:hidden}
+  .notif-panel.open{display:block}
+  .notif-head{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-bottom:1px solid var(--line);font-weight:600;font-size:13px}
+  .notif-markall{background:none;border:0;color:var(--accent2,#2563eb);font-size:12px;cursor:pointer}
+  .notif-list{max-height:60vh;overflow:auto}
+  .notif-item{display:block;padding:10px 12px;border-bottom:1px solid var(--line);color:var(--txt);text-decoration:none;font-size:13px}
+  .notif-item:hover{background:var(--hover)}
+  .notif-item.unread{background:rgba(37,99,235,.10);border-left:3px solid #5b9bff}
+  .notif-title{font-weight:600}.notif-body{color:var(--mut);font-size:12px;margin-top:2px}.notif-time{color:var(--mut);font-size:11px;margin-top:3px}
+  .notif-empty{padding:18px 12px;color:var(--mut);font-size:13px;text-align:center}
   .pbar .whoami{display:inline-flex;align-items:center;gap:7px;font-size:13px;color:var(--txt)}
   .pbar .whoami i{width:16px;height:16px;color:#5b9bff}
   @media(max-width:860px){.pbar .whoami span{display:none}}
@@ -92,6 +106,13 @@ function portal_header(string $title, string $nav = ''): void {
     <div class="co">Client Portal<b><?= e($company ?: 'My Company') ?></b></div>
   </div>
   <div class="pbar-right">
+    <div class="notif-wrap">
+      <button type="button" id="notifBell" class="notif-bell" title="Notifications"><i data-lucide="bell"></i><span id="notifBadge" class="notif-badge" style="display:none">0</span></button>
+      <div id="notifPanel" class="notif-panel">
+        <div class="notif-head"><span>Notifications</span><button type="button" id="notifMarkAll" class="notif-markall">Mark all read</button></div>
+        <div id="notifList" class="notif-list"></div>
+      </div>
+    </div>
     <span class="whoami"><i data-lucide="user-round"></i><span><?= e($c['name'] ?? $c['email'] ?? 'User') ?></span></span>
     <a class="out" href="<?= url('portal_logout.php') ?>"><i data-lucide="log-out"></i> Log out</a>
   </div>
@@ -163,5 +184,7 @@ if(window.lucide)lucide.createIcons();
   window.addEventListener('pageshow',done); window.addEventListener('beforeunload',start);
 })();
 </script>
+<script>window.NOTIF_CFG={url:'<?= url('notifications.php') ?>',csrf:'<?= e(csrf_token()) ?>'};</script>
+<script src="<?= url('notif.js') ?>"></script>
 </body></html>
 <?php }

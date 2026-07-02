@@ -339,20 +339,65 @@ function user_email(?int $uid): ?string {
     try { $st = db()->prepare('SELECT email FROM users WHERE id=?'); $st->execute([$uid]); return $st->fetchColumn() ?: null; }
     catch (Throwable $e) { return null; }
 }
+/** IDs of Kennet staff who can assign (admins + coordinators). */
+function assigner_ids(): array {
+    try { return db()->query("SELECT id FROM users WHERE (role='admin' OR role='coordinator') AND (active=1 OR active IS NULL)")->fetchAll(PDO::FETCH_COLUMN) ?: []; }
+    catch (Throwable $e) { return []; }
+}
+
+// ---------------- In-app notifications ----------------
+/** Create a notification for one user. audience: 'staff' (users) or 'client' (client_users). */
+function notify_user(string $audience, ?int $userId, string $title, string $body = '', string $url = ''): void {
+    if (!$userId || !table_exists('notifications')) return;
+    $aud = $audience === 'client' ? 'client' : 'staff';
+    try { db()->prepare("INSERT INTO notifications (audience,user_id,title,body,url,created_at) VALUES (?,?,?,?,?,NOW())")
+        ->execute([$aud, (int)$userId, mb_substr($title, 0, 250), $body, $url]); } catch (Throwable $e) {}
+}
+/** Create the same notification for many staff users. */
+function notify_staff(array $userIds, string $title, string $body = '', string $url = ''): void {
+    foreach (array_unique(array_filter(array_map('intval', $userIds))) as $id) notify_user('staff', $id, $title, $body, $url);
+}
+function notif_unread_count(string $aud, int $uid): int {
+    if (!$uid || !table_exists('notifications')) return 0;
+    try { $s = db()->prepare("SELECT COUNT(*) FROM notifications WHERE audience=? AND user_id=? AND read_at IS NULL"); $s->execute([$aud, $uid]); return (int)$s->fetchColumn(); }
+    catch (Throwable $e) { return 0; }
+}
+function notif_list(string $aud, int $uid, int $limit = 20): array {
+    if (!$uid || !table_exists('notifications')) return [];
+    $limit = max(1, min(50, $limit));
+    try { $s = db()->prepare("SELECT id,title,body,url,read_at,created_at FROM notifications WHERE audience=? AND user_id=? ORDER BY id DESC LIMIT $limit"); $s->execute([$aud, $uid]); return $s->fetchAll(); }
+    catch (Throwable $e) { return []; }
+}
+function notif_mark_read(string $aud, int $uid, array $ids = []): void {
+    if (!$uid || !table_exists('notifications')) return;
+    try {
+        if ($ids) { $in = implode(',', array_fill(0, count($ids), '?')); db()->prepare("UPDATE notifications SET read_at=NOW() WHERE audience=? AND user_id=? AND read_at IS NULL AND id IN ($in)")->execute(array_merge([$aud, $uid], array_map('intval', $ids))); }
+        else      { db()->prepare("UPDATE notifications SET read_at=NOW() WHERE audience=? AND user_id=? AND read_at IS NULL")->execute([$aud, $uid]); }
+    } catch (Throwable $e) {}
+}
+/** Audience + id of the current viewer (staff or portal), or [null,0]. */
+function current_audience(): array {
+    if ($u = current_user()) return ['staff', (int)($u['id'] ?? 0)];
+    if ($c = current_client()) return ['client', (int)($c['id'] ?? 0)];
+    return [null, 0];
+}
 /** New request raised by a portal officer -> notify Kennet assigners. */
 function notify_new_request(int $rid, string $reg, string $type, ?array $client): void {
     $co = lookup_name('clients', $client['client_id'] ?? null) ?: 'A client';
     $who = $client['name'] ?? 'A portal user';
+    $label = $type === 'insurance' ? 'insurance' : ($type === 'machine' ? 'machine' : 'bank');
     send_mail(assigner_emails(),
         "New valuation request: $reg",
-        "$who ($co) requested a " . ($type === 'bank' ? 'bank' : 'insurance') . " valuation.\n\nReg No: $reg\n\nLog in to assign a valuer.");
+        "$who ($co) requested a $label valuation.\n\nReg No: $reg\n\nLog in to assign a valuer.");
+    notify_staff(assigner_ids(), "New valuation request: $reg", "$who ($co) requested a $label valuation.", 'requests.php');
 }
 /** Request assigned to a Kennet officer -> notify that officer. */
 function notify_assigned(int $rid, string $reg, ?int $officerId): void {
+    if (!$officerId) return;
     $email = user_email($officerId);
-    if (!$email) return;
-    send_mail($email, "Valuation assigned to you: $reg",
+    if ($email) send_mail($email, "Valuation assigned to you: $reg",
         "A valuation has been assigned to you.\n\nReg No: $reg\n\nOpen the system to complete it.");
+    notify_user('staff', $officerId, "Valuation assigned to you: $reg", "Open it to complete the valuation.", 'dashboard.php');
 }
 /** Request completed -> notify the portal officer who raised it. */
 function notify_complete(int $rid, string $reg, ?string $requesterEmail): void {
@@ -579,7 +624,7 @@ function request_complete_for(string $table, array $ids): void {
     if (!$ids) return;
     try {
         $in = implode(',', array_fill(0, count($ids), '?'));
-        $st = db()->prepare("SELECT vr.id, vr.reg_no, vr.status, cu.email
+        $st = db()->prepare("SELECT vr.id, vr.reg_no, vr.status, vr.requested_by, cu.email
                              FROM valuation_requests vr
                              LEFT JOIN client_users cu ON cu.id = vr.requested_by
                              WHERE vr.valuation_table=? AND vr.valuation_id IN ($in)
@@ -588,6 +633,7 @@ function request_complete_for(string $table, array $ids): void {
         foreach ($st->fetchAll() as $r) {
             db()->prepare("UPDATE valuation_requests SET status='complete', updated_at=NOW() WHERE id=?")->execute([$r['id']]);
             notify_complete((int)$r['id'], (string)$r['reg_no'], $r['email'] ?? null);
+            notify_user('client', (int)($r['requested_by'] ?? 0), 'Valuation ready: ' . $r['reg_no'], 'Your valuation report is complete and ready to download.', 'portal_requests.php');
         }
     } catch (Throwable $e) {}
 }
