@@ -54,6 +54,12 @@ function e($v): string { return htmlspecialchars((string)($v ?? ''), ENT_QUOTES,
 
 /** Build an app URL. */
 function url(string $path = ''): string { return BASE_URL . '/' . ltrim($path, '/'); }
+/** Developer credit line shown at the bottom of every page. */
+function dev_credit(): string {
+    return 'Developed by <b>Nine One Two Holdings Limited</b> · '
+         . '<a href="https://nineonetwo.online" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline">nineonetwo.online</a> · '
+         . '<a href="tel:+254722974970" style="color:inherit;text-decoration:none">0722 974 970</a>';
+}
 
 /** Redirect helper. */
 function redirect(string $path): void { header('Location: ' . url($path)); exit; }

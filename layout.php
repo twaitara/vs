@@ -136,6 +136,8 @@ function layout_header(string $title, string $active = ''): void {
   .notif-item.unread{background:rgba(37,99,235,.08);border-left:3px solid var(--accent2,#2563eb)}
   .notif-title{font-weight:600} .notif-body{color:var(--mut);font-size:12px;margin-top:2px} .notif-time{color:var(--mut);font-size:11px;margin-top:3px}
   .notif-empty{padding:18px 12px;color:var(--mut);font-size:13px;text-align:center}
+  .devcredit{margin-top:28px;padding:14px 0 4px;border-top:1px solid var(--line);text-align:center;color:var(--mut);font-size:12px}
+  .devcredit b{color:var(--txt)}
   .who .logout{display:inline-flex;color:var(--mut);transition:color .15s,transform .15s} .who .logout:hover{color:var(--accent);transform:translateX(2px)} .who .logout i{width:18px;height:18px}
   .who .role{background:var(--chip);color:var(--mut);font-size:11px;padding:2px 8px;border-radius:10px}
   /* ---- global motion + icon polish ---- */
@@ -705,6 +707,7 @@ function form_assets(): void { ?>
 <?php }
 
 function layout_footer(): void { ?>
+      <div class="devcredit"><?= dev_credit() ?></div>
     </div>
   </div>
 </div>

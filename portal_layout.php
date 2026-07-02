@@ -40,6 +40,8 @@ function portal_header(string $title, string $nav = ''): void {
   .notif-item.unread{background:rgba(37,99,235,.10);border-left:3px solid #5b9bff}
   .notif-title{font-weight:600}.notif-body{color:var(--mut);font-size:12px;margin-top:2px}.notif-time{color:var(--mut);font-size:11px;margin-top:3px}
   .notif-empty{padding:18px 12px;color:var(--mut);font-size:13px;text-align:center}
+  .devcredit{margin:28px auto 8px;padding-top:14px;border-top:1px solid var(--line);text-align:center;color:var(--mut);font-size:12px;max-width:1200px}
+  .devcredit b{color:var(--txt)}
   .pbar .whoami{display:inline-flex;align-items:center;gap:7px;font-size:13px;color:var(--txt)}
   .pbar .whoami i{width:16px;height:16px;color:#5b9bff}
   @media(max-width:860px){.pbar .whoami span{display:none}}
@@ -147,6 +149,7 @@ function portal_header(string $title, string $nav = ''): void {
 <?php }
 
 function portal_footer(): void { ?>
+  <div class="devcredit"><?= dev_credit() ?></div>
 </div>
 <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 <script>
