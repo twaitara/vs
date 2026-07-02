@@ -72,6 +72,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 // Super-admin: test the SMTP connection & login (no email sent).
 if (is_superadmin() && isset($_GET['smtpconn'])) {
     [$ok, $msg] = smtp_test(mail_settings());
+    set_setting('smtp_last_test', ($ok ? 'OK' : 'FAIL') . '|' . date('Y-m-d H:i') . '|Connection: ' . $msg);
     flash(($ok ? '✓ ' : '✗ ') . $msg, $ok ? 'ok' : 'err');
     redirect('settings.php');
 }
@@ -84,7 +85,9 @@ if (is_superadmin() && isset($_GET['smtptest'])) {
         // Deliver immediately (bypass the hourly queue) so the test result is instant.
         $ok = mail_deliver($to, 'Kennet test email', "This is a test message from the Kennet valuation system.\n\n"
             . 'Sent via: ' . (smtp_configured() ? ('SMTP ' . setting('smtp_host')) : 'PHP mail()') . "\nTime: " . date('r'));
-        flash($ok ? ('Test email sent to ' . $to . '. Check the inbox (and spam).') : 'Test failed — check the SMTP host, port, security and credentials.', $ok ? 'ok' : 'err');
+        $msg = $ok ? ('Test email sent to ' . $to . '. Check the inbox (and spam).') : 'Test failed — check the SMTP host, port, security and credentials.';
+        set_setting('smtp_last_test', ($ok ? 'OK' : 'FAIL') . '|' . date('Y-m-d H:i') . '|Test email to ' . $to . ': ' . ($ok ? 'accepted for delivery' : 'rejected'));
+        flash(($ok ? '✓ ' : '✗ ') . $msg, $ok ? 'ok' : 'err');
     }
     redirect('settings.php');
 }
@@ -158,6 +161,12 @@ settings_nav('general');
   <?= csrf_field() ?><input type="hidden" name="_smtp_form" value="1">
   <h3 style="margin-top:0">Outgoing Email / SMTP <span class="muted" style="font-size:12px;font-weight:400">(super admin only)</span></h3>
   <p class="muted" style="font-size:13px">Send all system emails through the customer's own mail server, so messages come from their domain (better delivery, no spam). Leave the host blank to use the server's built-in PHP mail instead.</p>
+  <?php $lt = setting('smtp_last_test'); if ($lt): [$st, $when, $detail] = array_pad(explode('|', $lt, 3), 3, ''); $good = $st === 'OK'; ?>
+  <div style="display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border-radius:8px;margin:2px 0 14px;font-size:13px;background:<?= $good ? '#0f3d24' : '#3d0f0f' ?>;border:1px solid <?= $good ? '#1c7a47' : '#7a1c1c' ?>;color:<?= $good ? '#b8f5d0' : '#f5c0c0' ?>">
+    <span style="font-size:16px;line-height:1"><?= $good ? '✓' : '✗' ?></span>
+    <div><b>Last test: <?= $good ? 'Successful' : 'Failed' ?></b> <span style="opacity:.8">· <?= e($when) ?></span><br><?= e($detail) ?></div>
+  </div>
+  <?php endif; ?>
   <div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:12px">
     <div class="f"><label class="f">SMTP Host</label><input type="text" name="smtp_host" placeholder="mail.customer.com" value="<?= e(setting('smtp_host')) ?>"></div>
     <div class="f"><label class="f">Port</label><input type="number" name="smtp_port" value="<?= e(setting('smtp_port', '587')) ?>"></div>
