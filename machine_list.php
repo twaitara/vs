@@ -83,7 +83,7 @@ layout_header('Machine Valuations', 'machine');
   </div>
 </div>
 
-<table data-paginate="25" data-colpick class="list">
+<table data-paginate="25" data-colpick data-nosearch class="list">
   <thead><tr>
     <th>Serial</th><th>Machine</th><th>Customer</th><th>Client</th><th>Value (<?= e($cur) ?>)</th><th>Status</th><th>Valuer</th><th>Officer</th><th>Date</th><th data-nocolpick>Actions</th>
   </tr></thead>

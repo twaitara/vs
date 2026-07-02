@@ -242,6 +242,7 @@ function layout_header(string $title, string $active = ''): void {
   .colpick-menu.open{display:block}
   .colpick-menu label{display:flex;gap:8px;align-items:center;font-size:13px;padding:5px 7px;white-space:nowrap;cursor:pointer;border-radius:6px;color:var(--txt)}
   .colpick-menu label:hover{background:var(--hover,#2b3340)}
+  .quicksearch{width:100%;max-width:360px;background:var(--input,#0f1419);border:1px solid var(--line);color:var(--txt);padding:9px 12px;border-radius:8px;font-size:13px;margin:0 0 12px;display:block}
   .ppager{display:flex;gap:5px;justify-content:center;flex-wrap:wrap;margin-top:14px}
   .ppager .pgb{background:var(--panel);border:1px solid var(--line);color:var(--txt);padding:6px 11px;border-radius:6px;font-size:12px;cursor:pointer}
   .ppager .pgb:hover:not(:disabled){background:var(--hover,#2b3340)} .ppager .pgb.cur{background:var(--accent);border-color:var(--accent);color:#fff} .ppager .pgb:disabled{opacity:.4;cursor:default}
@@ -741,27 +742,42 @@ window.kInstall = function(){
 </script>
 <script>
 (function(){
-  // ---- Generic client-side paginator: any <table data-paginate="25"> gets paged ----
-  document.querySelectorAll('table[data-paginate]').forEach(function(tbl){
+  // ---- Generic list enhancer: any <table data-paginate="25"> gets a quick search + 25-row paging ----
+  window.enhanceList = function(tbl){
+    if(tbl.__enh) return; tbl.__enh=true;
     var per=parseInt(tbl.getAttribute('data-paginate'),10)||25;
     var body=tbl.tBodies[0]; if(!body) return;
-    var rows=Array.prototype.slice.call(body.rows).filter(function(tr){return !tr.querySelector('td[colspan]');});
-    if(rows.length<=per) return;
+    var dataRows=Array.prototype.slice.call(body.rows).filter(function(tr){return !tr.querySelector('td[colspan]');});
+    var search=null;
+    if(!tbl.hasAttribute('data-nosearch')){
+      search=document.createElement('input');
+      search.type='search'; search.className='quicksearch'; search.placeholder='Quick search this list…';
+      tbl.parentNode.insertBefore(search, tbl);
+    }
     var pager=document.createElement('div'); pager.className='ppager';
     tbl.parentNode.insertBefore(pager, tbl.nextSibling);
     var page=1;
+    function filtered(){
+      if(!search||!search.value.trim()) return dataRows;
+      var q=search.value.trim().toLowerCase();
+      return dataRows.filter(function(tr){return tr.textContent.toLowerCase().indexOf(q)>=0;});
+    }
     function render(){
+      var rows=filtered();
       var pages=Math.max(1,Math.ceil(rows.length/per)); if(page>pages)page=pages;
-      rows.forEach(function(tr,i){tr.style.display=(i>=(page-1)*per&&i<page*per)?'':'none';});
+      dataRows.forEach(function(tr){tr.style.display='none';});
+      rows.slice((page-1)*per,page*per).forEach(function(tr){tr.style.display='';});
       pager.innerHTML='';
-      if(pages<=1)return;
+      if(pages<=1) return;
       var mk=function(label,p,dis,cur){var b=document.createElement('button');b.textContent=label;b.className='pgb'+(cur?' cur':'');if(dis)b.disabled=true;else b.onclick=function(){page=p;render();window.scrollTo(0,0);};pager.appendChild(b);};
       mk('‹',page-1,page===1,false);
       for(var i=1;i<=pages;i++){ if(pages>9&&Math.abs(i-page)>2&&i>1&&i<pages){ if(i===2||i===pages-1)mk('…',page,true,false); continue; } mk(i,i,false,i===page); }
       mk('›',page+1,page===pages,false);
     }
+    if(search) search.addEventListener('input',function(){page=1;render();});
     render();
-  });
+  };
+  document.querySelectorAll('table[data-paginate]').forEach(function(tbl){ window.enhanceList(tbl); });
 })();
 (function(){
   // ---- Column chooser: any <table data-colpick> gets a "Columns" toggle (persisted) ----

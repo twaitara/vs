@@ -71,6 +71,7 @@ function portal_header(string $title, string $nav = ''): void {
   .ppager{display:flex;gap:5px;justify-content:center;flex-wrap:wrap;margin-top:14px}
   .ppager .pgb{background:var(--panel);border:1px solid var(--line);color:var(--txt);padding:6px 11px;border-radius:6px;font-size:12px;cursor:pointer}
   .ppager .pgb:hover:not(:disabled){background:var(--hover)} .ppager .pgb.cur{background:var(--accent);border-color:var(--accent);color:#fff} .ppager .pgb:disabled{opacity:.4;cursor:default}
+  .quicksearch{width:100%;max-width:360px;background:var(--input);border:1px solid var(--line);color:var(--txt);padding:9px 12px;border-radius:8px;font-size:13px;margin:0 0 12px;display:block}
   .muted{color:var(--mut)} .badge{display:inline-block;font-size:11px;padding:2px 7px;border-radius:10px}
   .b-red{background:#3d0f0f;color:#f5a3a3}.b-amber{background:#3d2f0f;color:#f5d79a}.b-green{background:#0f3d24;color:#b8f5d0}.b-grey{background:#2b3340;color:#cdd5e0}.b-blue{background:#0f2440;color:#a3c8f5}
   .pnav{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:20px}
@@ -155,26 +156,41 @@ function portal_footer(): void { ?>
 <script>
 if(window.lucide)lucide.createIcons();
 (function(){
-  document.querySelectorAll('table[data-paginate]').forEach(function(tbl){
+  function enhanceList(tbl){
+    if(tbl.__enh) return; tbl.__enh=true;
     var per=parseInt(tbl.getAttribute('data-paginate'),10)||25;
     var body=tbl.tBodies[0]; if(!body) return;
-    var rows=Array.prototype.slice.call(body.rows).filter(function(tr){return !tr.querySelector('td[colspan]');});
-    if(rows.length<=per) return;
+    var dataRows=Array.prototype.slice.call(body.rows).filter(function(tr){return !tr.querySelector('td[colspan]');});
+    var search=null;
+    if(!tbl.hasAttribute('data-nosearch')){
+      search=document.createElement('input');
+      search.type='search'; search.className='quicksearch'; search.placeholder='Quick search this list…';
+      tbl.parentNode.insertBefore(search, tbl);
+    }
     var pager=document.createElement('div'); pager.className='ppager';
     tbl.parentNode.insertBefore(pager, tbl.nextSibling);
     var page=1;
+    function filtered(){
+      if(!search||!search.value.trim()) return dataRows;
+      var q=search.value.trim().toLowerCase();
+      return dataRows.filter(function(tr){return tr.textContent.toLowerCase().indexOf(q)>=0;});
+    }
     function render(){
+      var rows=filtered();
       var pages=Math.max(1,Math.ceil(rows.length/per)); if(page>pages)page=pages;
-      rows.forEach(function(tr,i){tr.style.display=(i>=(page-1)*per&&i<page*per)?'':'none';});
+      dataRows.forEach(function(tr){tr.style.display='none';});
+      rows.slice((page-1)*per,page*per).forEach(function(tr){tr.style.display='';});
       pager.innerHTML='';
-      if(pages<=1)return;
+      if(pages<=1) return;
       var mk=function(label,p,dis,cur){var b=document.createElement('button');b.textContent=label;b.className='pgb'+(cur?' cur':'');if(dis)b.disabled=true;else b.onclick=function(){page=p;render();window.scrollTo(0,0);};pager.appendChild(b);};
       mk('‹',page-1,page===1,false);
       for(var i=1;i<=pages;i++){ if(pages>9&&Math.abs(i-page)>2&&i>1&&i<pages){ if(i===2||i===pages-1)mk('…',page,true,false); continue; } mk(i,i,false,i===page); }
       mk('›',page+1,page===pages,false);
     }
+    if(search) search.addEventListener('input',function(){page=1;render();});
     render();
-  });
+  }
+  document.querySelectorAll('table[data-paginate]').forEach(enhanceList);
 })();
 (function(){var L={'log-out':'Log out','eye':'View report','printer':'Download PDF','landmark':'Bank Valuations','shield-check':'Insurance Valuations','mail':'Email','lock':'Password','arrow-right':'Sign in'};
  document.querySelectorAll('.lucide').forEach(function(svg){var n='';svg.classList.forEach(function(c){if(c.indexOf('lucide-')===0)n=c.slice(7);});var el=svg.closest('a,button');if(!el||el.getAttribute('title'))return;var t=(el.textContent||'').trim();el.setAttribute('title',t||L[n]||n.replace(/-/g,' '));});})();
