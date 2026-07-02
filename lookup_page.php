@@ -5,6 +5,13 @@ require_admin();
 /** Render a simple add/edit/delete admin page for a lookup table (id, name). */
 function lookup_admin(string $table, string $title, string $subkey): void {
     // Handle actions
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'delete') {
+        csrf_verify();
+        $st = db()->prepare("DELETE FROM `$table` WHERE id = ?");
+        $st->execute([(int)($_POST['id'] ?? 0)]);
+        flash('Deleted.');
+        redirect(basename($_SERVER['PHP_SELF']));
+    }
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         csrf_verify();
         $name = trim($_POST['name'] ?? '');
@@ -23,13 +30,6 @@ function lookup_admin(string $table, string $title, string $subkey): void {
         }
         redirect(basename($_SERVER['PHP_SELF']));
     }
-    if (isset($_GET['delete'])) {
-        $st = db()->prepare("DELETE FROM `$table` WHERE id = ?");
-        $st->execute([$_GET['delete']]);
-        flash('Deleted.');
-        redirect(basename($_SERVER['PHP_SELF']));
-    }
-
     $editId = $_GET['edit'] ?? '';
     $editRow = $editId ? load_row_simple($table, $editId) : [];
     $rows = db()->query("SELECT * FROM `$table` ORDER BY name")->fetchAll();
@@ -59,7 +59,7 @@ function lookup_admin(string $table, string $title, string $subkey): void {
           <td><?= e($r['name']) ?></td>
           <td class="actions">
             <a href="?edit=<?= e($r['id']) ?>">Edit</a>
-            <a href="?delete=<?= e($r['id']) ?>" onclick="return confirm('Delete this entry?')" style="color:#d41d1d">Delete</a>
+            <form method="post" style="display:inline" onsubmit="return confirm('Delete this entry?')"><?= csrf_field() ?><input type="hidden" name="action" value="delete"><input type="hidden" name="id" value="<?= (int)$r['id'] ?>"><button type="submit" style="background:none;border:0;color:#d41d1d;cursor:pointer;padding:0;font:inherit">Delete</button></form>
           </td>
         </tr>
       <?php endforeach; endif; ?>

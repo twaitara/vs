@@ -11,6 +11,7 @@ $st = db()->prepare("SELECT * FROM `$table` WHERE id = ? LIMIT 1");
 $st->execute([$id]);
 $v = $st->fetch();
 if (!$v) { http_response_code(404); exit('Not found'); }
+require_own_valuation($v); // officers may only open their own records
 
 $clientName = lookup_name('clients', $v['client'] ?? null);
 $fuelName   = lookup_name('fuels', $v['fuel_type'] ?? null);

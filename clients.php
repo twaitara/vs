@@ -4,6 +4,11 @@ require_admin();
 
 $TYPES = ['bank' => 'Bank', 'client' => 'Client (insurance)'];
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'delete') {
+    csrf_verify();
+    db()->prepare('DELETE FROM clients WHERE id=?')->execute([(int)($_POST['id'] ?? 0)]);
+    flash('Deleted.'); redirect('clients.php');
+}
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     csrf_verify();
     $name = trim($_POST['name'] ?? '');
@@ -23,10 +28,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
     redirect('clients.php');
-}
-if (isset($_GET['delete'])) {
-    db()->prepare('DELETE FROM clients WHERE id=?')->execute([(int)$_GET['delete']]);
-    flash('Deleted.'); redirect('clients.php');
 }
 
 $editId = (int)($_GET['edit'] ?? 0);
@@ -61,7 +62,7 @@ settings_nav('clients');
       <td><?= e($TYPES[$hasType ? ($r['type'] ?? 'client') : 'client'] ?? 'Client') ?></td>
       <td class="actions">
         <a class="rbtn" href="?edit=<?= e($r['id']) ?>">Edit</a>
-        <a class="rbtn" href="?delete=<?= e($r['id']) ?>" onclick="return confirm('Delete this client?')" style="color:#d41d1d">Delete</a>
+        <form method="post" style="display:inline" onsubmit="return confirm('Delete this client?')"><?= csrf_field() ?><input type="hidden" name="action" value="delete"><input type="hidden" name="id" value="<?= (int)$r['id'] ?>"><button class="rbtn" type="submit" style="color:#d41d1d">Delete</button></form>
       </td>
     </tr>
   <?php endforeach; endif; ?>
