@@ -6,7 +6,7 @@ require_can_edit();
 // Columns persisted for a machine valuation.
 $COLUMNS = [
     'serial_no','corporate_ref_no','customer_name','phone_no','assesment_date','inspection_location',
-    'machine_name','colour','market_value','forced_value','note_value','client','officer',
+    'machine_name','machine_serial','manufacture_year','colour','market_value','forced_value','note_value','client','officer',
     'principal_valuer','extras','notes','status',
 ];
 
@@ -53,6 +53,8 @@ layout_header($id ? 'Edit Machine Valuation' : 'New Machine Valuation', 'machine
   <fieldset><legend>Machine & Customer Details</legend><div class="grid">
     <?= f_input('serial_no','Serial No. (auto)',$row,'text',false,'readonly') ?>
     <?= f_input('machine_name','Machine Name',$row,'text',true,'placeholder="e.g. CLAAS MARKANT 65 BALER"') ?>
+    <?= f_input('machine_serial','Machine Serial No. (if any)',$row) ?>
+    <?= f_input('manufacture_year','Year of Manufacture (if any)',$row) ?>
     <?= f_input('colour','Colour',$row) ?>
     <?= f_input('customer_name','Customer Name',$row) ?>
     <?= f_input('phone_no','Phone Number',$row) ?>

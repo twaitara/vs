@@ -485,6 +485,8 @@ function render_machine_report(array $val): string {
 
     <div class="row" style="text-decoration:underline;font-weight:bold">DESCRIPTION</div>
     <div class="row"><span class="k">NAME:</span> <?= $g('machine_name') ?></div>
+    <?php if (trim((string)($val['machine_serial'] ?? '')) !== ''): ?><div class="row"><span class="k">MACHINE SERIAL NO.:</span> <?= $g('machine_serial') ?></div><?php endif; ?>
+    <?php if (trim((string)($val['manufacture_year'] ?? '')) !== ''): ?><div class="row"><span class="k">YEAR OF MANUFACTURE:</span> <?= $g('manufacture_year') ?></div><?php endif; ?>
     <div class="row"><span class="k">COLOUR:</span> <?= $g('colour') ?></div>
 
     <div class="row" style="margin-top:18px"><span class="k">MARKET VALUE:</span> <span class="value"><?= number_format((float)($val['market_value'] ?? 0)) ?>/-</span> &nbsp; <span class="words"><?= e($valWords) ?></span></div>
