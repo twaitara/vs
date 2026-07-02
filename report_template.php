@@ -145,7 +145,6 @@ function render_bank_report(array $val): string {
         <tr><th width="50%">Report Information</th><th width="50%">Client Information</th></tr>
         <tr>
             <td>
-                <p><span>Corporate Ref No:</span> <?= $g('corporate_ref_no') ?></p>
                 <p><span>Serial No:</span> <?= e(serial_display($val['serial_no'] ?? '')) ?></p>
                 <p><span>Inspection Date:</span> <?= $g('assesment_date') ?></p>
             </td>

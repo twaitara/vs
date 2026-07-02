@@ -59,7 +59,6 @@ layout_header($id ? 'Edit Machine Valuation' : 'New Machine Valuation', 'machine
     <?= f_input('assesment_date','Inspection Date',$row,'date') ?>
     <?= f_input('inspection_location','Location',$row) ?>
     <?= f_select('client','Client','clients',$row,true) ?>
-    <?= f_input('corporate_ref_no','Corporate Ref No',$row) ?>
   </div></fieldset>
 
   <fieldset><legend>Valuation</legend><div class="grid">

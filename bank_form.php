@@ -64,7 +64,6 @@ layout_header($id ? 'Edit Bank Valuation' : 'New Bank Valuation', 'bank');
     <?= f_input('inspection_location','Inspection Location',$row) ?>
     <?= f_select('valuation_type','Valuation Type','types',$row,true) ?>
     <?= f_select('client','Client','clients',$row,true) ?>
-    <?= f_input('corporate_ref_no','Corporate Ref No',$row) ?>
   </div></fieldset>
 
   <fieldset><legend>Registration & Insurance</legend><div class="grid">
