@@ -8,7 +8,7 @@ $soft  = column_exists($table, 'deleted_at');
 // Per-row delete (draft / in-progress only; completed & signed are protected).
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'delete') {
     csrf_verify();
-    if (!can_edit()) { http_response_code(403); exit('View-only access.'); }
+    if (!is_admin()) { http_response_code(403); exit('Only admins can delete valuations.'); }
     $did = (int)($_POST['id'] ?? 0);
     if ($did && $soft) {
         $guard = '';
@@ -87,7 +87,7 @@ layout_header('Machine Valuations', 'machine');
             <a class="rbtn signbtn" href="<?= url('sign.php?type=machine&id=' . (int)$r['id'] . '&' . csrf_query()) ?>" onclick="return confirm('Sign and mark this report Complete?')" title="Sign report"><i data-lucide="pen-tool"></i></a>
           <?php endif; ?>
         <?php endif; ?>
-        <?php if (can_edit() && !$signed && ($r['status'] ?? '') !== 'complete'): ?>
+        <?php if (is_admin() && !$signed && ($r['status'] ?? '') !== 'complete'): ?>
           <form method="post" style="display:inline" onsubmit="return confirm('Delete this valuation? It moves to the Recycle Bin.')">
             <?= csrf_field() ?><input type="hidden" name="action" value="delete"><input type="hidden" name="id" value="<?= (int)$r['id'] ?>">
             <button class="rbtn del-one" type="submit" title="Delete"><i data-lucide="trash-2"></i></button>

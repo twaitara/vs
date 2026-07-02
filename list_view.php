@@ -20,7 +20,7 @@ function render_list(array $cfg): void {
         csrf_verify();
         $ids = array_values(array_filter(array_map('intval', (array)($_POST['ids'] ?? []))));
         if ($bulk === 'delete') {
-            if (!can_edit()) { http_response_code(403); exit('View-only access.'); }
+            if (!is_admin()) { http_response_code(403); exit('Only admins can delete valuations.'); }
             if ($ids && $soft) {
                 $in = implode(',', array_fill(0, count($ids), '?'));
                 // Only draft / in-progress records may be deleted; completed & signed reports are protected.
@@ -184,7 +184,7 @@ function render_list(array $cfg): void {
       <?php if (can_edit()): ?>
       <div class="bulkbar">
         <label><input type="checkbox" id="selAll"> Select all</label>
-        <button class="btn" type="submit" name="bulk" value="delete" onclick="return confirmBulk('delete')" style="background:#d41d1d"><i data-lucide="trash-2"></i>Delete selected</button>
+        <?php if (is_admin()): ?><button class="btn" type="submit" name="bulk" value="delete" onclick="return confirmBulk('delete')" style="background:#d41d1d"><i data-lucide="trash-2"></i>Delete selected</button><?php endif; ?>
         <?php if (can_sign()): ?><button class="btn" type="submit" name="bulk" value="sign" onclick="return confirmBulk('sign')" style="background:#1c9c5d"><i data-lucide="pen-tool"></i>Sign selected</button><?php endif; ?>
         <span class="muted" id="selCount"></span>
         <span class="stagekey">Key:&nbsp;<?php foreach (array_keys($STAGES) as $ab) echo '<span class="stagebox">' . $ab . '</span>&nbsp;' . e($STAGE_NAMES[$ab] ?? $ab) . '&nbsp;&nbsp;'; ?></span>
@@ -240,7 +240,7 @@ function render_list(array $cfg): void {
               <?php elseif (!empty($r['signed_at'])): ?>
                 <span class="rbtn ico" style="border-color:#1c7a47;color:#3ddc84;cursor:default" title="Signed <?= e(ddate($r['signed_at'])) ?>"><i data-lucide="check"></i></span>
               <?php endif; ?>
-              <?php if (can_edit() && $soft && empty($r['signed_at']) && ($r['status'] ?? '') !== 'complete'): ?>
+              <?php if (is_admin() && $soft && empty($r['signed_at']) && ($r['status'] ?? '') !== 'complete'): ?>
                 <button class="rbtn ico del-one" type="submit" name="bulk" value="delete" title="Delete (move to Recycle Bin)"
                         formnovalidate onclick="this.form.querySelectorAll('.rowchk').forEach(function(c){c.checked=false});var h=document.createElement('input');h.type='hidden';h.name='ids[]';h.value='<?= (int)$r['id'] ?>';this.form.appendChild(h);return confirm('Delete this valuation? It moves to the Recycle Bin.');"><i data-lucide="trash-2"></i></button>
               <?php endif; ?>
