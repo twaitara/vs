@@ -21,6 +21,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         db()->prepare("UPDATE valuation_requests SET status='accepted', updated_at=NOW() WHERE id=?")->execute([$rid]);
         audit('request_accept', 'valuation_request', $rid, $req['reg_no']);
         notify_user('client', (int)$req['requested_by'], 'Request accepted: ' . $req['reg_no'], 'Kennet has accepted your valuation request and will assign a valuer.', 'portal_requests.php');
+        notify_client_admins((int)$req['client_id'], 'Request accepted: ' . $req['reg_no'], 'Kennet accepted the request raised by ' . ($req['requester_name'] ?: 'your team') . '.', 'portal_requests.php', (int)$req['requested_by']);
         send_mail(client_user_email((int)$req['requested_by']), 'Valuation request accepted: ' . $req['reg_no'], "Your valuation request for {$req['reg_no']} has been accepted. A valuer will be assigned shortly.");
         flash('Request accepted.');
         redirect('requests.php');
@@ -32,6 +33,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         else            db()->prepare("UPDATE valuation_requests SET status='denied', updated_at=NOW() WHERE id=?")->execute([$rid]);
         audit('request_deny', 'valuation_request', $rid, $req['reg_no'] . ' — ' . $reason);
         notify_user('client', (int)$req['requested_by'], 'Request declined: ' . $req['reg_no'], 'Reason: ' . $reason, 'portal_requests.php');
+        notify_client_admins((int)$req['client_id'], 'Request declined: ' . $req['reg_no'], 'Raised by ' . ($req['requester_name'] ?: 'your team') . '. Reason: ' . $reason, 'portal_requests.php', (int)$req['requested_by']);
         send_mail(client_user_email((int)$req['requested_by']), 'Valuation request declined: ' . $req['reg_no'], "Your valuation request for {$req['reg_no']} was declined.\n\nReason: $reason");
         flash('Request denied.');
         redirect('requests.php');

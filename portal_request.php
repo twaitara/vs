@@ -33,6 +33,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $rid = (int)db()->lastInsertId();
     audit('request_create', 'valuation_request', $rid, $reg);
     notify_new_request($rid, $reg, $vtype, $c);
+    // Keep the company's portal admins in the loop on their team's requests.
+    notify_client_admins($cid, 'New request by ' . ($c['name'] ?: 'a team member') . ': ' . $reg, ucfirst($vtype) . ' valuation requested.', 'portal_requests.php', (int)$c['id']);
     flash('Request submitted. Kennet will assign a valuer shortly.');
     redirect('portal_requests.php');
 }

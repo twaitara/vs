@@ -381,6 +381,20 @@ function notif_mark_read(string $aud, int $uid, array $ids = []): void {
         else      { db()->prepare("UPDATE notifications SET read_at=NOW() WHERE audience=? AND user_id=? AND read_at IS NULL")->execute([$aud, $uid]); }
     } catch (Throwable $e) {}
 }
+/** IDs of a company's portal admins (optionally excluding one user). */
+function client_admin_ids(int $clientId, int $except = 0): array {
+    if (!$clientId) return [];
+    try {
+        $s = db()->prepare("SELECT id FROM client_users WHERE client_id=? AND role='admin' AND (active=1 OR active IS NULL)");
+        $s->execute([$clientId]);
+        $ids = $s->fetchAll(PDO::FETCH_COLUMN) ?: [];
+    } catch (Throwable $e) { return []; }
+    return array_values(array_filter(array_map('intval', $ids), fn($i) => $i !== $except));
+}
+/** Notify a company's portal admins (excluding $except) — for team-request oversight. */
+function notify_client_admins(int $clientId, string $title, string $body = '', string $url = '', int $except = 0): void {
+    foreach (client_admin_ids($clientId, $except) as $id) notify_user('client', $id, $title, $body, $url);
+}
 /** Audience + id of the current viewer (staff or portal), or [null,0]. */
 function current_audience(): array {
     if ($u = current_user()) return ['staff', (int)($u['id'] ?? 0)];
@@ -630,7 +644,7 @@ function request_complete_for(string $table, array $ids): void {
     if (!$ids) return;
     try {
         $in = implode(',', array_fill(0, count($ids), '?'));
-        $st = db()->prepare("SELECT vr.id, vr.reg_no, vr.status, vr.requested_by, cu.email
+        $st = db()->prepare("SELECT vr.id, vr.reg_no, vr.status, vr.requested_by, vr.client_id, cu.email
                              FROM valuation_requests vr
                              LEFT JOIN client_users cu ON cu.id = vr.requested_by
                              WHERE vr.valuation_table=? AND vr.valuation_id IN ($in)
@@ -640,6 +654,7 @@ function request_complete_for(string $table, array $ids): void {
             db()->prepare("UPDATE valuation_requests SET status='complete', updated_at=NOW() WHERE id=?")->execute([$r['id']]);
             notify_complete((int)$r['id'], (string)$r['reg_no'], $r['email'] ?? null);
             notify_user('client', (int)($r['requested_by'] ?? 0), 'Valuation ready: ' . $r['reg_no'], 'Your valuation report is complete and ready to download.', 'portal_requests.php');
+            notify_client_admins((int)($r['client_id'] ?? 0), 'Valuation ready: ' . $r['reg_no'], 'A valuation requested by your team is complete.', 'portal_requests.php', (int)($r['requested_by'] ?? 0));
         }
     } catch (Throwable $e) {}
 }
