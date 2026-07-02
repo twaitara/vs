@@ -69,15 +69,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     redirect('settings.php');
 }
 
-// Super-admin: send a test email to yourself to verify SMTP.
+// Super-admin: send a test email to a chosen address to verify SMTP.
 if (is_superadmin() && isset($_GET['smtptest'])) {
-    $me = current_user()['email'] ?? '';
-    if ($me) {
-        $ok = app_mail($me, 'Kennet test email', "This is a test message from the Kennet valuation system.\n\n"
-            . 'Sent via: ' . (smtp_configured() ? ('SMTP ' . setting('smtp_host')) : 'PHP mail()') . "\nTime: " . date('r'));
-        flash($ok ? ('Test email sent to ' . $me . '. Check the inbox (and spam).') : 'Test failed — check the SMTP host, port, security and credentials.', $ok ? 'ok' : 'err');
+    $to = trim((string)($_GET['to'] ?? '')) ?: (current_user()['email'] ?? '');
+    if (!filter_var($to, FILTER_VALIDATE_EMAIL)) {
+        flash('Enter a valid email address to send the test to.', 'err');
     } else {
-        flash('Your account has no email address set.', 'err');
+        // Deliver immediately (bypass the hourly queue) so the test result is instant.
+        $ok = mail_deliver($to, 'Kennet test email', "This is a test message from the Kennet valuation system.\n\n"
+            . 'Sent via: ' . (smtp_configured() ? ('SMTP ' . setting('smtp_host')) : 'PHP mail()') . "\nTime: " . date('r'));
+        flash($ok ? ('Test email sent to ' . $to . '. Check the inbox (and spam).') : 'Test failed — check the SMTP host, port, security and credentials.', $ok ? 'ok' : 'err');
     }
     redirect('settings.php');
 }
@@ -176,8 +177,18 @@ settings_nav('general');
   </div>
   <div style="display:flex;gap:10px;align-items:center;margin-top:6px">
     <button class="btn" type="submit"><i data-lucide="save"></i>Save SMTP</button>
-    <a class="btn sec" href="<?= url('settings.php?smtptest=1') ?>">Send test email to me</a>
     <span class="muted" style="font-size:12px"><?= smtp_configured() ? 'Currently: sending via ' . e(setting('smtp_host')) : 'Currently: using server PHP mail()' ?></span>
+  </div>
+</form>
+
+<form class="card" method="get" action="<?= url('settings.php') ?>" style="max-width:680px;border-color:#7a5c1c">
+  <input type="hidden" name="smtptest" value="1">
+  <h3 style="margin-top:0">Send a test email <span class="muted" style="font-size:12px;font-weight:400">(super admin only)</span></h3>
+  <p class="muted" style="font-size:13px">Sends a test using the settings above (Save first). It's delivered immediately, bypassing the hourly limit.</p>
+  <div style="display:flex;gap:10px;align-items:end;flex-wrap:wrap">
+    <div class="f" style="flex:1;min-width:240px;margin:0"><label class="f">Send test to</label>
+      <input type="email" name="to" required placeholder="you@example.com" value="<?= e(current_user()['email'] ?? '') ?>"></div>
+    <button class="btn" type="submit"><i data-lucide="send"></i>Send test</button>
   </div>
 </form>
 <?php endif; ?>
