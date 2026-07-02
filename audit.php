@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/layout.php';
 require_admin();
+if (!is_superadmin()) { flash('The audit log is available to the super admin only.', 'err'); redirect('dashboard.php'); }
 
 $q       = trim($_GET['q'] ?? '');
 $action  = $_GET['action'] ?? '';

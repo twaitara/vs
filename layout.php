@@ -391,7 +391,8 @@ function settings_nav(string $active): void {
     $tabs['clients']  = ['Clients', 'clients.php', 'users'];
     $tabs['insurers'] = ['Insurers', 'insurers.php', 'shield'];
     $tabs['types']    = ['Valuation Types', 'types.php', 'tags'];
-    if (is_admin()) { $tabs['users'] = ['Users', 'users.php', 'user-cog']; $tabs['portal'] = ['Portal Users', 'client_users.php', 'key-round']; $tabs['audit'] = ['Audit Log', 'audit.php', 'scroll-text']; }
+    if (is_admin()) { $tabs['users'] = ['Users', 'users.php', 'user-cog']; $tabs['portal'] = ['Portal Users', 'client_users.php', 'key-round']; }
+    if (is_superadmin()) $tabs['audit'] = ['Audit Log', 'audit.php', 'scroll-text'];
     if (is_superadmin()) $tabs['email'] = ['Email', 'settings_email.php', 'mail'];
     $tabs['recycle']  = ['Recycle Bin', 'recycle.php', 'trash-2'];
     echo '<div class="subnav">';
