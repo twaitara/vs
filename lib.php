@@ -57,7 +57,7 @@ function url(string $path = ''): string { return BASE_URL . '/' . ltrim($path, '
 /** Developer credit line shown at the bottom of every page. */
 function dev_credit(): string {
     return 'Developed by <b>Nine One Two Holdings Limited</b> · '
-         . '<a href="https://nineonetwo.online" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline">nineonetwo.online</a> · '
+         . '<a href="https://www.nineonetwo.co.ke" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline">www.nineonetwo.co.ke</a> · '
          . '<a href="tel:+254722974970" style="color:inherit;text-decoration:none">0722 974 970</a>';
 }
 
