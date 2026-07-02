@@ -25,6 +25,10 @@ function portal_header(string $title, string $nav = ''): void {
   .pbar .brand .co{font-size:13px;color:var(--mut)} .pbar .brand .co b{color:var(--txt);display:block;font-size:14px}
   .pbar .out{display:inline-flex;align-items:center;gap:7px;background:var(--chip);color:var(--txt);padding:8px 14px;border-radius:8px;font-size:13px;transition:background .15s}
   .pbar .out:hover{background:var(--hover)} .pbar .out i{width:16px;height:16px;color:#ff6b6b}
+  .pbar-right{display:flex;align-items:center;gap:12px}
+  .pbar .whoami{display:inline-flex;align-items:center;gap:7px;font-size:13px;color:var(--txt)}
+  .pbar .whoami i{width:16px;height:16px;color:#5b9bff}
+  @media(max-width:860px){.pbar .whoami span{display:none}}
   .wrap{max-width:1200px;margin:0 auto;padding:24px;animation:fadeUp .45s ease}
   @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
   h1.pt{font-size:22px;font-weight:800;letter-spacing:-.02em;margin:0 0 4px}
@@ -87,7 +91,10 @@ function portal_header(string $title, string $nav = ''): void {
     <img src="<?= url('assets/logo2.png') ?>" alt="Kennet">
     <div class="co">Client Portal<b><?= e($company ?: 'My Company') ?></b></div>
   </div>
-  <a class="out" href="<?= url('portal_logout.php') ?>"><i data-lucide="log-out"></i> Log out</a>
+  <div class="pbar-right">
+    <span class="whoami"><i data-lucide="user-round"></i><span><?= e($c['name'] ?? $c['email'] ?? 'User') ?></span></span>
+    <a class="out" href="<?= url('portal_logout.php') ?>"><i data-lucide="log-out"></i> Log out</a>
+  </div>
 </div>
 <div class="wrap">
   <?php
