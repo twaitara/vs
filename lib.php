@@ -409,14 +409,45 @@ function request_complete_for(string $table, array $ids): void {
     } catch (Throwable $e) {}
 }
 
-/** Generate the next serial, e.g. 079/06/2026 = running number this month / month / year. */
+/** True if a table exists in the current database (cached). */
+function table_exists(string $table): bool {
+    static $cache = [];
+    if (isset($cache[$table])) return $cache[$table];
+    try {
+        $st = db()->prepare("SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ?");
+        $st->execute([$table]);
+        return $cache[$table] = ((int)$st->fetchColumn() > 0);
+    } catch (Throwable $e) { return $cache[$table] = false; }
+}
+/**
+ * Atomically allocate the next value for a named counter (race-safe).
+ * On first use the row is seeded with $seed (typically the current max) so new
+ * numbers never collide with records created before the sequences table existed.
+ * Falls back to $seed+1 (best-effort) if schema_v12 hasn't been run yet.
+ */
+function next_sequence(string $key, int $seed = 0): int {
+    if (!table_exists('sequences')) return $seed + 1;
+    try {
+        db()->prepare("INSERT IGNORE INTO sequences (name, value) VALUES (?, ?)")->execute([$key, $seed]);
+        db()->prepare("UPDATE sequences SET value = LAST_INSERT_ID(value + 1) WHERE name = ?")->execute([$key]);
+        return (int)db()->query("SELECT LAST_INSERT_ID()")->fetchColumn();
+    } catch (Throwable $e) { return $seed + 1; }
+}
+
+/** Generate the next serial, e.g. 079/06/2026 = running number this month / month / year.
+ *  The monthly counter is shared across bank/insurance/machine so serials are unique. */
 function next_serial(): string {
     $y = date('Y'); $m = (int)date('m');
-    try {
-        $st = db()->prepare("SELECT COUNT(*) FROM bankvaluations WHERE YEAR(created_at)=? AND MONTH(created_at)=?");
-        $st->execute([$y, $m]);
-        $seq = (int)$st->fetchColumn() + 1;
-    } catch (Throwable $e) { $seq = 1; }
+    // Seed = count of everything already created this month across all valuation types.
+    $seed = 0;
+    foreach (['bankvaluations', 'valuations', 'machinevaluations'] as $t) {
+        if (!table_exists($t)) continue;
+        try {
+            $st = db()->prepare("SELECT COUNT(*) FROM `$t` WHERE YEAR(created_at)=? AND MONTH(created_at)=?");
+            $st->execute([$y, $m]); $seed += (int)$st->fetchColumn();
+        } catch (Throwable $e) {}
+    }
+    $seq = next_sequence(sprintf('serial-%04d-%02d', $y, $m), $seed);
     $prefix = trim(setting('serial_prefix', ''));
     return ($prefix !== '' ? $prefix . '/' : '') . sprintf('%03d/%02d/%04d', $seq, $m, $y);
 }
@@ -430,15 +461,16 @@ function serial_display(?string $s): string {
     return $s; // already prefixed or legacy text
 }
 
-/** Generate next sequential report number, e.g. KEN/2026/0007. */
+/** Generate next sequential report number, e.g. KEN/2026/0007 (atomic, per table per year). */
 function next_report_no(string $table): string {
     $prefix = setting('report_prefix', 'KEN');
     $year = date('Y');
+    $seed = 0;
     try {
         $st = db()->prepare("SELECT COUNT(*) FROM `$table` WHERE YEAR(created_at) = ?");
-        $st->execute([$year]);
-        $seq = (int)$st->fetchColumn() + 1;
-    } catch (Throwable $e) { $seq = 1; }
+        $st->execute([$year]); $seed = (int)$st->fetchColumn();
+    } catch (Throwable $e) {}
+    $seq = next_sequence("report-$table-$year", $seed);
     return sprintf('%s/%s/%04d', $prefix, $year, $seq);
 }
 
