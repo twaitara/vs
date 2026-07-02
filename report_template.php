@@ -186,7 +186,7 @@ function render_bank_report(array $val): string {
                 <p class="value-highlight" style="color:#d41d1dff;"><?= number_format((float)($val['market_value'] ?? 0), 2) ?></p>
                 <p><?= e($valWords) ?></p>
             </td>
-            <td class="text-center"><p class="value-highlight" style="color:#d41d1dff;"><?= number_format((float)($val['forced_value'] ?? 0), 2) ?></p></td>
+            <td class="text-center"><p class="value-highlight" style="color:#d41d1dff;"><?= number_format((float)($val['forced_value'] ?? 0), 2) ?></p><?php if ((float)($val['forced_value'] ?? 0) > 0): ?><p><?= e(report_words($val['forced_value'])) ?></p><?php endif; ?></td>
             <td><p style="color:#d41d1dff;"><?= $g('note_value') ?></p></td>
         </tr>
     </table>
@@ -489,7 +489,7 @@ function render_machine_report(array $val): string {
     <div class="row"><span class="k">COLOUR:</span> <?= $g('colour') ?></div>
 
     <div class="row" style="margin-top:18px"><span class="k">MARKET VALUE:</span> <span class="value"><?= number_format((float)($val['market_value'] ?? 0)) ?>/-</span> &nbsp; <span class="words"><?= e($valWords) ?></span></div>
-    <div class="row"><span class="k">FORCED VALUE:</span> <span class="value"><?= number_format((float)($val['forced_value'] ?? 0)) ?>/-</span></div>
+    <div class="row"><span class="k">FORCED VALUE:</span> <span class="value"><?= number_format((float)($val['forced_value'] ?? 0)) ?>/-</span> <?php if ((float)($val['forced_value'] ?? 0) > 0): ?>&nbsp; <span class="words"><?= e(report_words($val['forced_value'])) ?></span><?php endif; ?></div>
 
     <div class="row" style="margin-top:18px"><span class="k">CLIENT:</span> <?= e($client) ?></div>
     <div class="row"><span class="k">OFFICER:</span> <?= $g('officer') ?></div>
