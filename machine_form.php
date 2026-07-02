@@ -64,7 +64,7 @@ layout_header($id ? 'Edit Machine Valuation' : 'New Machine Valuation', 'machine
 
   <fieldset><legend>Valuation</legend><div class="grid">
     <?= f_money('market_value','Market Value',$row,false,true,'note_value') ?>
-    <?= f_money('forced_value','Forced Value',$row,false) ?>
+    <?= f_money('forced_value','Forced Value',$row,false,true) ?>
     <?= f_text('note_value','Value in Words (auto)',$row,'auto-filled from Market Value — you can edit') ?>
     <?= f_text('notes','N.B. / Notes',$row) ?>
     <?= f_text('extras','Extras',$row) ?>
