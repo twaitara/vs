@@ -495,6 +495,19 @@ function require_own_valuation(array $row): void {
 function table_type(?string $t): string {
     return ['valuations' => 'insurance', 'machinevaluations' => 'machine'][$t] ?? 'bank';
 }
+/** Map a report type key to its valuation table. */
+function type_table(?string $t): string {
+    return ['insurance' => 'valuations', 'machine' => 'machinevaluations'][$t] ?? 'bankvaluations';
+}
+/** Portal officers may only open reports for valuations tied to requests they raised. Admins: any in their company. */
+function portal_may_view(string $table, int $valuationId): bool {
+    if (client_is_admin()) return true;
+    try {
+        $st = db()->prepare("SELECT 1 FROM valuation_requests WHERE requested_by=? AND valuation_table=? AND valuation_id=? LIMIT 1");
+        $st->execute([(int)(current_client()['id'] ?? 0), $table, $valuationId]);
+        return (bool)$st->fetchColumn();
+    } catch (Throwable $e) { return false; }
+}
 /** Map a valuation table to its edit-form page. */
 function table_form(?string $t): string {
     return ['valuations' => 'insurance_form.php', 'machinevaluations' => 'machine_form.php'][$t] ?? 'bank_form.php';

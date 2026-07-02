@@ -11,6 +11,7 @@ elseif ($type === 'machine') { $val = load_machine_valuation($_GET['id'] ?? null
 else                         { $val = load_bank_valuation($_GET['id'] ?? null);      $render = 'render_bank_report'; }
 
 if (!$val || (int)($val['client'] ?? -1) !== $cid) { http_response_code(403); exit('Not available.'); }
+if (!portal_may_view(type_table($type), (int)$val['id'])) { http_response_code(403); exit('Not available.'); }
 
 $html = $render($val);
 $pdf  = make_pdf($html);

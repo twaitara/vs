@@ -9,7 +9,9 @@ if ($type === 'insurance')   { $val = load_insurance_valuation($_GET['id'] ?? nu
 elseif ($type === 'machine') { $val = load_machine_valuation($_GET['id'] ?? null);   $render = 'render_machine_report'; }
 else                         { $val = load_bank_valuation($_GET['id'] ?? null);      $render = 'render_bank_report'; }
 
-// Strict ownership: clients only ever see their own company's valuations.
+// Strict ownership: clients only ever see their own company's valuations,
+// and officers only the ones tied to requests they raised.
 if (!$val || (int)($val['client'] ?? -1) !== $cid) { http_response_code(403); exit('Not available.'); }
+if (!portal_may_view(type_table($type), (int)$val['id'])) { http_response_code(403); exit('Not available.'); }
 
 echo $render($val);

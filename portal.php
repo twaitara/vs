@@ -9,15 +9,27 @@ if (!in_array($tab, ['bank', 'insurance', 'machine'], true)) $tab = 'bank';
 $table = ['insurance' => 'valuations', 'machine' => 'machinevaluations'][$tab] ?? 'bankvaluations';
 $vf    = $tab === 'insurance' ? 'assessed_value' : 'market_value';
 
-function pcount(string $table, int $cid): int {
+// Portal admins see the whole company; officers see only valuations tied to requests they raised.
+$mine    = !client_is_admin();
+$meId    = (int)$c['id'];
+
+/** Restrict a valuation table to the current officer's own requested records. */
+function own_scope(string $table, bool $mine, int $meId): array {
+    if (!$mine) return ['', []];
+    return [" AND id IN (SELECT valuation_id FROM valuation_requests WHERE requested_by = ? AND valuation_table = ? AND valuation_id IS NOT NULL)",
+            [$meId, $table]];
+}
+
+function pcount(string $table, int $cid, bool $mine, int $meId): int {
     if (!column_exists($table, 'id')) return 0;
     $w = column_exists($table, 'deleted_at') ? ' AND deleted_at IS NULL' : '';
-    try { $st = db()->prepare("SELECT COUNT(*) FROM `$table` WHERE client = ?$w"); $st->execute([$cid]); return (int)$st->fetchColumn(); }
+    [$os, $op] = own_scope($table, $mine, $meId);
+    try { $st = db()->prepare("SELECT COUNT(*) FROM `$table` WHERE client = ?$w$os"); $st->execute(array_merge([$cid], $op)); return (int)$st->fetchColumn(); }
     catch (Throwable $e) { return 0; }
 }
-$bankCount = pcount('bankvaluations', $cid);
-$insCount  = pcount('valuations', $cid);
-$machCount = pcount('machinevaluations', $cid);
+$bankCount = pcount('bankvaluations', $cid, $mine, $meId);
+$insCount  = pcount('valuations', $cid, $mine, $meId);
+$machCount = pcount('machinevaluations', $cid, $mine, $meId);
 
 $del = column_exists($table, 'deleted_at') ? ' AND deleted_at IS NULL' : '';
 $statSel = column_exists($table, 'status') ? 'status' : "'' AS status";
@@ -28,11 +40,12 @@ $regSel  = $tab === 'machine' ? 'machine_name AS reg_no' : 'reg_no';
 $makeSel = $tab === 'machine' ? "'' AS make" : 'make';
 $yomSel  = $tab === 'machine' ? "'' AS manufacture_year" : 'manufacture_year';
 $expSel  = $tab === 'machine' ? "'' AS insurance_exp" : 'insurance_exp';
+[$os, $op] = own_scope($table, $mine, $meId);
 $rows = [];
 try {
     $st = db()->prepare("SELECT id, $repSel, $serSel, $regSel, $makeSel, $yomSel, $expSel, $statSel, `$vf` AS val, created_at
-                         FROM `$table` WHERE client = ?$del ORDER BY id DESC LIMIT 1000");
-    $st->execute([$cid]); $rows = $st->fetchAll();
+                         FROM `$table` WHERE client = ?$del$os ORDER BY id DESC LIMIT 1000");
+    $st->execute(array_merge([$cid], $op)); $rows = $st->fetchAll();
 } catch (Throwable $e) {}
 
 $cur = setting('currency', CURRENCY);
