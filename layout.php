@@ -8,6 +8,7 @@ function layout_header(string $title, string $active = ''): void {
         'dashboard' => ['label' => 'Dashboard',            'href' => 'dashboard.php',       'icon' => 'layout-dashboard'],
         'bank'      => ['label' => 'Bank Valuations',      'href' => 'bank_list.php',       'icon' => 'landmark'],
         'insurance' => ['label' => 'Insurance Valuations', 'href' => 'insurance_list.php',  'icon' => 'shield-check'],
+        'machine'   => ['label' => 'Machine Valuations',   'href' => 'machine_list.php',    'icon' => 'cog'],
     ];
     if (can_assign()) {
         $pend = pending_request_count();
@@ -268,6 +269,7 @@ function layout_header(string $title, string $active = ''): void {
   .nav .lucide-layout-dashboard{color:#5b9bff}
   .nav .lucide-landmark{color:#ff6b6b}
   .nav .lucide-shield-check{color:#22c55e}
+  .nav .lucide-cog{color:#f5b14a}
   .nav .lucide-bar-chart-3{color:#b18cff}
   .nav .lucide-settings{color:#f5b14a}
   .nav .lucide-inbox{color:#38bdf8}

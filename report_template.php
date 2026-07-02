@@ -397,3 +397,126 @@ function render_insurance_report(array $val): string {
 <?php
     return ob_get_clean();
 }
+
+/** Load a machine valuation row by id, or null. */
+function load_machine_valuation($id): ?array {
+    $st = db()->prepare('SELECT * FROM machinevaluations WHERE id = ? LIMIT 1');
+    $st->execute([$id]);
+    return $st->fetch() ?: null;
+}
+
+/** Build the machine valuation report HTML (mirrors the printed Machine Valuation Report). */
+function render_machine_report(array $val): string {
+    $client   = lookup_name('clients', $val['client'] ?? null);
+    $valWords = trim((string)($val['note_value'] ?? '')) !== '' ? $val['note_value'] : report_words($val['market_value'] ?? 0);
+    $images   = !empty($val['images']) ? (json_decode($val['images'], true) ?: []) : [];
+    $g = fn($k) => e($val[$k] ?? '');
+
+    $logo  = report_img_data(__DIR__ . '/assets/logo.png');
+    $logo2 = report_img_data(__DIR__ . '/assets/logo2.png');
+
+    $coName   = setting('company_name', 'Kennet Automobile Valuers And Assessors Ltd.');
+    $coAddr   = setting('company_address', 'Desai Road off Forest Rd, Opp Nairobi Gymkhana');
+    $coPobox  = setting('company_pobox', '1268 - 00600 NAIROBI, KENYA');
+    $coTel    = setting('company_tel', '+254 723 441 666, +254 712 730 738, +254 706 850 101');
+    $coEmail  = setting('company_email', 'info@kennetvaluers.com');
+    $coFooter = setting('report_footer', 'For: Insurance, Bank Loan Facilities, Motor Vehicle Buying & Selling, Court Bond, Inventories');
+
+    $sigFile    = __DIR__ . '/' . ltrim(setting('signature_image', 'storage/signature.png'), '/');
+    $signed     = !empty($val['signed_at']);
+    $sig        = ($signed && is_file($sigFile)) ? report_img_data($sigFile) : null;
+    $signedDate = $signed ? date('d M Y', strtotime($val['signed_at'])) : '';
+    $signatoryName = setting('signatory_name', 'George Mwangi');
+    $stampFile  = __DIR__ . '/' . ltrim(setting('stamp_image', 'storage/stamp.png'), '/');
+    $stamp      = ($signed && is_file($stampFile)) ? report_img_data($stampFile) : null;
+
+    ob_start(); ?>
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><title>Machine Valuation Report</title>
+<style>
+    @page { margin: 10px 40px 10px 0px; }
+    #watermark { opacity:0.1; position:fixed; transform:rotate(45deg); bottom:13cm; left:5.5cm; width:8cm; height:8cm; z-index:-1000; }
+    body { font-family:Arial, sans-serif; font-size:13px; line-height:1.5; color:#333; margin:0; padding:20px; }
+    .container { width:100%; max-width:1000px; margin:0 auto; border:1px solid #ddd; padding:16px; box-sizing:border-box; }
+    .header { display:flex; align-items:center; justify-content:center; }
+    .header_image { max-width:35%; float:left; }
+    .title { text-align:center; text-decoration:underline; font-weight:bold; font-size:16px; margin:16px 0 20px; }
+    .company-info { border-bottom:1px solid #ddd; }
+    .company-info p span { color:#d41d1dff; }
+    .row { margin:8px 0; }
+    .row span.k { font-weight:bold; }
+    .green { color:#21490eff; font-style:italic; }
+    .value { font-weight:bold; }
+    .words { color:#d41d1dff; font-style:italic; }
+    .disclaimer p { color:#21490eff; font-style:italic; }
+    .signature-area { margin-top:30px; }
+    .footer { margin-top:30px; padding-top:15px; border-top:1px solid #ddd; text-align:center; font-size:11px; color:#666; }
+    table.photos { width:100%; border-collapse:collapse; }
+    table.photos td { padding:6px; text-align:center; }
+</style></head>
+<?php if ($logo): ?><div id="watermark"><img src="<?= $logo ?>" height="120%" width="200%"></div><?php endif; ?>
+<body>
+<div class="container">
+    <div class="header">
+        <div class="header_image"><?php if ($logo2): ?><img src="<?= $logo2 ?>" height="80" width="210"><?php endif; ?></div>
+    </div>
+    <div class="company-info"><p style="text-align:center">
+        <span>Location:</span> <?= e($coAddr) ?> &nbsp;|&nbsp; <span>P.O. Box:</span> <?= e($coPobox) ?><br>
+        <span>Tel:</span> <?= e($coTel) ?> &nbsp;|&nbsp; <span>Email:</span> <?= e($coEmail) ?>
+    </p></div>
+
+    <div class="title">MACHINE VALUATION REPORT</div>
+
+    <div class="row"><span class="k">SERIAL NUMBER:</span> <?= e(serial_display($val['serial_no'] ?? '')) ?></div>
+    <div class="row"><span class="k">CUSTOMER NAME:</span> <?= $g('customer_name') ?></div>
+    <div class="row"><span class="k">INSPECTION DATE:</span> <?= $g('assesment_date') ?></div>
+    <div class="row"><span class="k">LOCATION:</span> <?= $g('inspection_location') ?></div>
+
+    <p class="green">A brief examination has been carried out on the machine described below, the findings are as follows.</p>
+
+    <div class="row" style="text-decoration:underline;font-weight:bold">DESCRIPTION</div>
+    <div class="row"><span class="k">NAME:</span> <?= $g('machine_name') ?></div>
+    <div class="row"><span class="k">COLOUR:</span> <?= $g('colour') ?></div>
+
+    <div class="row" style="margin-top:18px"><span class="k">MARKET VALUE:</span> <span class="value"><?= number_format((float)($val['market_value'] ?? 0)) ?>/-</span> &nbsp; <span class="words"><?= e($valWords) ?></span></div>
+    <div class="row"><span class="k">FORCED VALUE:</span> <span class="value"><?= number_format((float)($val['forced_value'] ?? 0)) ?>/-</span></div>
+
+    <div class="row" style="margin-top:18px"><span class="k">CLIENT:</span> <?= e($client) ?></div>
+    <div class="row"><span class="k">OFFICER:</span> <?= $g('officer') ?></div>
+
+    <div class="signature-area">
+        <table style="width:100%"><tr>
+            <td style="width:55%">
+                <div style="height:70px;"><?php if ($sig): ?><img src="<?= $sig ?>" style="max-height:68px; max-width:300px;"><?php endif; ?></div>
+                <?php if ($signed): ?><strong style="color:#080bc0ff;font-size:13px;"><?= e($signatoryName) ?></strong><br><?php endif; ?>
+                <?php if ($stamp): ?><img src="<?= $stamp ?>" style="max-height:90px;max-width:180px;"><?php endif; ?>
+            </td>
+            <td style="width:45%;vertical-align:top"><span class="k">Date:</span>
+                <div style="height:40px; border-bottom:1px solid #ccc; font-weight:bold; color:#080bc0ff;"><?= e($signedDate) ?></div></td>
+        </tr></table>
+    </div>
+
+    <div style="margin-top:20px" class="disclaimer">
+        <div style="text-decoration:underline;font-weight:bold;color:#333">DISCLAIMER</div>
+        <p>At the time of valuation, this report reflected the estimated market value of the subject item in that condition. Any future assessment will take into account changes due to time, usage e.t.c.</p>
+    </div>
+
+    <?php if ($images): ?>
+    <div style="page-break-before: always;"></div>
+    <table class="photos">
+        <?php for ($i = 0; $i < count($images); $i += 2): ?>
+        <tr>
+            <td><?php $d = gd_jpeg_data_uri(UPLOAD_DIR . '/' . ltrim($images[$i], '/'), 1000, 62); if ($d): ?><img src="<?= $d ?>" width="290"><?php endif; ?></td>
+            <?php if ($i + 1 < count($images)): $d2 = gd_jpeg_data_uri(UPLOAD_DIR . '/' . ltrim($images[$i+1], '/'), 1000, 62); ?>
+                <td><?php if ($d2): ?><img src="<?= $d2 ?>" width="290"><?php endif; ?></td>
+            <?php else: ?><td></td><?php endif; ?>
+        </tr>
+        <?php endfor; ?>
+    </table>
+    <?php endif; ?>
+
+    <div class="footer"><p><?= e($coFooter) ?></p></div>
+</div></body></html>
+<?php
+    return ob_get_clean();
+}
