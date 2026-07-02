@@ -213,9 +213,13 @@ function layout_header(string $title, string $active = ''): void {
   .b-grey{background:#2b3340;color:#cdd5e0}
   .b-green{background:#0f3d24;color:#b8f5d0;border:1px solid #1c7a47}
   .b-blue{background:#0f2440;color:#a3c8f5;border:1px solid #1c4a7a}
-  .colpick{position:relative;display:inline-block;margin:0 0 12px}
+  .colpick{position:relative;display:inline-flex;gap:8px;margin:0 0 12px}
   .colpick-btn{background:var(--panel);border:1px solid var(--line);color:var(--txt);padding:8px 14px;border-radius:8px;font-size:13px;cursor:pointer}
   .colpick-btn:hover{background:var(--hover,#2b3340)}
+  table.list.compact th,table.list.compact td{padding:3px 8px;font-size:12px}
+  table.list.compact .badge,table.list.compact .stagebox{font-size:10px;padding:1px 5px}
+  table.list.compact .rbtn.ico{padding:3px 6px}
+  table.list.compact .rbtn.ico i{width:14px;height:14px}
   .colpick-menu{display:none;position:absolute;z-index:60;top:calc(100% + 4px);left:0;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:8px;min-width:180px;max-height:340px;overflow:auto;box-shadow:0 12px 30px rgba(0,0,0,.35)}
   .colpick-menu.open{display:block}
   .colpick-menu label{display:flex;gap:8px;align-items:center;font-size:13px;padding:5px 7px;white-space:nowrap;cursor:pointer;border-radius:6px;color:var(--txt)}
@@ -748,6 +752,13 @@ window.kInstall = function(){
     }
     var wrap=document.createElement('div'); wrap.className='colpick';
     var btn=document.createElement('button'); btn.type='button'; btn.className='colpick-btn'; btn.innerHTML='&#9881; Columns';
+    // Compact/dense rows toggle (persisted per page).
+    var dkey='compact:'+location.pathname;
+    var dense=false; try{ dense=localStorage.getItem(dkey)==='1'; }catch(e){}
+    var dbtn=document.createElement('button'); dbtn.type='button'; dbtn.className='colpick-btn';
+    function dsync(){ tbl.classList.toggle('compact',dense); dbtn.innerHTML=(dense?'&#9632;':'&#9634;')+' Compact'; }
+    dbtn.addEventListener('click',function(){ dense=!dense; try{localStorage.setItem(dkey,dense?'1':'0');}catch(e){} dsync(); });
+    dsync();
     var menu=document.createElement('div'); menu.className='colpick-menu';
     heads.forEach(function(th,i){
       if(th.hasAttribute('data-nocolpick')) return; // e.g. Actions / checkbox column stays fixed
@@ -757,7 +768,7 @@ window.kInstall = function(){
       cb.addEventListener('change',function(){ if(cb.checked)delete hidden[i]; else hidden[i]=1; try{localStorage.setItem(key,JSON.stringify(hidden));}catch(e){} apply(); });
       lab.appendChild(cb); lab.appendChild(document.createTextNode(' '+label)); menu.appendChild(lab);
     });
-    wrap.appendChild(btn); wrap.appendChild(menu);
+    wrap.appendChild(btn); wrap.appendChild(menu); wrap.appendChild(dbtn);
     tbl.parentNode.insertBefore(wrap,tbl);
     btn.addEventListener('click',function(e){ e.stopPropagation(); menu.classList.toggle('open'); });
     menu.addEventListener('click',function(e){ e.stopPropagation(); });
