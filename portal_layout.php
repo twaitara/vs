@@ -72,6 +72,17 @@ function portal_header(string $title, string $nav = ''): void {
   .ppager .pgb{background:var(--panel);border:1px solid var(--line);color:var(--txt);padding:6px 11px;border-radius:6px;font-size:12px;cursor:pointer}
   .ppager .pgb:hover:not(:disabled){background:var(--hover)} .ppager .pgb.cur{background:var(--accent);border-color:var(--accent);color:#fff} .ppager .pgb:disabled{opacity:.4;cursor:default}
   .quicksearch{width:100%;max-width:360px;background:var(--input);border:1px solid var(--line);color:var(--txt);padding:9px 12px;border-radius:8px;font-size:13px;margin:0 0 12px;display:block}
+  .colpick{position:relative;display:inline-flex;gap:8px;margin:0 0 12px}
+  .colpick-btn{background:var(--panel);border:1px solid var(--line);color:var(--txt);padding:8px 14px;border-radius:8px;font-size:13px;cursor:pointer}
+  .colpick-btn:hover{background:var(--hover)}
+  .colpick-menu{display:none;position:absolute;z-index:60;top:calc(100% + 4px);left:0;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:8px;min-width:180px;max-height:340px;overflow:auto;box-shadow:0 12px 30px rgba(0,0,0,.35)}
+  .colpick-menu.open{display:block}
+  .colpick-menu label{display:flex;gap:8px;align-items:center;font-size:13px;padding:5px 7px;white-space:nowrap;cursor:pointer;border-radius:6px;color:var(--txt)}
+  .colpick-menu label:hover{background:var(--hover)}
+  table.list.compact th,table.list.compact td{padding:4px 8px;font-size:12px}
+  table.list.compact .badge{font-size:10px;padding:1px 5px}
+  table.list.compact .rbtn{padding:3px 8px;font-size:11px}
+  table.list.compact .rbtn i{width:13px;height:13px}
   .muted{color:var(--mut)} .badge{display:inline-block;font-size:11px;padding:2px 7px;border-radius:10px}
   .b-red{background:#3d0f0f;color:#f5a3a3}.b-amber{background:#3d2f0f;color:#f5d79a}.b-green{background:#0f3d24;color:#b8f5d0}.b-grey{background:#2b3340;color:#cdd5e0}.b-blue{background:#0f2440;color:#a3c8f5}
   .pnav{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:20px}
@@ -191,6 +202,46 @@ if(window.lucide)lucide.createIcons();
     render();
   }
   document.querySelectorAll('table[data-paginate]').forEach(enhanceList);
+})();
+(function(){
+  // ---- Column chooser + Compact toggle: any <table data-colpick> ----
+  document.querySelectorAll('table[data-colpick]').forEach(function(tbl){
+    if(!tbl.tHead||!tbl.tHead.rows.length) return;
+    var heads=Array.prototype.slice.call(tbl.tHead.rows[0].cells);
+    var key='cols:'+location.pathname;
+    var hidden={}; try{ hidden=JSON.parse(localStorage.getItem(key)||'{}'); }catch(e){}
+    function apply(){
+      heads.forEach(function(th,i){
+        var hide=!!hidden[i]; th.style.display=hide?'none':'';
+        Array.prototype.forEach.call(tbl.tBodies,function(tb){
+          Array.prototype.forEach.call(tb.rows,function(row){ if(row.cells[i]&&!row.cells[i].hasAttribute('colspan')) row.cells[i].style.display=hide?'none':''; });
+        });
+      });
+    }
+    var wrap=document.createElement('div'); wrap.className='colpick';
+    var btn=document.createElement('button'); btn.type='button'; btn.className='colpick-btn'; btn.innerHTML='&#9881; Columns';
+    var dkey='compact:'+location.pathname;
+    var dense=false; try{ dense=localStorage.getItem(dkey)==='1'; }catch(e){}
+    var dbtn=document.createElement('button'); dbtn.type='button'; dbtn.className='colpick-btn';
+    function dsync(){ tbl.classList.toggle('compact',dense); dbtn.innerHTML=(dense?'&#9632;':'&#9634;')+' Compact'; }
+    dbtn.addEventListener('click',function(){ dense=!dense; try{localStorage.setItem(dkey,dense?'1':'0');}catch(e){} dsync(); });
+    dsync();
+    var menu=document.createElement('div'); menu.className='colpick-menu';
+    heads.forEach(function(th,i){
+      if(th.hasAttribute('data-nocolpick')) return;
+      var label=(th.textContent||'').trim()||('Column '+(i+1));
+      var lab=document.createElement('label');
+      var cb=document.createElement('input'); cb.type='checkbox'; cb.checked=!hidden[i];
+      cb.addEventListener('change',function(){ if(cb.checked)delete hidden[i]; else hidden[i]=1; try{localStorage.setItem(key,JSON.stringify(hidden));}catch(e){} apply(); });
+      lab.appendChild(cb); lab.appendChild(document.createTextNode(' '+label)); menu.appendChild(lab);
+    });
+    wrap.appendChild(btn); wrap.appendChild(menu); wrap.appendChild(dbtn);
+    tbl.parentNode.insertBefore(wrap,tbl);
+    btn.addEventListener('click',function(e){ e.stopPropagation(); menu.classList.toggle('open'); });
+    menu.addEventListener('click',function(e){ e.stopPropagation(); });
+    document.addEventListener('click',function(){ menu.classList.remove('open'); });
+    apply();
+  });
 })();
 (function(){var L={'log-out':'Log out','eye':'View report','printer':'Download PDF','landmark':'Bank Valuations','shield-check':'Insurance Valuations','mail':'Email','lock':'Password','arrow-right':'Sign in'};
  document.querySelectorAll('.lucide').forEach(function(svg){var n='';svg.classList.forEach(function(c){if(c.indexOf('lucide-')===0)n=c.slice(7);});var el=svg.closest('a,button');if(!el||el.getAttribute('title'))return;var t=(el.textContent||'').trim();el.setAttribute('title',t||L[n]||n.replace(/-/g,' '));});})();

@@ -68,8 +68,8 @@ portal_header('My Valuations', 'valuations');
 </div>
 
 <input type="search" id="psearch" placeholder="Search your vehicles (reg no, make)…" autocomplete="off">
-<table class="list" id="ptable">
-  <thead><tr><th>Serial</th><th>Report No</th><th>Reg No.</th><th>Make/Model</th><th>YOM</th><th>Status</th><th><?= $tab==='insurance'?'Assessed':'Market' ?> Value</th><th>Date</th><th>Report</th></tr></thead>
+<table class="list" id="ptable" data-colpick>
+  <thead><tr><th>Serial</th><th>Report No</th><th>Reg No.</th><th>Make/Model</th><th>YOM</th><th>Status</th><th><?= $tab==='insurance'?'Assessed':'Market' ?> Value</th><th>Date</th><th data-nocolpick>Report</th></tr></thead>
   <tbody>
   <?php if (!$rows): ?>
     <tr><td colspan="9" class="muted">No valuations on record yet.</td></tr>

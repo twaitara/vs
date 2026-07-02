@@ -63,11 +63,11 @@ portal_header('My Requests', 'requests');
   <a class="btn" href="<?= url('portal_request.php') ?>"><i data-lucide="plus"></i> New Request</a>
 </div>
 
-<table data-paginate="25" class="list">
+<table data-paginate="25" data-colpick class="list">
   <thead><tr>
     <th>Reg No.</th><th>Type</th>
     <?php if (!$mine): ?><th>Requested by</th><?php endif; ?>
-    <th>Status</th><th>Requested</th><th>Actions</th>
+    <th>Status</th><th>Requested</th><th data-nocolpick>Actions</th>
   </tr></thead>
   <tbody>
   <?php if (!$rows): ?>
