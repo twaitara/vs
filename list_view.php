@@ -183,9 +183,9 @@ function render_list(array $cfg): void {
         <span class="stagekey">Key:&nbsp;<?php foreach (array_keys($STAGES) as $ab) echo '<span class="stagebox">' . $ab . '</span>&nbsp;' . e($STAGE_NAMES[$ab] ?? $ab) . '&nbsp;&nbsp;'; ?></span>
       </div>
       <?php endif; ?>
-      <table class="list">
+      <table class="list" data-colpick>
         <thead><tr>
-          <?php if (can_edit()): ?><th style="width:28px"></th><?php endif; ?>
+          <?php if (can_edit()): ?><th style="width:28px" data-nocolpick></th><?php endif; ?>
           <?= $sortHeader('id','ID') ?>
           <?= $sortHeader('reg_no','Reg No.') ?>
           <?php if ($hasSerial) echo '<th>Serial</th>'; ?>
@@ -195,8 +195,8 @@ function render_list(array $cfg): void {
           <th>Status</th>
           <?= $sortHeader('value', $cfg['value_label']) ?>
           <?= $sortHeader('created','Created') ?>
+          <th>Valuer</th>
           <th>Officer</th>
-          <th>Requested By</th>
           <th>Actions</th>
         </tr></thead>
         <tbody>
@@ -222,7 +222,7 @@ function render_list(array $cfg): void {
             <td><?php $cb = $r['created_by'] ?? 0; $ini = $userInitials[$cb] ?? ''; $nm = $userNames[$cb] ?? '';
               echo $ini !== '' ? '<span class="badge b-grey" title="' . e($nm) . '">' . e($ini) . '</span>' : '<span class="muted">—</span>'; ?></td>
             <td class="muted"><?= e(requesting_officer($r, $table)) ?: '—' ?></td>
-            <td class="actions">
+            <td class="actions" data-nocolpick>
               <?php if (can_edit() && (empty($r['signed_at']) || is_admin())): ?>
                 <a class="rbtn ico" href="<?= url($cfg['form_page'].'?id='.$r['id']) ?>" title="Edit"><i data-lucide="pencil"></i></a>
               <?php endif; ?>
