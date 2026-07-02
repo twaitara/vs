@@ -55,6 +55,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   <button class="btn" type="submit"><span>Sign in</span><i data-lucide="arrow-right"></i></button>
   <div class="foot">© <?= date('Y') ?> Kennet Automobile Valuers · Secure portal</div>
 </form>
+<?= dev_footer() ?>
 <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script><script>if(window.lucide)lucide.createIcons();</script>
-<div style="position:fixed;left:0;right:0;bottom:0;text-align:center;padding:10px;font-size:12px;color:rgba(255,255,255,.7)"><?= dev_credit() ?></div>
 </body></html>

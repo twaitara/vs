@@ -709,10 +709,10 @@ function form_assets(): void { ?>
 <?php }
 
 function layout_footer(): void { ?>
-      <div class="devcredit"><?= dev_credit() ?></div>
     </div>
   </div>
 </div>
+<?= dev_footer() ?>
 <?php if (can_edit()): ?>
 <a class="fab" href="<?= url('bank_form.php') ?>" title="New valuation"><i data-lucide="plus"></i><span>New Valuation</span></a>
 <?php endif; ?>

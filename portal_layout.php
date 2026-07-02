@@ -161,8 +161,8 @@ function portal_header(string $title, string $nav = ''): void {
 <?php }
 
 function portal_footer(): void { ?>
-  <div class="devcredit"><?= dev_credit() ?></div>
 </div>
+<?= dev_footer() ?>
 <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 <script>
 if(window.lucide)lucide.createIcons();

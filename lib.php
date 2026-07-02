@@ -64,11 +64,48 @@ function online_meta(?string $activity): string {
     return '<span class="muted">online</span>';
 }
 
-/** Developer credit line shown at the bottom of every page. */
+/** Developer credit line (compact). */
 function dev_credit(): string {
     return 'Developed by <b>Nine One Two Holdings Limited</b> · '
          . '<a href="https://www.nineonetwo.co.ke" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline">www.nineonetwo.co.ke</a> · '
          . '<a href="tel:+254722974970" style="color:inherit;text-decoration:none">0722 974 970</a>';
+}
+/** Full branded developer footer bar shown at the bottom of every page. */
+function dev_footer(): string {
+    $logoFile = __DIR__ . '/assets/logo912.png';
+    $logo = is_file($logoFile)
+        ? '<img src="' . url('assets/logo912.png') . '" alt="Nine One Two Holdings" class="df-img">'
+        : '<span class="df-912">912</span><span class="df-cap">NINE ONE TWO<br>HOLDINGS LTD</span>';
+    $services = ['Enterprise Business Systems', 'Custom Software', 'AI & Automation', 'WhatsApp Integrations',
+        'IT Security', 'IT Infrastructure', 'Network Solutions', 'Cloud Services', 'CCTV & Access Control', 'VoIP & PBX', 'Managed IT Services'];
+    $links = implode('<span class="df-sep">·</span>', array_map(fn($s) => '<span>' . e($s) . '</span>', $services));
+    return '<style>
+      .site-footer{margin-top:34px;background:#0c0f13;border-top:3px solid #d41d1d;color:#c7ccd4}
+      .df-inner{max-width:1800px;margin:0 auto;padding:16px 22px;display:flex;align-items:center;gap:22px;flex-wrap:wrap}
+      .df-brand{display:flex;align-items:center;gap:12px;flex:0 0 auto}
+      .df-img{height:48px;width:auto}
+      .df-912{font-size:30px;font-weight:900;color:#d41d1d;letter-spacing:1px;line-height:1}
+      .df-cap{font-size:9px;letter-spacing:1.5px;color:#9aa4b2;line-height:1.25}
+      .df-mid{flex:1 1 340px;min-width:260px}
+      .df-dev{font-size:13px;color:#e6e9ee;margin-bottom:4px}.df-dev b{color:#fff}
+      .df-links{font-size:11px;color:#8a93a0;line-height:1.7}
+      .df-links .df-sep{margin:0 6px;color:#3a4048}
+      .df-contact{display:flex;flex-direction:column;gap:4px;font-size:12.5px;flex:0 0 auto;text-align:right}
+      .df-contact a{color:#c7ccd4;text-decoration:none;display:inline-flex;align-items:center;gap:7px;justify-content:flex-end}
+      .df-contact a:hover{color:#fff} .df-contact i{width:15px;height:15px;color:#d41d1d}
+      @media(max-width:860px){.df-inner{flex-direction:column;align-items:flex-start;gap:12px}.df-contact{text-align:left}.df-contact a{justify-content:flex-start}}
+    </style>
+    <footer class="site-footer"><div class="df-inner">
+      <div class="df-brand">' . $logo . '</div>
+      <div class="df-mid">
+        <div class="df-dev">Developed by <b>Nine One Two Holdings Ltd</b></div>
+        <div class="df-links">' . $links . '</div>
+      </div>
+      <div class="df-contact">
+        <a href="https://www.nineonetwo.co.ke" target="_blank" rel="noopener"><i data-lucide="globe"></i>www.nineonetwo.co.ke</a>
+        <a href="tel:+254722974970"><i data-lucide="phone"></i>+254 722 974 970</a>
+      </div>
+    </div></footer>';
 }
 
 /** Redirect helper. */
