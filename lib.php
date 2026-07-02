@@ -125,35 +125,48 @@ function dev_footer(): string {
     $links = implode('<span class="df-sep">·</span>', array_map(fn($s) => '<span>' . e($s) . '</span>', $services));
 
     $webHref = $website === '' ? '' : (preg_match('#^https?://#i', $website) ? $website : 'https://' . $website);
+    $digits  = preg_replace('/[^0-9]/', '', $phone);
+    if (strpos($digits, '0') === 0) $digits = '254' . substr($digits, 1); // local -> intl for WhatsApp
     $telHref = 'tel:' . preg_replace('/[^0-9+]/', '', $phone);
-    $contact = '';
-    if ($website !== '') $contact .= '<a href="' . e($webHref) . '" target="_blank" rel="noopener"><i data-lucide="globe"></i>' . e($website) . '</a>';
-    if ($phone !== '')   $contact .= '<a href="' . e($telHref) . '"><i data-lucide="phone"></i>' . e($phone) . '</a>';
+    $waHref  = 'https://wa.me/' . $digits;
+
+    $wa = '<svg viewBox="0 0 32 32" width="15" height="15" fill="currentColor" style="flex:0 0 auto"><path d="M16 3C9.4 3 4 8.4 4 15c0 2.1.6 4.1 1.6 5.9L4 29l8.3-1.6c1.7.9 3.7 1.4 5.7 1.4 6.6 0 12-5.4 12-12S22.6 3 16 3zm0 21.8c-1.8 0-3.5-.5-5-1.4l-.4-.2-4.9 1 1-4.8-.3-.4a9.8 9.8 0 01-1.5-5.3c0-5.4 4.4-9.8 9.8-9.8s9.8 4.4 9.8 9.8-4.4 9.9-9.5 9.9zm5.4-7.4c-.3-.1-1.8-.9-2-1s-.5-.1-.7.1-.8 1-.9 1.2-.3.2-.6.1a8 8 0 01-2.4-1.5 9 9 0 01-1.6-2c-.2-.3 0-.5.1-.6l.5-.5.3-.5c.1-.2 0-.4 0-.5l-.9-2.2c-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.5s1.1 2.9 1.2 3.1c.1.2 2.1 3.3 5.2 4.6 2.6 1.1 3.1.9 3.7.8.6-.1 1.8-.7 2-1.4.3-.7.3-1.3.2-1.4-.1-.2-.3-.2-.6-.4z"/></svg>';
+
+    $contacts = '';
+    if ($website !== '') $contacts .= '<a href="' . e($webHref) . '" target="_blank" rel="noopener"><span class="df-ic"><i data-lucide="globe-2"></i></span>' . e($website) . '</a>';
+    if ($phone !== '')   $contacts .= '<a href="' . e($telHref) . '"><span class="df-ic"><i data-lucide="phone-call"></i></span>' . e($phone) . '</a>';
+    if ($digits !== '')  $contacts .= '<a href="' . e($waHref) . '" target="_blank" rel="noopener" title="Chat on WhatsApp"><span class="df-ic wa">' . $wa . '</span>WhatsApp</a>';
 
     return '<style>
       .site-footer{background:#0c0f13;border-top:3px solid #d41d1d;color:#c7ccd4}
-      .df-inner{max-width:1800px;margin:0 auto;padding:12px 22px;display:flex;align-items:center;gap:22px;flex-wrap:wrap}
+      .df-inner{max-width:1800px;margin:0 auto;padding:12px 22px;display:flex;align-items:center;gap:18px;flex-wrap:wrap}
       .df-brand{display:flex;align-items:center;gap:12px;flex:0 0 auto}
       .df-img{height:44px;width:auto}
       .df-912{font-size:28px;font-weight:900;color:#d41d1d;letter-spacing:1px;line-height:1}
       .df-cap{font-size:9px;letter-spacing:1.5px;color:#9aa4b2;line-height:1.25}
-      .df-mid{flex:1 1 340px;min-width:220px;min-width:0}
-      .df-dev{font-size:13px;color:#e6e9ee;margin-bottom:3px}.df-dev b{color:#fff}
+      .df-mid{flex:1 1 340px;min-width:0}
+      .df-top{display:flex;align-items:center;gap:10px 20px;flex-wrap:wrap;margin-bottom:4px}
+      .df-dev{font-size:13px;color:#e6e9ee}.df-dev b{color:#fff}
+      .df-contacts{display:inline-flex;align-items:center;gap:8px 16px;flex-wrap:wrap}
+      .df-contacts a{color:#c7ccd4;text-decoration:none;display:inline-flex;align-items:center;gap:7px;font-size:12.5px}
+      .df-contacts a:hover{color:#fff}
+      .df-ic{width:24px;height:24px;border-radius:50%;background:#161b22;border:1px solid #262d36;display:inline-flex;align-items:center;justify-content:center;color:#d41d1d}
+      .df-ic i{width:14px;height:14px}
+      .df-ic.wa{background:#0d3d2b;border-color:#125a3f;color:#25d366}
       .df-links{font-size:11px;color:#8a93a0;line-height:1.6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
       .df-links .df-sep{margin:0 6px;color:#3a4048}
-      .df-contact{display:flex;flex-direction:column;gap:3px;font-size:12.5px;flex:0 0 auto;text-align:right}
-      .df-contact a{color:#c7ccd4;text-decoration:none;display:inline-flex;align-items:center;gap:7px;justify-content:flex-end}
-      .df-contact a:hover{color:#fff} .df-contact i{width:15px;height:15px;color:#d41d1d}
-      @media(min-width:861px){ .site-footer{position:fixed;left:0;right:0;bottom:0;z-index:500} body{padding-bottom:88px} .fab{bottom:100px} }
-      @media(max-width:860px){.site-footer{margin-top:24px}.df-inner{flex-direction:column;align-items:flex-start;gap:10px}.df-links{white-space:normal}.df-contact{text-align:left}.df-contact a{justify-content:flex-start}}
+      @media(min-width:861px){ .site-footer{position:fixed;left:0;right:0;bottom:0;z-index:500} body{padding-bottom:92px} .fab{bottom:104px} }
+      @media(max-width:860px){.site-footer{margin-top:24px}.df-inner{flex-direction:column;align-items:flex-start;gap:10px}.df-links{white-space:normal}}
     </style>
     <footer class="site-footer"><div class="df-inner">
       <div class="df-brand">' . $logo . '</div>
       <div class="df-mid">
-        <div class="df-dev">Developed by <b>' . e($devName) . '</b></div>
+        <div class="df-top">
+          <span class="df-dev">Developed by <b>' . e($devName) . '</b></span>
+          <span class="df-contacts">' . $contacts . '</span>
+        </div>
         <div class="df-links">' . $links . '</div>
       </div>
-      <div class="df-contact">' . $contact . '</div>
     </div></footer>';
 }
 
