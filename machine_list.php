@@ -5,6 +5,22 @@ require_login();
 $table = 'machinevaluations';
 $soft  = column_exists($table, 'deleted_at');
 
+// Per-row delete (draft / in-progress only; completed & signed are protected).
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'delete') {
+    csrf_verify();
+    if (!can_edit()) { http_response_code(403); exit('View-only access.'); }
+    $did = (int)($_POST['id'] ?? 0);
+    if ($did && $soft) {
+        $guard = '';
+        if (column_exists($table, 'signed_at')) $guard .= ' AND signed_at IS NULL';
+        if (column_exists($table, 'status'))    $guard .= " AND status <> 'complete'";
+        $st = db()->prepare("UPDATE `$table` SET deleted_at = NOW() WHERE id = ?$guard");
+        $st->execute([$did]);
+        flash($st->rowCount() ? 'Valuation deleted.' : 'Completed/signed reports cannot be deleted.', $st->rowCount() ? 'ok' : 'err');
+    }
+    redirect('machine_list.php');
+}
+
 $cond = []; $params = [];
 if ($soft) $cond[] = 'deleted_at IS NULL';
 if (!sees_all_valuations() && column_exists($table, 'created_by')) { $cond[] = 'created_by = ?'; $params[] = (int)(current_user()['id'] ?? 0); }
@@ -71,6 +87,12 @@ layout_header('Machine Valuations', 'machine');
             <a class="rbtn signbtn" href="<?= url('sign.php?type=machine&id=' . (int)$r['id'] . '&' . csrf_query()) ?>" onclick="return confirm('Sign and mark this report Complete?')" title="Sign report"><i data-lucide="pen-tool"></i></a>
           <?php endif; ?>
         <?php endif; ?>
+        <?php if (can_edit() && !$signed && ($r['status'] ?? '') !== 'complete'): ?>
+          <form method="post" style="display:inline" onsubmit="return confirm('Delete this valuation? It moves to the Recycle Bin.')">
+            <?= csrf_field() ?><input type="hidden" name="action" value="delete"><input type="hidden" name="id" value="<?= (int)$r['id'] ?>">
+            <button class="rbtn del-one" type="submit" title="Delete"><i data-lucide="trash-2"></i></button>
+          </form>
+        <?php endif; ?>
       </td>
     </tr>
   <?php endforeach; endif; ?>
@@ -91,7 +113,8 @@ function pvClose(){document.getElementById('pvModal').classList.remove('open');d
 document.addEventListener('keydown',function(e){if(e.key==='Escape')pvClose();});
 </script>
 <style>
-  .list .lucide-pencil{color:#5b9bff}.list .lucide-eye{color:#22c55e}.list .lucide-printer{color:#7c8896}.list .lucide-pen-tool{color:#f5b14a}.list .lucide-badge-check{color:#22c55e}
+  .list .lucide-pencil{color:#5b9bff}.list .lucide-eye{color:#22c55e}.list .lucide-printer{color:#7c8896}.list .lucide-pen-tool{color:#f5b14a}.list .lucide-badge-check{color:#22c55e}.list .lucide-trash-2{color:#ff6b6b}
+  .del-one{background:none;border:1px solid var(--line);cursor:pointer}
   .signbtn{animation:pulseamber 1.6s infinite}
   @keyframes pulseamber{0%,100%{box-shadow:0 0 0 0 rgba(245,177,74,.5)}50%{box-shadow:0 0 0 4px rgba(245,177,74,0)}}
   .modal iframe{flex:1;width:100%;border:0;background:#fff}

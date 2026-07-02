@@ -293,6 +293,7 @@ function layout_header(string $title, string $active = ''): void {
   .subnav .lucide-building-2{color:#5b9bff}.subnav .lucide-users{color:#22c55e}.subnav .lucide-shield{color:#5b9bff}
   .subnav .lucide-tags{color:#f5b14a}.subnav .lucide-user-cog{color:#b18cff}.subnav .lucide-scroll-text{color:#5b9bff}.subnav .lucide-trash-2{color:#ff6b6b}
   .rbtn .lucide-pencil{color:#5b9bff}.rbtn .lucide-copy{color:#b18cff}.rbtn .lucide-eye{color:#22c55e}.rbtn .lucide-printer{color:#7c8896}
+  .actions .lucide-trash-2{color:#ff6b6b} .del-one{background:var(--chip);cursor:pointer}
   .who .lucide-sun-moon{color:#f5b14a}.who .lucide-user-round{color:#5b9bff}.who .lucide-log-out{color:#ff6b6b}
   /* keep icons readable inside solid/gradient buttons */
   .btn:not(.sec) .lucide{color:#fff}

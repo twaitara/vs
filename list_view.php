@@ -23,9 +23,16 @@ function render_list(array $cfg): void {
             if (!can_edit()) { http_response_code(403); exit('View-only access.'); }
             if ($ids && $soft) {
                 $in = implode(',', array_fill(0, count($ids), '?'));
-                db()->prepare("UPDATE `$table` SET deleted_at = NOW() WHERE id IN ($in)")->execute($ids);
-                audit('bulk_delete', $cfg['type'], implode(',', $ids), count($ids) . ' records');
-                flash(count($ids) . ' record(s) deleted.');
+                // Only draft / in-progress records may be deleted; completed & signed reports are protected.
+                $guard = '';
+                if (column_exists($table, 'signed_at')) $guard .= ' AND signed_at IS NULL';
+                if (column_exists($table, 'status'))    $guard .= " AND status <> 'complete'";
+                $st = db()->prepare("UPDATE `$table` SET deleted_at = NOW() WHERE id IN ($in)$guard");
+                $st->execute($ids);
+                $n = $st->rowCount();
+                audit('bulk_delete', $cfg['type'], implode(',', $ids), $n . ' records');
+                $skipped = count($ids) - $n;
+                flash($n . ' record(s) deleted.' . ($skipped > 0 ? " $skipped completed/signed report(s) were kept." : ''), $skipped > 0 && $n === 0 ? 'err' : 'ok');
             }
         } elseif ($bulk === 'sign') {
             if (!can_sign()) { http_response_code(403); exit('You do not have a signing mandate.'); }
@@ -232,6 +239,10 @@ function render_list(array $cfg): void {
                 <a class="rbtn ico sign-due" href="<?= url('sign.php?type='.$cfg['nav'].'&id='.$r['id'].'&_csrf='.csrf_token()) ?>" onclick="return confirm('Sign this report? It will be marked Complete and stamped with today’s date.')" title="Sign report"><i data-lucide="pen-tool"></i></a>
               <?php elseif (!empty($r['signed_at'])): ?>
                 <span class="rbtn ico" style="border-color:#1c7a47;color:#3ddc84;cursor:default" title="Signed <?= e(ddate($r['signed_at'])) ?>"><i data-lucide="check"></i></span>
+              <?php endif; ?>
+              <?php if (can_edit() && $soft && empty($r['signed_at']) && ($r['status'] ?? '') !== 'complete'): ?>
+                <button class="rbtn ico del-one" type="submit" name="bulk" value="delete" title="Delete (move to Recycle Bin)"
+                        formnovalidate onclick="this.form.querySelectorAll('.rowchk').forEach(function(c){c.checked=false});var h=document.createElement('input');h.type='hidden';h.name='ids[]';h.value='<?= (int)$r['id'] ?>';this.form.appendChild(h);return confirm('Delete this valuation? It moves to the Recycle Bin.');"><i data-lucide="trash-2"></i></button>
               <?php endif; ?>
             </td>
           </tr>
