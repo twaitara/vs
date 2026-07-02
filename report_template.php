@@ -346,7 +346,7 @@ function render_insurance_report(array $val): string {
     <table>
         <tr><th width="50%">Report Information</th><th width="50%">Client Information</th></tr>
         <tr>
-            <td><p><span>Corporate Ref No:</span> <?= $g('corporate_ref_no') ?></p><p><span>Inspection Date:</span> <?= $g('inspection_date') ?></p><p><span>Inspection Officer:</span> <?= $g('inspection_officer') ?></p></td>
+            <td><p><span>Corporate Ref No:</span> <?= $g('corporate_ref_no') ?></p><p><span>Inspection Date:</span> <?= $g('inspection_date') ?></p><p><span>Inspection Officer:</span> <?= $g('inspection_officer') ?></p><p><span>Insurance Officer:</span> <?= $g('insurance_officer') ?></p></td>
             <td><p><span>Client Name:</span> <?= $g('customer_name') ?></p><p><span>Phone:</span> <?= $g('phone_no') ?></p><p><span>Policy No:</span> <?= $g('insurance_pol_no') ?></p><p><span>Policy Expiry:</span> <?= $g('insurance_exp') ?></p></td>
         </tr>
     </table>

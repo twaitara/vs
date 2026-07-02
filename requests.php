@@ -29,6 +29,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (column_exists($table, 'status'))    $extra['status'] = 'draft';
         if (column_exists($table, 'serial_no'))  $extra['serial_no'] = next_serial();
         if (column_exists($table, 'report_no'))  $extra['report_no'] = next_report_no($table);
+        // Attribute the valuation to the portal officer who requested it.
+        $offCol = requesting_officer_field($table);
+        if (column_exists($table, $offCol) && trim((string)$req['requester_name']) !== '') {
+            $extra[$offCol] = $req['requester_name'];
+        }
         // Machines have no reg_no — the requested identifier is the machine name.
         if ($table === 'machinevaluations') { $post = ['machine_name' => $req['reg_no'], 'client' => (int)$req['client_id']]; $cols = ['machine_name', 'client']; }
         else                                { $post = ['reg_no' => $req['reg_no'], 'client' => (int)$req['client_id']]; $cols = ['reg_no', 'client']; }

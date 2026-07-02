@@ -531,6 +531,18 @@ function table_type(?string $t): string {
 function type_table(?string $t): string {
     return ['insurance' => 'valuations', 'machine' => 'machinevaluations'][$t] ?? 'bankvaluations';
 }
+/** The column holding the client-side officer who requested the valuation, per table. */
+function requesting_officer_field(string $table): string {
+    return ['bankvaluations' => 'bank_officer', 'valuations' => 'insurance_officer', 'machinevaluations' => 'officer'][$table] ?? 'officer';
+}
+/** Human label for that officer field, per table. */
+function requesting_officer_label(string $table): string {
+    return ['bankvaluations' => 'Bank Officer', 'valuations' => 'Insurance Officer', 'machinevaluations' => 'Officer'][$table] ?? 'Officer';
+}
+/** The requesting-officer value from a valuation row. */
+function requesting_officer(array $row, string $table): string {
+    return (string)($row[requesting_officer_field($table)] ?? '');
+}
 /** Portal officers may only open reports for valuations tied to requests they raised. Admins: any in their company. */
 function portal_may_view(string $table, int $valuationId): bool {
     if (client_is_admin()) return true;

@@ -43,11 +43,11 @@ layout_header('Machine Valuations', 'machine');
 
 <table data-paginate="25" class="list">
   <thead><tr>
-    <th>Serial</th><th>Machine</th><th>Customer</th><th>Client</th><th>Value (<?= e($cur) ?>)</th><th>Status</th><th>Officer</th><th>Date</th><th>Actions</th>
+    <th>Serial</th><th>Machine</th><th>Customer</th><th>Client</th><th>Value (<?= e($cur) ?>)</th><th>Status</th><th>Officer</th><th>Requested By</th><th>Date</th><th>Actions</th>
   </tr></thead>
   <tbody>
   <?php if (!$rows): ?>
-    <tr><td colspan="9" class="muted">No machine valuations yet. <a href="<?= url('machine_form.php') ?>" style="color:#5b9bff">Add the first →</a></td></tr>
+    <tr><td colspan="10" class="muted">No machine valuations yet. <a href="<?= url('machine_form.php') ?>" style="color:#5b9bff">Add the first →</a></td></tr>
   <?php else: foreach ($rows as $r):
       $signed = !empty($r['signed_at']); $cb = $r['created_by'] ?? 0; ?>
     <tr>
@@ -58,6 +58,7 @@ layout_header('Machine Valuations', 'machine');
       <td><?= $r['market_value'] !== null ? number_format((float)$r['market_value']) : '—' ?></td>
       <td><?= !empty($r['status']) ? status_badge($r['status']) : '' ?></td>
       <td class="muted" title="<?= e($uNames[$cb] ?? '') ?>"><?= e($uIni[$cb] ?? '') ?: e($uNames[$cb] ?? '—') ?></td>
+      <td class="muted"><?= e($r['officer'] ?? '') ?: '—' ?></td>
       <td class="muted"><?= e(ddate($r['created_at'])) ?></td>
       <td class="actions">
         <?php if (can_edit()): ?><a class="rbtn" href="<?= url('machine_form.php?id=' . (int)$r['id']) ?>" title="Edit"><i data-lucide="pencil"></i></a><?php endif; ?>

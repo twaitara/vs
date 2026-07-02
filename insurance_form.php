@@ -27,7 +27,7 @@ $COLUMNS = [
     // engine/cooling/AC
     'idling','eng_mounts_damage','oil_leaks','water_pump_ok','radiator_damage','air_con_damage','engine_comment',
     // other
-    'air_bags_no','inspection_officer','inspection_date','extras','note_value','notes','anti_theft',
+    'air_bags_no','inspection_officer','insurance_officer','inspection_date','extras','note_value','notes','anti_theft',
     'remarks','pending','remedy','ammends','assessed_value','status',
 ];
 
@@ -156,6 +156,7 @@ layout_header($id ? 'Edit Insurance Valuation' : 'New Insurance Valuation', 'ins
     <?= f_money('assessed_value','Assessed Value',$row,false,true) ?>
     <?= f_input('inspection_date','Inspection Date',$row,'date') ?>
     <?= f_input('inspection_officer','Inspection Officer',$row) ?>
+    <?= f_input('insurance_officer','Insurance Officer (requested by)',$row) ?>
     <div class="f"><label class="f">Status</label><select name="status">
       <?php foreach (valuation_statuses() as $k => $l): ?><option value="<?= $k ?>" <?= ($row['status'] ?? 'draft') === $k ? 'selected' : '' ?>><?= e($l) ?></option><?php endforeach; ?>
     </select></div>

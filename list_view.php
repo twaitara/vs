@@ -196,11 +196,12 @@ function render_list(array $cfg): void {
           <?= $sortHeader('value', $cfg['value_label']) ?>
           <?= $sortHeader('created','Created') ?>
           <th>Officer</th>
+          <th>Requested By</th>
           <th>Actions</th>
         </tr></thead>
         <tbody>
         <?php if (!$rows): ?>
-          <tr><td colspan="12" class="muted">No valuations found.</td></tr>
+          <tr><td colspan="13" class="muted">No valuations found.</td></tr>
         <?php else: foreach ($rows as $r): ?>
           <tr>
             <?php if (can_edit()): ?><td><input type="checkbox" class="rowchk" name="ids[]" value="<?= (int)$r['id'] ?>"></td><?php endif; ?>
@@ -220,6 +221,7 @@ function render_list(array $cfg): void {
             <td class="muted"><?= e(ddate($r['created_at'])) ?></td>
             <td><?php $cb = $r['created_by'] ?? 0; $ini = $userInitials[$cb] ?? ''; $nm = $userNames[$cb] ?? '';
               echo $ini !== '' ? '<span class="badge b-grey" title="' . e($nm) . '">' . e($ini) . '</span>' : '<span class="muted">—</span>'; ?></td>
+            <td class="muted"><?= e(requesting_officer($r, $table)) ?: '—' ?></td>
             <td class="actions">
               <?php if (can_edit() && (empty($r['signed_at']) || is_admin())): ?>
                 <a class="rbtn ico" href="<?= url($cfg['form_page'].'?id='.$r['id']) ?>" title="Edit"><i data-lucide="pencil"></i></a>
