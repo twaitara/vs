@@ -53,7 +53,47 @@ function db(): PDO {
 function e($v): string { return htmlspecialchars((string)($v ?? ''), ENT_QUOTES, 'UTF-8'); }
 
 /** Build an app URL. */
-function url(string $path = ''): string { return BASE_URL . '/' . ltrim($path, '/'); }
+/** Opaque routing: full-page URLs are shown as short codes (…/vs/ab12cd34ef) via r.php. */
+function route_enabled(): bool { return !defined('ROUTE_OBFUSCATE') || ROUTE_OBFUSCATE; }
+/** Pages whose URL is obfuscated. Assets, AJAX endpoints (activity/online/notifications/quick_add),
+ *  sw.js, manifest.php, notif.js, email_cron.php are intentionally left as direct paths. */
+function route_pages(): array {
+    return [
+        'index.php','dashboard.php','bank_list.php','insurance_list.php','machine_list.php',
+        'bank_form.php','insurance_form.php','machine_form.php',
+        'requests.php','analytics.php','settings.php','settings_email.php','profile.php',
+        'users.php','client_users.php','clients.php','insurers.php','types.php','fuels.php',
+        'audit.php','recycle.php','assign_valuers.php',
+        'duplicate.php','sign.php','preview.php','print.php','export.php','send_report.php','backup.php',
+        'login.php','logout.php',
+        'portal.php','portal_request.php','portal_requests.php','portal_team.php',
+        'portal_view.php','portal_pdf.php','portal_login.php','portal_logout.php',
+    ];
+}
+function route_code(string $file): string {
+    static $codes = null;
+    if ($codes === null) { $codes = []; $salt = 'k912route|' . (defined('BASE_URL') ? BASE_URL : ''); foreach (route_pages() as $f) $codes[$f] = substr(hash('sha256', $salt . '|' . $f), 0, 12); }
+    return $codes[$file] ?? '';
+}
+function code_page(string $code): string {
+    $code = preg_replace('/[^a-f0-9]/', '', $code);
+    if ($code === '') return '';
+    foreach (route_pages() as $f) if (route_code($f) === $code) return $f;
+    return '';
+}
+/** The real page currently executing (router-aware), for self-links/redirects. */
+function self_page(): string { return $GLOBALS['ROUTE_PAGE'] ?? basename($_SERVER['SCRIPT_NAME'] ?? ''); }
+
+function url(string $path = ''): string {
+    $p = ltrim($path, '/');
+    if (route_enabled()) {
+        $cut = strcspn($p, '?#');
+        $file = substr($p, 0, $cut);
+        $code = route_code($file);
+        if ($code !== '') return BASE_URL . '/' . $code . substr($p, $cut);
+    }
+    return BASE_URL . '/' . $p;
+}
 /** Online-widget label: the registration/machine being valued if on a valuation form, else "online". */
 function online_meta(?string $activity): string {
     $a = (string)$activity;
@@ -542,7 +582,7 @@ function touch_activity(?string $activity = null): void {
             'analytics.php'=>'Analytics','users.php'=>'Users','settings.php'=>'Settings','audit.php'=>'Audit Log',
             'recycle.php'=>'Recycle Bin','clients.php'=>'Clients','insurers.php'=>'Insurers','types.php'=>'Valuation Types',
             'profile.php'=>'Profile','bank_form.php'=>'Bank valuation form','insurance_form.php'=>'Insurance valuation form'];
-        $base = basename($_SERVER['SCRIPT_NAME'] ?? '');
+        $base = self_page();
         $activity = $map[$base] ?? ucwords(str_replace(['_', '.php'], [' ', ''], $base));
     }
     $loginAt = (int)($_SESSION['login_at'] ?? time());

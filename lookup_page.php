@@ -10,7 +10,7 @@ function lookup_admin(string $table, string $title, string $subkey): void {
         $st = db()->prepare("DELETE FROM `$table` WHERE id = ?");
         $st->execute([(int)($_POST['id'] ?? 0)]);
         flash('Deleted.');
-        redirect(basename($_SERVER['PHP_SELF']));
+        redirect(self_page());
     }
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         csrf_verify();
@@ -28,7 +28,7 @@ function lookup_admin(string $table, string $title, string $subkey): void {
                 flash(ucfirst(rtrim($title,'s')) . ' added.');
             }
         }
-        redirect(basename($_SERVER['PHP_SELF']));
+        redirect(self_page());
     }
     $editId = $_GET['edit'] ?? '';
     $editRow = $editId ? load_row_simple($table, $editId) : [];
@@ -46,7 +46,7 @@ function lookup_admin(string $table, string $title, string $subkey): void {
       </div>
       <div style="margin-top:12px">
         <button class="btn" type="submit"><?= $editRow ? 'Update' : 'Add' ?></button>
-        <?php if ($editRow): ?><a class="btn sec" href="<?= url(basename($_SERVER['PHP_SELF'])) ?>">Cancel</a><?php endif; ?>
+        <?php if ($editRow): ?><a class="btn sec" href="<?= url(self_page()) ?>">Cancel</a><?php endif; ?>
       </div>
     </form>
     <table data-paginate="25" class="list">

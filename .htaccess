@@ -1,16 +1,23 @@
 # ============================================================
 # Kennet Valuation — standalone app in the /vs subfolder.
-# Stops the parent (WordPress) .htaccess from hijacking this
-# folder, and serves index.php when the folder is opened.
+# Serves index.php for /vs/, and routes opaque page codes
+# (…/vs/<code>) to the front controller r.php.
 # ============================================================
 
 # Open index.php when someone visits /vs/
 DirectoryIndex index.php index.html
 
-# Turn OFF any rewrite rules inherited from the domain root
-# (this is what was sending /vs to the WordPress 404 page).
 <IfModule mod_rewrite.c>
-    RewriteEngine Off
+    RewriteEngine On
+    RewriteBase /vs/
+
+    # Serve real files and directories directly (assets, .php, .js, images, sw.js…)
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+
+    # Anything else that looks like a page code -> the front controller
+    RewriteRule ^([a-f0-9]{6,16})/?$ r.php?c=$1 [L,QSA]
 </IfModule>
 
 # Make sure this folder is publicly accessible.
