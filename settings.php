@@ -187,8 +187,10 @@ settings_nav('general');
   <div style="display:grid;grid-template-columns:1fr 2fr;gap:12px;align-items:end">
     <div class="f"><label class="f">Max emails per hour</label><input type="number" name="email_hourly_cap" min="0" value="<?= e(setting('email_hourly_cap', '30')) ?>"></div>
     <div class="muted" style="font-size:12px;padding-bottom:12px">Beyond this, emails are queued and sent automatically in the following hour(s). Set 0 for no limit.
-    <?php $qp = 0; try { $qp = (int)db()->query("SELECT COUNT(*) FROM email_queue WHERE status='pending'")->fetchColumn(); } catch (Throwable $e) {} ?>
-    <?php if ($qp > 0): ?><br><b style="color:#c98a1a"><?= $qp ?> email(s) currently queued.</b><?php endif; ?></div>
+    <?php $qp = 0; try { $qp = (int)db()->query("SELECT COUNT(*) FROM email_queue WHERE status='pending'")->fetchColumn(); } catch (Throwable $e) {}
+          $sentHr = emails_sent_last_hour(); $capN = email_hourly_cap(); ?>
+    <br><b style="color:#5b9bff">Sent in the last hour: <?= $sentHr ?><?= $capN ? ' / ' . $capN : '' ?></b>
+    <?php if ($qp > 0): ?> &nbsp; <b style="color:#c98a1a"><?= $qp ?> queued</b><?php endif; ?></div>
   </div>
   <div style="display:flex;gap:10px;align-items:center;margin-top:6px">
     <button class="btn" type="submit"><i data-lucide="save"></i>Save SMTP</button>
