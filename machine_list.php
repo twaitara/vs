@@ -21,6 +21,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'delet
     redirect('machine_list.php');
 }
 
+// Sign ALL unsigned machine valuations matching the current search.
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['bulk'] ?? '') === 'sign_all') {
+    csrf_verify();
+    if (!can_sign()) { http_response_code(403); exit('You do not have a signing mandate.'); }
+    $sq = trim($_POST['q'] ?? '');
+    $c = []; $p = [];
+    if ($soft) $c[] = 'deleted_at IS NULL';
+    if (column_exists($table, 'signed_at')) $c[] = 'signed_at IS NULL';
+    if (!sees_all_valuations() && column_exists($table, 'created_by')) { $c[] = 'created_by = ?'; $p[] = (int)(current_user()['id'] ?? 0); }
+    if ($sq !== '') { $c[] = '(machine_name LIKE ? OR customer_name LIKE ? OR serial_no LIKE ?)'; $l = "%$sq%"; array_push($p, $l, $l, $l); }
+    $w = $c ? ' WHERE ' . implode(' AND ', $c) : '';
+    $ids = db()->prepare("SELECT id FROM `$table`$w"); $ids->execute($p);
+    $idList = $ids->fetchAll(PDO::FETCH_COLUMN);
+    $n = $idList ? sign_records($table, $idList) : 0;
+    audit('sign_all', 'machinevaluation', '', $n . ' signed');
+    flash($n ? ($n . ' report(s) signed and marked Complete.') : 'No unsigned reports matched.', $n ? 'ok' : 'err');
+    redirect('machine_list.php' . ($sq !== '' ? '?q=' . urlencode($sq) : ''));
+}
+
 $cond = []; $params = [];
 if ($soft) $cond[] = 'deleted_at IS NULL';
 if (!sees_all_valuations() && column_exists($table, 'created_by')) { $cond[] = 'created_by = ?'; $params[] = (int)(current_user()['id'] ?? 0); }
@@ -52,6 +71,12 @@ layout_header('Machine Valuations', 'machine');
            style="width:100%;max-width:420px;background:var(--input);border:1px solid var(--line);color:var(--txt);padding:10px 12px;border-radius:8px;font-size:13px">
   </form>
   <div style="display:flex;gap:8px">
+    <?php if (can_sign()): ?>
+    <form method="post" style="margin:0" onsubmit="return confirm('Sign ALL unsigned machine reports matching the current search? This marks them Complete with today\'s date.')">
+      <?= csrf_field() ?><input type="hidden" name="bulk" value="sign_all"><?php if ($q !== '') echo '<input type="hidden" name="q" value="' . e($q) . '">'; ?>
+      <button class="btn" type="submit" style="background:#0f7a44"><i data-lucide="pen-tool"></i>Sign all matching</button>
+    </form>
+    <?php endif; ?>
     <a class="btn sec" href="<?= url('export.php?type=machine' . ($q !== '' ? '&q=' . urlencode($q) : '')) ?>"><i data-lucide="download"></i>Export CSV</a>
     <?php if (can_edit()): ?><a class="btn" href="<?= url('machine_form.php') ?>"><i data-lucide="plus"></i>New Machine Valuation</a><?php endif; ?>
   </div>

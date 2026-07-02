@@ -45,6 +45,38 @@ function render_list(array $cfg): void {
         redirect($cfg['nav'] === 'bank' ? 'bank_list.php' : 'insurance_list.php');
     }
 
+    // ---- Sign ALL unsigned rows matching the current filter (not just this page) ----
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['bulk'] ?? '') === 'sign_all') {
+        csrf_verify();
+        if (!can_sign()) { http_response_code(403); exit('You do not have a signing mandate.'); }
+        $f = fn($k) => trim((string)($_POST[$k] ?? ''));
+        $cond = []; $params = [];
+        if ($soft) $cond[] = 'deleted_at IS NULL';
+        if (column_exists($table, 'signed_at')) $cond[] = 'signed_at IS NULL';
+        if (!sees_all_valuations() && column_exists($table, 'created_by')) { $cond[] = 'created_by = ?'; $params[] = (int)(current_user()['id'] ?? 0); }
+        if ($f('q') !== '')      { $cond[] = '(reg_no LIKE ? OR make LIKE ? OR customer_name LIKE ?)'; $l = '%' . $f('q') . '%'; array_push($params, $l, $l, $l); }
+        if ($f('client') !== '') { $cond[] = 'client = ?';         $params[] = $f('client'); }
+        if ($f('vtype') !== '')  { $cond[] = 'valuation_type = ?'; $params[] = $f('vtype'); }
+        if ($f('status') !== '' && column_exists($table, 'status')) { $cond[] = 'status = ?'; $params[] = $f('status'); }
+        $ins = $f('ins');
+        if ($ins === 'expired')   $cond[] = "insurance_exp IS NOT NULL AND insurance_exp <> '0000-00-00' AND insurance_exp < CURDATE()";
+        elseif ($ins === 'soon')  $cond[] = "insurance_exp >= CURDATE() AND insurance_exp <= (CURDATE() + INTERVAL 30 DAY)";
+        elseif ($ins === 'valid') $cond[] = "insurance_exp > (CURDATE() + INTERVAL 30 DAY)";
+        if ($f('dfrom') !== '')  { $cond[] = 'created_at >= ?'; $params[] = $f('dfrom') . ' 00:00:00'; }
+        if ($f('dto') !== '')    { $cond[] = 'created_at <= ?'; $params[] = $f('dto') . ' 23:59:59'; }
+        if ($f('vmin') !== '')   { $cond[] = "$vf >= ?";       $params[] = (float)$f('vmin'); }
+        if ($f('vmax') !== '')   { $cond[] = "$vf <= ?";       $params[] = (float)$f('vmax'); }
+        $w = $cond ? ' WHERE ' . implode(' AND ', $cond) : '';
+        $ids = db()->prepare("SELECT id FROM `$table`$w");
+        $ids->execute($params);
+        $idList = $ids->fetchAll(PDO::FETCH_COLUMN);
+        $n = $idList ? sign_records($table, $idList) : 0;
+        audit('sign_all', $cfg['type'], '', $n . ' signed');
+        flash($n ? ($n . ' report(s) signed and marked Complete.') : 'No unsigned reports matched the current filter.', $n ? 'ok' : 'err');
+        $qs = array_filter(['q'=>$f('q'),'client'=>$f('client'),'vtype'=>$f('vtype'),'status'=>$f('status'),'ins'=>$ins,'dfrom'=>$f('dfrom'),'dto'=>$f('dto'),'vmin'=>$f('vmin'),'vmax'=>$f('vmax')], fn($v) => $v !== '' && $v !== null);
+        redirect(($cfg['nav'] === 'bank' ? 'bank_list.php' : 'insurance_list.php') . ($qs ? '?' . http_build_query($qs) : ''));
+    }
+
     // ---- Inputs ----
     $q      = trim($_GET['q'] ?? '');
     $client = $_GET['client'] ?? '';
@@ -185,7 +217,9 @@ function render_list(array $cfg): void {
       <div class="bulkbar">
         <label><input type="checkbox" id="selAll"> Select all</label>
         <?php if (is_admin()): ?><button class="btn" type="submit" name="bulk" value="delete" onclick="return confirmBulk('delete')" style="background:#d41d1d"><i data-lucide="trash-2"></i>Delete selected</button><?php endif; ?>
-        <?php if (can_sign()): ?><button class="btn" type="submit" name="bulk" value="sign" onclick="return confirmBulk('sign')" style="background:#1c9c5d"><i data-lucide="pen-tool"></i>Sign selected</button><?php endif; ?>
+        <?php if (can_sign()): ?><button class="btn" type="submit" name="bulk" value="sign" onclick="return confirmBulk('sign')" style="background:#1c9c5d"><i data-lucide="pen-tool"></i>Sign selected</button>
+        <?php foreach (['q','client','vtype','status','ins','dfrom','dto','vmin','vmax'] as $fk) if (($keep[$fk] ?? '') !== '') echo '<input type="hidden" name="' . $fk . '" value="' . e($keep[$fk]) . '">'; ?>
+        <button class="btn" type="submit" name="bulk" value="sign_all" onclick="return confirm('Sign ALL unsigned reports matching the current filter? This marks them Complete with today\'s date.')" style="background:#0f7a44"><i data-lucide="pen-tool"></i>Sign all matching</button><?php endif; ?>
         <span class="muted" id="selCount"></span>
         <span class="stagekey">Key:&nbsp;<?php foreach (array_keys($STAGES) as $ab) echo '<span class="stagebox">' . $ab . '</span>&nbsp;' . e($STAGE_NAMES[$ab] ?? $ab) . '&nbsp;&nbsp;'; ?></span>
       </div>
