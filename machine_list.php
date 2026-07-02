@@ -25,6 +25,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'delet
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['bulk'] ?? '') === 'sign_all') {
     csrf_verify();
     if (!can_sign()) { http_response_code(403); exit('You do not have a signing mandate.'); }
+    if (!sign_all_enabled()) { http_response_code(403); exit('The "Sign all matching" action is disabled.'); }
     $sq = trim($_POST['q'] ?? '');
     $c = []; $p = [];
     if ($soft) $c[] = 'deleted_at IS NULL';
@@ -71,7 +72,7 @@ layout_header('Machine Valuations', 'machine');
            style="width:100%;max-width:420px;background:var(--input);border:1px solid var(--line);color:var(--txt);padding:10px 12px;border-radius:8px;font-size:13px">
   </form>
   <div style="display:flex;gap:8px">
-    <?php if (can_sign()): ?>
+    <?php if (can_sign() && sign_all_enabled()): ?>
     <form method="post" style="margin:0" onsubmit="return confirm('Sign ALL unsigned machine reports matching the current search? This marks them Complete with today\'s date.')">
       <?= csrf_field() ?><input type="hidden" name="bulk" value="sign_all"><?php if ($q !== '') echo '<input type="hidden" name="q" value="' . e($q) . '">'; ?>
       <button class="btn" type="submit" style="background:#0f7a44"><i data-lucide="pen-tool"></i>Sign all matching</button>

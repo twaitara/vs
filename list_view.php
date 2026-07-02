@@ -49,6 +49,7 @@ function render_list(array $cfg): void {
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['bulk'] ?? '') === 'sign_all') {
         csrf_verify();
         if (!can_sign()) { http_response_code(403); exit('You do not have a signing mandate.'); }
+        if (!sign_all_enabled()) { http_response_code(403); exit('The "Sign all matching" action is disabled.'); }
         $f = fn($k) => trim((string)($_POST[$k] ?? ''));
         $cond = []; $params = [];
         if ($soft) $cond[] = 'deleted_at IS NULL';
@@ -219,7 +220,7 @@ function render_list(array $cfg): void {
         <?php if (is_admin()): ?><button class="btn" type="submit" name="bulk" value="delete" onclick="return confirmBulk('delete')" style="background:#d41d1d"><i data-lucide="trash-2"></i>Delete selected</button><?php endif; ?>
         <?php if (can_sign()): ?><button class="btn" type="submit" name="bulk" value="sign" onclick="return confirmBulk('sign')" style="background:#1c9c5d"><i data-lucide="pen-tool"></i>Sign selected</button>
         <?php foreach (['q','client','vtype','status','ins','dfrom','dto','vmin','vmax'] as $fk) if (($keep[$fk] ?? '') !== '') echo '<input type="hidden" name="' . $fk . '" value="' . e($keep[$fk]) . '">'; ?>
-        <button class="btn" type="submit" name="bulk" value="sign_all" onclick="return confirm('Sign ALL unsigned reports matching the current filter? This marks them Complete with today\'s date.')" style="background:#0f7a44"><i data-lucide="pen-tool"></i>Sign all matching</button><?php endif; ?>
+        <?php if (sign_all_enabled()): ?><button class="btn" type="submit" name="bulk" value="sign_all" onclick="return confirm('Sign ALL unsigned reports matching the current filter? This marks them Complete with today\'s date.')" style="background:#0f7a44"><i data-lucide="pen-tool"></i>Sign all matching</button><?php endif; ?><?php endif; ?>
         <span class="muted" id="selCount"></span>
         <span class="stagekey">Key:&nbsp;<?php foreach (array_keys($STAGES) as $ab) echo '<span class="stagebox">' . $ab . '</span>&nbsp;' . e($STAGE_NAMES[$ab] ?? $ab) . '&nbsp;&nbsp;'; ?></span>
       </div>

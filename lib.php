@@ -109,6 +109,8 @@ function can_sign(): bool {
     $u = current_user();
     return $u && (is_admin() || (int)($u['can_sign'] ?? 0) === 1);
 }
+/** "Sign all matching" bulk button — super admin can switch it off (default on). */
+function sign_all_enabled(): bool { return setting('sign_all_enabled', '1') === '1'; }
 /** Kennet coordinator: triages requests and assigns them, but no settings/edit/sign. */
 function is_coordinator(): bool { return user_role() === 'coordinator'; }
 /** May see all requests and assign them to officers. */

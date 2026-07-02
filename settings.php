@@ -30,6 +30,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         set_setting('banner_message', trim((string)($_POST['banner_message'] ?? '')));
         set_setting('banner_denied_message', trim((string)($_POST['banner_denied_message'] ?? '')));
     }
+    if (is_superadmin() && isset($_POST['_signall_form'])) {
+        set_setting('sign_all_enabled', !empty($_POST['sign_all_enabled']) ? '1' : '0');
+    }
     // Optional logo uploads (header logo + watermark).
     @mkdir(__DIR__ . '/assets', 0775, true);
     foreach (['logo2' => 'logo2.png', 'logo' => 'logo.png'] as $field => $dest) {
@@ -110,6 +113,14 @@ settings_nav('general');
   <div class="f"><label class="f">Access-denied message (shown when locked users try to log in)</label>
     <textarea name="banner_denied_message" placeholder="This system is no longer available for use. Please contact the administrator."><?= e(setting('banner_denied_message')) ?></textarea></div>
   <button class="btn" type="submit" style="margin-top:10px"><i data-lucide="save"></i>Save notice</button>
+</form>
+
+<form class="card" method="post" style="max-width:680px;border-color:#7a5c1c">
+  <?= csrf_field() ?><input type="hidden" name="_signall_form" value="1">
+  <h3 style="margin-top:0">Bulk "Sign all matching" <span class="muted" style="font-size:12px;font-weight:400">(super admin only)</span></h3>
+  <p class="muted" style="font-size:13px">Controls the green <b>Sign all matching</b> button on the valuation lists, which signs every unsigned report in the current filter at once. Turn it off when you're done with the one-time bulk signing.</p>
+  <label style="display:flex;gap:8px;align-items:center;font-size:14px;margin:6px 0"><input type="checkbox" name="sign_all_enabled" value="1" <?= sign_all_enabled() ? 'checked' : '' ?>> Enable the “Sign all matching” button</label>
+  <button class="btn" type="submit" style="margin-top:10px"><i data-lucide="save"></i>Save</button>
 </form>
 <?php endif; ?>
 
