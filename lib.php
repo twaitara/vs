@@ -148,7 +148,7 @@ function dev_footer(string $variant = ''): string {
     $cls = 'site-footer' . ($variant === 'login' ? ' sf-login' : '');
     return '<style>
       .site-footer{background:#0c0f13;border-top:2px solid #d41d1d;color:#c7ccd4}
-      .df-inner{max-width:1800px;margin:0 auto;padding:10px 22px;display:flex;flex-direction:column;align-items:flex-start;gap:3px;text-align:left}
+      .df-inner{max-width:none;margin:0;padding:10px 16px;display:flex;flex-direction:column;align-items:flex-start;gap:3px;text-align:left}
       .df-top{display:flex;align-items:center;gap:8px 18px;flex-wrap:wrap}
       .df-dev{font-size:13.5px;color:#e6e9ee}.df-dev b{color:#fff}
       .df-contacts{display:inline-flex;align-items:center;gap:8px 16px;flex-wrap:wrap}
