@@ -105,6 +105,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     var b = document.getElementById('loginBtn'); b.classList.add('loading'); b.querySelector('.lbl').textContent = 'Signing in…';
   });
 </script>
-<?= dev_footer() ?>
+<?= dev_footer('login') ?>
 <script>if(window.lucide)lucide.createIcons();</script>
 </body></html>

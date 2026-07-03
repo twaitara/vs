@@ -122,13 +122,9 @@ function dev_credit(): string {
          . '<a href="https://www.nineonetwo.co.ke" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline">www.nineonetwo.co.ke</a> · '
          . '<a href="tel:+254722974970" style="color:inherit;text-decoration:none">0722 974 970</a>';
 }
-/** Full branded developer footer bar shown fixed at the bottom of every page (super-admin editable). */
-function dev_footer(): string {
-    $logoFile = __DIR__ . '/assets/logo912.png';
-    $logo = is_file($logoFile)
-        ? '<img src="' . url('assets/logo912.png') . '" alt="Nine One Two Holdings" class="df-img">'
-        : '<span class="df-912">912</span><span class="df-cap">NINE ONE TWO<br>HOLDINGS LTD</span>';
-
+/** Full branded developer footer bar shown fixed at the bottom of every page (super-admin editable).
+ *  $variant 'login' hides it on mobile / installed-app view. */
+function dev_footer(string $variant = ''): string {
     $devName  = setting('footer_dev_name', 'Nine One Two Holdings Ltd');
     $website  = trim(setting('footer_website', 'www.nineonetwo.co.ke'));
     $phone    = trim(setting('footer_phone', '+254 722 974 970'));
@@ -149,36 +145,30 @@ function dev_footer(): string {
     if ($phone !== '')   $contacts .= '<a href="' . e($telHref) . '"><span class="df-ic"><i data-lucide="phone-call"></i></span>' . e($phone) . '</a>';
     if ($digits !== '')  $contacts .= '<a href="' . e($waHref) . '" target="_blank" rel="noopener" title="Chat on WhatsApp"><span class="df-ic wa">' . $wa . '</span>WhatsApp</a>';
 
+    $cls = 'site-footer' . ($variant === 'login' ? ' sf-login' : '');
     return '<style>
-      .site-footer{background:#0c0f13;border-top:3px solid #d41d1d;color:#c7ccd4}
-      .df-inner{max-width:1800px;margin:0 auto;padding:12px 22px;display:flex;align-items:center;gap:18px;flex-wrap:wrap}
-      .df-brand{display:flex;align-items:center;gap:12px;flex:0 0 auto}
-      .df-img{height:44px;width:auto}
-      .df-912{font-size:28px;font-weight:900;color:#d41d1d;letter-spacing:1px;line-height:1}
-      .df-cap{font-size:9px;letter-spacing:1.5px;color:#9aa4b2;line-height:1.25}
-      .df-mid{flex:1 1 340px;min-width:0}
-      .df-top{display:flex;align-items:center;gap:10px 20px;flex-wrap:wrap;margin-bottom:4px}
-      .df-dev{font-size:13px;color:#e6e9ee}.df-dev b{color:#fff}
-      .df-contacts{display:inline-flex;align-items:center;gap:8px 16px;flex-wrap:wrap}
-      .df-contacts a{color:#c7ccd4;text-decoration:none;display:inline-flex;align-items:center;gap:7px;font-size:12.5px}
+      .site-footer{background:#0c0f13;border-top:2px solid #d41d1d;color:#c7ccd4}
+      .df-inner{max-width:1800px;margin:0 auto;padding:7px 20px;display:flex;flex-direction:column;gap:2px}
+      .df-top{display:flex;align-items:center;gap:6px 16px;flex-wrap:wrap}
+      .df-dev{font-size:12px;color:#e6e9ee}.df-dev b{color:#fff}
+      .df-contacts{display:inline-flex;align-items:center;gap:6px 14px;flex-wrap:wrap}
+      .df-contacts a{color:#c7ccd4;text-decoration:none;display:inline-flex;align-items:center;gap:6px;font-size:12px}
       .df-contacts a:hover{color:#fff}
-      .df-ic{width:24px;height:24px;border-radius:50%;background:#161b22;border:1px solid #262d36;display:inline-flex;align-items:center;justify-content:center;color:#d41d1d}
-      .df-ic i{width:14px;height:14px}
+      .df-ic{width:19px;height:19px;border-radius:50%;background:#161b22;border:1px solid #262d36;display:inline-flex;align-items:center;justify-content:center;color:#d41d1d}
+      .df-ic i{width:12px;height:12px}
       .df-ic.wa{background:#0d3d2b;border-color:#125a3f;color:#25d366}
-      .df-links{font-size:11px;color:#8a93a0;line-height:1.6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-      .df-links .df-sep{margin:0 6px;color:#3a4048}
-      @media(min-width:861px){ .site-footer{position:fixed;left:0;right:0;bottom:0;z-index:500} body{padding-bottom:92px} .fab{bottom:104px} }
-      @media(max-width:860px){.site-footer{margin-top:24px}.df-inner{flex-direction:column;align-items:flex-start;gap:10px}.df-links{white-space:normal}}
+      .df-links{font-size:10px;color:#8a93a0;line-height:1.5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+      .df-links .df-sep{margin:0 5px;color:#3a4048}
+      @media(min-width:861px){ .site-footer{position:fixed;left:0;right:0;bottom:0;z-index:500} body{padding-bottom:56px} .fab{bottom:70px} }
+      @media(max-width:860px){.site-footer{margin-top:20px}.df-links{white-space:normal}.site-footer.sf-login{display:none}}
+      @media(display-mode:standalone){.site-footer.sf-login{display:none}}
     </style>
-    <footer class="site-footer"><div class="df-inner">
-      <div class="df-brand">' . $logo . '</div>
-      <div class="df-mid">
-        <div class="df-top">
-          <span class="df-dev">Developed by <b>' . e($devName) . '</b></span>
-          <span class="df-contacts">' . $contacts . '</span>
-        </div>
-        <div class="df-links">' . $links . '</div>
+    <footer class="' . $cls . '"><div class="df-inner">
+      <div class="df-top">
+        <span class="df-dev">Developed by <b>' . e($devName) . '</b></span>
+        <span class="df-contacts">' . $contacts . '</span>
       </div>
+      <div class="df-links">' . $links . '</div>
     </div></footer>';
 }
 
