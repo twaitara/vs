@@ -148,18 +148,18 @@ function dev_footer(string $variant = ''): string {
     $cls = 'site-footer' . ($variant === 'login' ? ' sf-login' : '');
     return '<style>
       .site-footer{background:#0c0f13;border-top:2px solid #d41d1d;color:#c7ccd4}
-      .df-inner{max-width:1800px;margin:0 auto;padding:7px 20px;display:flex;flex-direction:column;align-items:center;gap:2px;text-align:center}
-      .df-top{display:flex;align-items:center;justify-content:center;gap:6px 16px;flex-wrap:wrap}
-      .df-dev{font-size:12px;color:#e6e9ee}.df-dev b{color:#fff}
-      .df-contacts{display:inline-flex;align-items:center;gap:6px 14px;flex-wrap:wrap}
-      .df-contacts a{color:#c7ccd4;text-decoration:none;display:inline-flex;align-items:center;gap:6px;font-size:12px}
+      .df-inner{max-width:1800px;margin:0 auto;padding:10px 22px;display:flex;flex-direction:column;align-items:flex-start;gap:3px;text-align:left}
+      .df-top{display:flex;align-items:center;gap:8px 18px;flex-wrap:wrap}
+      .df-dev{font-size:13.5px;color:#e6e9ee}.df-dev b{color:#fff}
+      .df-contacts{display:inline-flex;align-items:center;gap:8px 16px;flex-wrap:wrap}
+      .df-contacts a{color:#c7ccd4;text-decoration:none;display:inline-flex;align-items:center;gap:7px;font-size:13px}
       .df-contacts a:hover{color:#fff}
-      .df-ic{width:19px;height:19px;border-radius:50%;background:#161b22;border:1px solid #262d36;display:inline-flex;align-items:center;justify-content:center;color:#d41d1d}
-      .df-ic i{width:12px;height:12px}
+      .df-ic{width:23px;height:23px;border-radius:50%;background:#161b22;border:1px solid #262d36;display:inline-flex;align-items:center;justify-content:center;color:#d41d1d}
+      .df-ic i{width:13px;height:13px}
       .df-ic.wa{background:#0d3d2b;border-color:#125a3f;color:#25d366}
-      .df-links{font-size:10px;color:#8a93a0;line-height:1.5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-      .df-links .df-sep{margin:0 5px;color:#3a4048}
-      @media(min-width:861px){ .site-footer{position:fixed;left:0;right:0;bottom:0;z-index:500} body{padding-bottom:56px} .fab{bottom:70px} }
+      .df-links{font-size:11.5px;color:#8a93a0;line-height:1.5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+      .df-links .df-sep{margin:0 6px;color:#3a4048}
+      @media(min-width:861px){ .site-footer{position:fixed;left:0;right:0;bottom:0;z-index:500} body{padding-bottom:70px} .fab{bottom:84px} }
       @media(max-width:860px){.site-footer{margin-top:20px}.df-links{white-space:normal}.site-footer.sf-login{display:none}}
       @media(display-mode:standalone){.site-footer.sf-login{display:none}}
     </style>
