@@ -129,13 +129,21 @@ layout_header('Machine Valuations', 'machine');
 <div class="modal-bg" id="pvModal" onclick="if(event.target===this)pvClose()">
   <div class="modal">
     <div class="modal-head"><span>Machine Valuation</span>
-      <span><a id="pvPdf" href="#" target="_blank">⬇ PDF</a><button class="close" onclick="pvClose()">✕ Close</button></span>
+      <span><a id="pvPdf" href="#" target="_blank">⬇ PDF</a><button class="close" type="button" onclick="pvEmailNow()">✉ Email</button><button class="close" onclick="pvClose()">✕ Close</button></span>
     </div>
     <iframe id="pvFrame" src="about:blank"></iframe>
   </div>
 </div>
 <script>
-function openPreview(id){document.getElementById('pvFrame').src='<?= url('preview.php') ?>?type=machine&bare=1&id='+id;document.getElementById('pvPdf').href='<?= url('print.php') ?>?type=machine&id='+id;document.getElementById('pvModal').classList.add('open');document.body.style.overflow='hidden';}
+var __pvId=0;
+function openPreview(id){__pvId=id;document.getElementById('pvFrame').src='<?= url('preview.php') ?>?type=machine&bare=1&id='+id;document.getElementById('pvPdf').href='<?= url('print.php') ?>?type=machine&id='+id;document.getElementById('pvModal').classList.add('open');document.body.style.overflow='hidden';}
+function pvEmailNow(){
+  var to=prompt('Email this machine report (PDF attachment) to:'); if(!to)return;
+  var fd=new FormData(); fd.append('id',__pvId); fd.append('type','machine'); fd.append('to',to); fd.append('_csrf','<?= e(csrf_token()) ?>');
+  fetch('<?= url('send_report.php') ?>',{method:'POST',body:fd}).then(function(r){return r.json();})
+    .then(function(d){ if(window.toast)toast(d&&d.ok?('Report emailed to '+to):('Email failed: '+((d&&d.error)||'unknown')),d&&d.ok?'ok':'err'); else alert(d&&d.ok?'Emailed':'Failed'); })
+    .catch(function(){ if(window.toast)toast('Network error sending email','err'); });
+}
 function pvClose(){document.getElementById('pvModal').classList.remove('open');document.getElementById('pvFrame').src='about:blank';document.body.style.overflow='';}
 document.addEventListener('keydown',function(e){if(e.key==='Escape')pvClose();});
 </script>
