@@ -128,8 +128,12 @@ layout_header('Machine Valuations', 'machine');
 
 <div class="modal-bg" id="pvModal" onclick="if(event.target===this)pvClose()">
   <div class="modal">
-    <div class="modal-head"><span>Machine Valuation</span>
-      <span><a id="pvPdf" href="#" target="_blank">⬇ PDF</a><button class="close" type="button" onclick="pvEmailNow()">✉ Email</button><button class="close" onclick="pvClose()">✕ Close</button></span>
+    <div class="modal-head"><span class="title">Machine Valuation</span>
+      <span class="acts">
+        <a id="pvPdf" href="#" target="_blank"><i data-lucide="download"></i> Download PDF</a>
+        <?php if (can_edit()): ?><button type="button" onclick="pvEmailNow()"><i data-lucide="mail"></i> Email</button><?php endif; ?>
+        <button class="close" onclick="pvClose()"><i data-lucide="x"></i> Close</button>
+      </span>
     </div>
     <iframe id="pvFrame" src="about:blank"></iframe>
   </div>
@@ -153,5 +157,7 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')pvClose();})
   .signbtn{animation:pulseamber 1.6s infinite}
   @keyframes pulseamber{0%,100%{box-shadow:0 0 0 0 rgba(245,177,74,.5)}50%{box-shadow:0 0 0 4px rgba(245,177,74,0)}}
   .modal iframe{flex:1;width:100%;border:0;background:#fff}
+  .modal-head .acts a,.modal-head .acts button{display:inline-flex;align-items:center;gap:6px}
+  .modal-head .acts i{width:14px;height:14px}
 </style>
 <?php layout_footer();
