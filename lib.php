@@ -689,8 +689,9 @@ function attempt_login(string $email, string $password) {
         record_login_attempt($email, $ip, false);
         return (($u['disabled_reason'] ?? '') === 'inactivity') ? 'expired' : 'disabled';
     }
-    // Auto-disable after 30 days without logging in (never the super admin).
-    if (!$isSuper && !empty($u['last_login_at'])) {
+    // Auto-disable after 30 days without logging in (never super admins or admins).
+    $isAdminRole = ($u['role'] ?? '') === 'admin';
+    if (!$isSuper && !$isAdminRole && !empty($u['last_login_at'])) {
         $last = strtotime((string)$u['last_login_at']);
         if ($last && (time() - $last) > 30 * 86400) {
             try { db()->prepare("UPDATE users SET active=0, disabled_reason='inactivity' WHERE id=?")->execute([$u['id']]); } catch (Throwable $e) {}
