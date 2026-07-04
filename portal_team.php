@@ -47,6 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     } elseif ($action === 'toggle' && $uid && $uid !== $me && team_owns($uid, $cid)) {
         db()->prepare('UPDATE client_users SET active = 1 - active, updated_at=NOW() WHERE id=? AND client_id=?')->execute([$uid, $cid]);
+        if (column_exists('client_users', 'disabled_reason')) db()->prepare("UPDATE client_users SET disabled_reason=NULL, last_login_at=NOW() WHERE id=? AND client_id=? AND active=1")->execute([$uid, $cid]);
         audit('portal_team_toggle', 'client_user', $uid); flash('Status changed.'); redirect('portal_team.php');
     } elseif ($action === 'resetpw' && $uid && team_owns($uid, $cid)) {
         $pass = $_POST['password'] ?? '';

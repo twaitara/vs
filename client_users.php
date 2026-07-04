@@ -77,6 +77,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     } elseif ($action === 'toggle' && $uid) {
         db()->prepare('UPDATE client_users SET active = 1 - active, updated_at=NOW() WHERE id=?')->execute([$uid]);
+        if (column_exists('client_users', 'disabled_reason')) db()->prepare("UPDATE client_users SET disabled_reason=NULL, last_login_at=NOW() WHERE id=? AND active=1")->execute([$uid]);
         audit('toggle_active', 'client_user', $uid); flash('Status changed.'); redirect('client_users.php');
     } elseif ($action === 'resetpw' && $uid) {
         $pass = $_POST['password'] ?? '';

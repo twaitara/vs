@@ -10,8 +10,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($res === true) {
         if (system_locked()) { client_logout(); $error = denied_message(); }
         else { if (setting('banner_enabled') === '1') $_SESSION['avail_notice_pending'] = 1; redirect('portal.php'); }
+    } elseif ($res === 'expired') {
+        $error = 'Your account has been disabled because you did not log in for 30 days. Please contact your administrator to re-enable it.';
+    } elseif ($res === 'disabled') {
+        $error = 'This account has been disabled. Please contact your administrator.';
+    } elseif ($res === 'locked') {
+        $error = 'Too many attempts. Try again in 15 minutes.';
     } else {
-        $error = $res === 'locked' ? 'Too many attempts. Try again in 15 minutes.' : 'Invalid email or password.';
+        $error = 'Invalid email or password.';
     }
 }
 ?><!doctype html>

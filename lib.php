@@ -736,16 +736,30 @@ function attempt_client_login(string $email, string $password) {
     $st = db()->prepare('SELECT * FROM client_users WHERE email = ? LIMIT 1');
     $st->execute([$email]);
     $u = $st->fetch();
-    $ok = $u && password_verify($password, $u['password']) && (int)($u['active'] ?? 1) === 1;
-    record_login_attempt($email, $ip, (bool)$ok);
-    if ($ok) {
-        unset($u['password']);
-        session_regenerate_id(true);
-        $_SESSION['client_user'] = $u;
-        audit('portal_login', 'client_user', $u['id'], $email);
-        return true;
+    if (!$u || !password_verify($password, $u['password'])) { record_login_attempt($email, $ip, false); return false; }
+
+    // Already disabled — say why if it was auto-disabled for inactivity.
+    if ((int)($u['active'] ?? 1) !== 1) {
+        record_login_attempt($email, $ip, false);
+        return (($u['disabled_reason'] ?? '') === 'inactivity') ? 'expired' : 'disabled';
     }
-    return false;
+    // Auto-disable after 30 days without logging in.
+    if (!empty($u['last_login_at'])) {
+        $last = strtotime((string)$u['last_login_at']);
+        if ($last && (time() - $last) > 30 * 86400) {
+            try { db()->prepare("UPDATE client_users SET active=0, disabled_reason='inactivity' WHERE id=?")->execute([$u['id']]); } catch (Throwable $e) {}
+            record_login_attempt($email, $ip, false);
+            return 'expired';
+        }
+    }
+
+    record_login_attempt($email, $ip, true);
+    unset($u['password']);
+    session_regenerate_id(true);
+    $_SESSION['client_user'] = $u;
+    if (column_exists('client_users', 'last_login_at')) { try { db()->prepare("UPDATE client_users SET last_login_at=NOW() WHERE id=?")->execute([$u['id']]); } catch (Throwable $e) {} }
+    audit('portal_login', 'client_user', $u['id'], $email);
+    return true;
 }
 function client_logout(): void {
     if ($c = current_client()) audit('portal_logout', 'client_user', $c['id']);
