@@ -28,9 +28,9 @@ if (session_status() !== PHP_SESSION_ACTIVE) {
     session_name('KENNETSESS');
     session_start();
 }
-// Idle timeout: 8 hours.
+// Idle timeout: 8 hours on desktop only — mobile sessions are not auto-logged-out.
 $IDLE = 8 * 3600;
-if (!empty($_SESSION['last_activity']) && (time() - $_SESSION['last_activity'] > $IDLE)) {
+if (device_class() === 'desktop' && !empty($_SESSION['last_activity']) && (time() - $_SESSION['last_activity'] > $IDLE)) {
     $_SESSION = []; session_destroy(); session_start();
 }
 $_SESSION['last_activity'] = time();
@@ -212,6 +212,41 @@ function csrf_verify_get(): void {
 // ---------------- Auth & roles ----------------
 if (!defined('SUPERADMIN_EMAIL')) define('SUPERADMIN_EMAIL', 'exyeez@gmail.com');
 function current_user(): ?array { return $_SESSION['user'] ?? null; }
+
+/** Rough device class from the User-Agent: 'mobile' or 'desktop'. */
+function device_class(): string {
+    $ua = $_SERVER['HTTP_USER_AGENT'] ?? '';
+    return preg_match('/Mobi|Android|iPhone|iPod|IEMobile|BlackBerry|Opera Mini|Windows Phone/i', $ua) ? 'mobile' : 'desktop';
+}
+/** Record this login as the single active session for the user's device class (evicts the old one). */
+function register_session(int $uid): void {
+    if (!$uid || !table_exists('user_sessions')) return;
+    $device = device_class();
+    $token  = bin2hex(random_bytes(16));
+    $_SESSION['sess_token'] = $token;
+    $_SESSION['sess_device'] = $device;
+    try {
+        db()->prepare("INSERT INTO user_sessions (user_id, device, token, created_at, last_seen) VALUES (?,?,?,NOW(),NOW())
+                       ON DUPLICATE KEY UPDATE token=VALUES(token), created_at=NOW(), last_seen=NOW()")
+            ->execute([$uid, $device, $token]);
+    } catch (Throwable $e) {}
+}
+/** True if this session is still the active one for its device class (not replaced by a newer login). */
+function session_is_current(): bool {
+    if (!table_exists('user_sessions')) return true;      // pre-migration
+    $u = current_user(); if (!$u) return false;
+    $tok = $_SESSION['sess_token'] ?? '';
+    if ($tok === '') return true;                          // session predates this feature
+    $dev = $_SESSION['sess_device'] ?? device_class();
+    try {
+        $st = db()->prepare("SELECT token FROM user_sessions WHERE user_id=? AND device=?");
+        $st->execute([(int)$u['id'], $dev]);
+        $row = $st->fetchColumn();
+        if ($row === false || !hash_equals((string)$row, $tok)) return false;
+        db()->prepare("UPDATE user_sessions SET last_seen=NOW() WHERE user_id=? AND device=?")->execute([(int)$u['id'], $dev]);
+        return true;
+    } catch (Throwable $e) { return true; }
+}
 /** The single super-admin (system owner) identified by email. */
 function is_superadmin(): bool {
     $u = current_user();
@@ -584,6 +619,7 @@ function deny_unavailable(): void {
 
 function require_login(): void {
     if (!current_user()) redirect('login.php');
+    if (!session_is_current()) { logout(); redirect('login.php?e=other'); }
     if (system_locked() && !is_superadmin()) { logout(); deny_unavailable(); }
     touch_activity();
 }
@@ -644,27 +680,43 @@ function attempt_login(string $email, string $password) {
     $u = $st->fetch();
 
     $ok = $u && password_verify($password, $u['password']);
-    // Respect active flag if the column exists.
-    if ($ok && array_key_exists('active', $u) && (int)$u['active'] !== 1) {
+    if (!$ok) { record_login_attempt($email, $ip, false); return false; }
+
+    $isSuper = strtolower(trim((string)($u['email'] ?? ''))) === strtolower(SUPERADMIN_EMAIL);
+
+    // Already disabled — say why if it was auto-disabled for inactivity.
+    if (array_key_exists('active', $u) && (int)$u['active'] !== 1) {
         record_login_attempt($email, $ip, false);
-        return false;
+        return (($u['disabled_reason'] ?? '') === 'inactivity') ? 'expired' : 'disabled';
     }
-    record_login_attempt($email, $ip, $ok);
-    if ($ok) {
-        unset($u['password']);
-        session_regenerate_id(true);
-        $_SESSION['user'] = $u;
-        $_SESSION['login_at'] = time();
-        audit('login', 'user', $u['id']);
-        return true;
+    // Auto-disable after 30 days without logging in (never the super admin).
+    if (!$isSuper && !empty($u['last_login_at'])) {
+        $last = strtotime((string)$u['last_login_at']);
+        if ($last && (time() - $last) > 30 * 86400) {
+            try { db()->prepare("UPDATE users SET active=0, disabled_reason='inactivity' WHERE id=?")->execute([$u['id']]); } catch (Throwable $e) {}
+            record_login_attempt($email, $ip, false);
+            return 'expired';
+        }
     }
-    return false;
+
+    record_login_attempt($email, $ip, true);
+    unset($u['password']);
+    session_regenerate_id(true);
+    $_SESSION['user'] = $u;
+    $_SESSION['login_at'] = time();
+    if (column_exists('users', 'last_login_at')) { try { db()->prepare("UPDATE users SET last_login_at=NOW() WHERE id=?")->execute([$u['id']]); } catch (Throwable $e) {} }
+    register_session((int)$u['id']);
+    audit('login', 'user', $u['id']);
+    return true;
 }
 
 function logout(): void {
     if ($u = current_user()) {
         audit('logout', 'user', $u['id']);
         try { db()->prepare('DELETE FROM user_activity WHERE user_id=?')->execute([$u['id']]); } catch (Throwable $e) {}
+        if (table_exists('user_sessions') && !empty($_SESSION['sess_device'])) {
+            try { db()->prepare('DELETE FROM user_sessions WHERE user_id=? AND device=?')->execute([(int)$u['id'], $_SESSION['sess_device']]); } catch (Throwable $e) {}
+        }
     }
     $_SESSION = []; session_destroy();
 }

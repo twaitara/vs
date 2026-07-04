@@ -89,6 +89,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($uid === (int)$me['id']) { flash('You cannot deactivate yourself.', 'err'); redirect('users.php'); }
         $st = db()->prepare('UPDATE users SET active = 1 - active, updated_at=NOW() WHERE id=?');
         $st->execute([$uid]);
+        // Re-enabling clears an inactivity lock and restarts the 30-day clock.
+        if (column_exists('users', 'disabled_reason')) {
+            db()->prepare("UPDATE users SET disabled_reason=NULL, last_login_at=NOW() WHERE id=? AND active=1")->execute([$uid]);
+        }
         audit('toggle_active', 'user', $uid);
         flash('User status changed.');
         redirect('users.php');

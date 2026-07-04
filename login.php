@@ -3,6 +3,7 @@ require_once __DIR__ . '/lib.php';
 if (current_user()) redirect('dashboard.php');
 
 $error = '';
+if (($_GET['e'] ?? '') === 'other') $error = 'You were signed out because your account was signed in on another device.';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     csrf_verify();
     $email = trim($_POST['email'] ?? '');
@@ -11,10 +12,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($res === true) {
         if (system_locked() && !is_superadmin()) { logout(); $error = denied_message(); }
         else { if (setting('banner_enabled') === '1' && !is_superadmin()) $_SESSION['avail_notice_pending'] = 1; redirect('dashboard.php'); }
+    } elseif ($res === 'expired') {
+        $error = 'Your account has been disabled because you did not log in for 30 days. Please contact the administrator to re-enable it.';
+    } elseif ($res === 'disabled') {
+        $error = 'This account has been disabled. Please contact the administrator.';
+    } elseif ($res === 'locked') {
+        $error = 'Too many failed attempts. Please wait 15 minutes and try again.';
     } else {
-        $error = $res === 'locked'
-            ? 'Too many failed attempts. Please wait 15 minutes and try again.'
-            : 'Invalid email or password.';
+        $error = 'Invalid email or password.';
     }
 }
 ?><!doctype html>
