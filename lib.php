@@ -263,6 +263,9 @@ function can_sign(): bool {
 }
 /** "Sign all matching" bulk button — super admin can switch it off (default on). */
 function sign_all_enabled(): bool { return setting('sign_all_enabled', '1') === '1'; }
+/** Photo-to-text (OCR) scanning — prototype. Always on for the super admin;
+ *  the super admin flips it on for everyone else via settings. */
+function ocr_enabled_for_user(): bool { return is_superadmin() || setting('ocr_enabled', '0') === '1'; }
 /** Kennet coordinator: triages requests and assigns them, but no settings/edit/sign. */
 function is_coordinator(): bool { return user_role() === 'coordinator'; }
 /** May see all requests and assign them to officers. */

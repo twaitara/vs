@@ -58,7 +58,7 @@ layout_header($id ? 'Edit Bank Valuation' : 'New Bank Valuation', 'bank');
     <?= f_input('country_of_origin','Country of Origin',$row) ?>
     <?= f_input('serial_no','Serial No. (auto)',$row,'text',false,'readonly') ?>
     <?= f_input('make','Make/Model',$row,'text',false) ?>
-    <?= f_input('chasis_no','Chasis No.',$row) ?>
+    <?= f_input_ocr('chasis_no','Chasis No.',$row,'vin') ?>
     <?= f_input('body_type','Body Type',$row) ?>
     <?= f_input('customer_name','Customer Name',$row,'text',false) ?>
     <?= f_input('phone_no','Phone Number',$row) ?>
@@ -76,7 +76,7 @@ layout_header($id ? 'Edit Bank Valuation' : 'New Bank Valuation', 'bank');
   </div></fieldset>
 
   <fieldset><legend>Engine & Mileage</legend><div class="grid">
-    <?= f_input('mileage','Odometer Reading (KMS / MI / HRS)',$row,'text',false,'placeholder="e.g. 85000 KMS or 3200 HRS"') ?>
+    <?= f_input_ocr('mileage','Odometer Reading (KMS / MI / HRS)',$row,'digits','text','placeholder="e.g. 85000 KMS or 3200 HRS"') ?>
     <?= f_input('colour','Colour',$row) ?>
     <?= f_input('engine_no','Engine No.',$row) ?>
     <?= f_input('engine_capacity','Engine Capacity (cc)',$row) ?>

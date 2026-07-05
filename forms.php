@@ -35,6 +35,16 @@ function f_money(string $name, string $label, array $row, bool $req = false, boo
         . ($words ? '<small class="words-preview muted"></small>' : '') . field_err($name) . '</div>';
 }
 
+/** Like f_input, but adds a "Scan" (photo→text) button when OCR is enabled for the user.
+ *  $mode: 'vin' (chassis, check-digit verified) or 'digits' (odometer etc.). */
+function f_input_ocr(string $name, string $label, array $row, string $mode = 'digits', string $type = 'text', string $attrs = ''): string {
+    $base = f_input($name, $label, $row, $type, false, $attrs);
+    if (!function_exists('ocr_enabled_for_user') || !ocr_enabled_for_user()) return $base;
+    $scan = '<div class="ocr-row"><button type="button" class="ocr-btn" data-ocr-target="' . e($name) . '" data-ocr-mode="' . e($mode) . '"><i data-lucide="camera"></i> Scan</button>'
+          . '<span class="ocr-status" data-ocr-status="' . e($name) . '"></span></div>';
+    return preg_replace('#</div>\s*$#', $scan . '</div>', $base, 1);
+}
+
 /** A labelled textarea. */
 function f_text(string $name, string $label, array $row, string $ph = ''): string {
     $v = e($row[$name] ?? '');

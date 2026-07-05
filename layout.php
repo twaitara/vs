@@ -710,6 +710,16 @@ function form_assets(): void { ?>
   }
 })();
 </script>
+<?php if (function_exists('ocr_enabled_for_user') && ocr_enabled_for_user()): ?>
+<style>
+  .ocr-row{display:flex;align-items:center;gap:8px;margin-top:5px;flex-wrap:wrap}
+  .ocr-btn{display:inline-flex;align-items:center;gap:6px;background:var(--chip);border:1px solid var(--line);color:var(--txt);padding:5px 10px;border-radius:7px;font-size:12px;cursor:pointer}
+  .ocr-btn:hover{background:var(--hover,#2b3340)} .ocr-btn i{width:14px;height:14px;color:#5b9bff}
+  .ocr-status{font-size:11.5px;color:var(--mut)}
+  .ocr-status.busy{color:#f5b14a}.ocr-status.ok{color:#3ddc84}.ocr-status.warn{color:#f5b14a}.ocr-status.err{color:#f5a3a3}
+</style>
+<script src="<?= url('ocr.js') ?>"></script>
+<?php endif; ?>
 <?php }
 
 function layout_footer(): void { ?>

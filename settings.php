@@ -33,6 +33,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (is_superadmin() && isset($_POST['_signall_form'])) {
         set_setting('sign_all_enabled', !empty($_POST['sign_all_enabled']) ? '1' : '0');
     }
+    if (is_superadmin() && isset($_POST['_ocr_form'])) {
+        set_setting('ocr_enabled', !empty($_POST['ocr_enabled']) ? '1' : '0');
+    }
     if (is_superadmin() && isset($_POST['_modules_form'])) {
         foreach (array_keys(modules_list()) as $mk) set_setting('mod_' . $mk, !empty($_POST['mod_' . $mk]) ? '1' : '0');
     }
@@ -139,6 +142,14 @@ settings_nav('general');
   <h3 style="margin-top:0">Bulk "Sign all matching" <span class="muted" style="font-size:12px;font-weight:400">(super admin only)</span></h3>
   <p class="muted" style="font-size:13px">Controls the green <b>Sign all matching</b> button on the valuation lists, which signs every unsigned report in the current filter at once. Turn it off when you're done with the one-time bulk signing.</p>
   <label style="display:flex;gap:8px;align-items:center;font-size:14px;margin:6px 0"><input type="checkbox" name="sign_all_enabled" value="1" <?= sign_all_enabled() ? 'checked' : '' ?>> Enable the “Sign all matching” button</label>
+  <button class="btn" type="submit" style="margin-top:10px"><i data-lucide="save"></i>Save</button>
+</form>
+
+<form class="card" method="post" style="max-width:680px;border-color:#7a5c1c">
+  <?= csrf_field() ?><input type="hidden" name="_ocr_form" value="1">
+  <h3 style="margin-top:0">Photo → Text scanning <span class="muted" style="font-size:12px;font-weight:400">(prototype · super admin only)</span></h3>
+  <p class="muted" style="font-size:13px">Lets valuers snap a photo of the chassis (VIN) or odometer and read it into the field. Always on for you (super admin) to test; tick to switch it on for all valuers.</p>
+  <label style="display:flex;gap:8px;align-items:center;font-size:14px;margin:6px 0"><input type="checkbox" name="ocr_enabled" value="1" <?= setting('ocr_enabled','0') === '1' ? 'checked' : '' ?>> Enable photo scanning for everyone</label>
   <button class="btn" type="submit" style="margin-top:10px"><i data-lucide="save"></i>Save</button>
 </form>
 
