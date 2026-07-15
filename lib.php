@@ -47,6 +47,10 @@ function db(): PDO {
             PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
             PDO::ATTR_EMULATE_PREPARES   => false,
         ]);
+        // Relax STRICT mode so valuations can be saved partially ("save early, finish later").
+        // Many legacy columns are NOT NULL without a default; strict MySQL would 500 on an
+        // incomplete save. Non-strict lets MySQL fill implicit defaults instead.
+        try { $pdo->exec("SET SESSION sql_mode = 'NO_ENGINE_SUBSTITUTION'"); } catch (Throwable $e) {}
     }
     return $pdo;
 }
