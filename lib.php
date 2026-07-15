@@ -79,7 +79,7 @@ function route_pages(): array {
     return [
         'index.php','dashboard.php','bank_list.php','insurance_list.php','machine_list.php',
         'bank_form.php','insurance_form.php','machine_form.php',
-        'requests.php','analytics.php','settings.php','settings_email.php','profile.php',
+        'requests.php','pending_figures.php','analytics.php','settings.php','settings_email.php','profile.php',
         'users.php','client_users.php','clients.php','insurers.php','types.php','fuels.php',
         'audit.php','recycle.php','assign_valuers.php',
         'duplicate.php','sign.php','preview.php','print.php','export.php','send_report.php','backup.php',
@@ -1012,6 +1012,42 @@ function portal_may_view(string $table, int $valuationId): bool {
 /** Map a valuation table to its edit-form page. */
 function table_form(?string $t): string {
     return ['valuations' => 'insurance_form.php', 'machinevaluations' => 'machine_form.php'][$t] ?? 'bank_form.php';
+}
+
+/** Valuations a valuer has saved but that still need the admin to enter the figures. */
+function pending_figures_defs(): array {
+    return [
+        ['bankvaluations',    'market_value',   'reg_no',       'bank',      'bank_form.php'],
+        ['valuations',        'assessed_value', 'reg_no',       'insurance', 'insurance_form.php'],
+        ['machinevaluations', 'market_value',   'machine_name', 'machine',   'machine_form.php'],
+    ];
+}
+function pending_figures_count(): int {
+    $n = 0;
+    foreach (pending_figures_defs() as [$t, $vf, $reg]) {
+        if (!table_exists($t) || !column_exists($t, $vf)) continue;
+        $del = column_exists($t, 'deleted_at') ? ' AND deleted_at IS NULL' : '';
+        $sgn = column_exists($t, 'signed_at') ? ' AND signed_at IS NULL' : '';
+        try { $n += (int)db()->query("SELECT COUNT(*) FROM `$t` WHERE (`$vf` IS NULL OR `$vf`=0) AND `$reg` IS NOT NULL AND `$reg`<>''$del$sgn")->fetchColumn(); }
+        catch (Throwable $e) {}
+    }
+    return $n;
+}
+function pending_figures_rows(): array {
+    $out = [];
+    foreach (pending_figures_defs() as [$t, $vf, $reg, $type, $form]) {
+        if (!table_exists($t) || !column_exists($t, $vf)) continue;
+        $del = column_exists($t, 'deleted_at') ? ' AND deleted_at IS NULL' : '';
+        $sgn = column_exists($t, 'signed_at') ? ' AND signed_at IS NULL' : '';
+        $cb  = column_exists($t, 'created_by') ? 'created_by' : "'' AS created_by";
+        try {
+            $st = db()->query("SELECT id, `$reg` AS label, created_at, $cb FROM `$t`
+                WHERE (`$vf` IS NULL OR `$vf`=0) AND `$reg` IS NOT NULL AND `$reg`<>''$del$sgn ORDER BY id DESC LIMIT 200");
+            foreach ($st->fetchAll() as $r) { $r['type'] = $type; $r['form'] = $form; $out[] = $r; }
+        } catch (Throwable $e) {}
+    }
+    usort($out, fn($a, $b) => strcmp((string)($b['created_at'] ?? ''), (string)($a['created_at'] ?? '')));
+    return $out;
 }
 
 /** Load a saved autosave draft for opening in a form. Admins/coordinators see any; valuers only their own. */

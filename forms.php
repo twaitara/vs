@@ -25,14 +25,16 @@ function f_input(string $name, string $label, array $row, string $type = 'text',
 }
 
 /** A money input (text + class so JS can add live thousands separators). */
-function f_money(string $name, string $label, array $row, bool $req = false, bool $words = false, string $fillWords = ''): string {
+function f_money(string $name, string $label, array $row, bool $req = false, bool $words = false, string $fillWords = '', bool $lock = false): string {
     $v = e($row[$name] ?? '');
     $r = $req ? ' required' : '';
     $w = $words ? ' data-words="1"' : '';
     $fw = $fillWords !== '' ? ' data-words-fill="' . e($fillWords) . '"' : ''; // auto-fill another field with the amount in words
+    $dis  = $lock ? ' disabled' : '';                                        // valuers can't enter figures — admin only
+    $note = $lock ? '<small class="muted" style="display:block;font-size:11px;margin-top:3px">🔒 Entered by an admin</small>' : '';
     return '<div class="f' . err_class($name) . '"><label class="f">' . e($label) . '</label>'
-        . '<input type="text" class="money" inputmode="decimal" name="' . e($name) . '" value="' . $v . '"' . $r . $w . $fw . '>'
-        . ($words ? '<small class="words-preview muted"></small>' : '') . field_err($name) . '</div>';
+        . '<input type="text" class="money" inputmode="decimal" name="' . e($name) . '" value="' . $v . '"' . $r . $w . $fw . $dis . '>'
+        . ($words ? '<small class="words-preview muted"></small>' : '') . $note . field_err($name) . '</div>';
 }
 
 /** Like f_input, but adds a "Scan" (photo→text) button when OCR is enabled for the user.

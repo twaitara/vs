@@ -12,6 +12,9 @@ function layout_header(string $title, string $active = ''): void {
         $pend = pending_request_count();
         $nav['requests'] = ['label' => 'Requests', 'href' => 'requests.php', 'icon' => 'inbox', 'badge' => $pend];
     }
+    if (is_admin()) {
+        $nav['pending'] = ['label' => 'Pending Figures', 'href' => 'pending_figures.php', 'icon' => 'calculator', 'badge' => pending_figures_count()];
+    }
     if (is_admin() && module_enabled('analytics')) $nav['analytics'] = ['label' => 'Analytics', 'href' => 'analytics.php', 'icon' => 'bar-chart-3'];
     // Settings hub is admin-only.
     if (is_admin()) $nav['settings'] = ['label' => 'Settings', 'href' => 'settings.php', 'icon' => 'settings'];
@@ -301,6 +304,7 @@ function layout_header(string $title, string $active = ''): void {
   .nav .lucide-bar-chart-3{color:#b18cff}
   .nav .lucide-settings{color:#f5b14a}
   .nav .lucide-inbox{color:#38bdf8}
+  .nav .lucide-calculator{color:#f5b14a}
   .nav a{position:relative}
   .navbadge{margin-left:auto;background:var(--accent);color:#fff;font-size:11px;font-weight:700;min-width:18px;height:18px;line-height:18px;text-align:center;border-radius:9px;padding:0 5px}
   #navInstall{display:none}

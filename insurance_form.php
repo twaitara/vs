@@ -155,7 +155,7 @@ layout_header($id ? 'Edit Insurance Valuation' : 'New Insurance Valuation', 'ins
   <?php endforeach; ?>
 
   <fieldset><legend>Vehicle Valuation</legend><div class="grid">
-    <?= f_money('assessed_value','Assessed Value',$row,false,true) ?>
+    <?= f_money('assessed_value','Assessed Value',$row,false,true,'',!is_admin()) ?>
     <?= f_input('inspection_date','Inspection Date',$row,'date') ?>
     <?= f_input('inspection_officer','Inspection Officer',$row) ?>
     <?= f_input('insurance_officer','Insurance Officer (requested by)',$row) ?>

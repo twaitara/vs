@@ -94,8 +94,8 @@ layout_header($id ? 'Edit Bank Valuation' : 'New Bank Valuation', 'bank');
   </div></fieldset>
 
   <fieldset><legend>Vehicle Valuation</legend><div class="grid">
-    <?= f_money('market_value','Market Value',$row,false,true) ?>
-    <?= f_money('forced_value','Forced Value',$row,false,true) ?>
+    <?= f_money('market_value','Market Value',$row,false,true,'',!is_admin()) ?>
+    <?= f_money('forced_value','Forced Value',$row,false,true,'',!is_admin()) ?>
     <?= f_text('note_value','Note Value',$row,'W/S value estimated at 00000/= R/CD/TV value estimated at 00000/= REMARKS:') ?>
     <?= f_text('notes','N.B.',$row) ?>
     <?= f_text('extras','Extras',$row) ?>
