@@ -502,7 +502,12 @@ function emailReport(id, type){
  * tabbed wizard, live money formatting + value-in-words, auto-uppercase,
  * auto-save draft, image dropzone/thumbnails, and inline quick-add for lookups.
  */
-function form_assets(): void { ?>
+function form_assets(): void {
+    if (($_GET['draft'] ?? '') !== '' && function_exists('open_form_draft')) {
+        $d = open_form_draft((int)$_GET['draft']);
+        if ($d) echo '<script>window.__loadDraft=' . json_encode($d['payload']) . ';window.__loadDraftMeta=' . json_encode(['who' => $d['who']]) . ';</script>';
+    }
+    ?>
 <style>
   .wizard.tabbed > fieldset{display:none}
   .wizard.tabbed > fieldset.active{display:block}
@@ -662,13 +667,44 @@ function form_assets(): void { ?>
   var df=document.querySelector('form[data-draft]');
   if(df && window.localStorage){
     var key='draft_'+df.dataset.draft;
+    var dkeyRaw=df.dataset.draft||'';
+    var dform=dkeyRaw.indexOf('machine')===0?'machine':(dkeyRaw.indexOf('ins')===0?'insurance':'bank');
+    var drid=(dkeyRaw.match(/(\d+)$/)||['',''])[1]||'';
     var fields=function(){return df.querySelectorAll('input[name]:not([type=file]):not([type=hidden]):not([name=_csrf]),select[name],textarea[name]');};
     var pad=function(n){return (n<10?'0':'')+n;};
     var clock=function(d){return pad(d.getHours())+':'+pad(d.getMinutes())+':'+pad(d.getSeconds());};
+    var regEl=function(){return df.querySelector('[name="reg_no"]')||df.querySelector('[name="machine_name"]');};
 
     // status pill
     var note=document.createElement('div'); note.className='autosave-note'; note.textContent='Autosave on';
     df.appendChild(note);
+
+    // ---- server-side autosave (so admins can see drafts) ----
+    var lastPush=0;
+    function labelVal(o){ return (o.reg_no||o.machine_name||'').toString().slice(0,150); }
+    function serverSave(o,beacon){
+      try{
+        var fd=new FormData(); fd.append('_csrf',CSRF); fd.append('action','save');
+        fd.append('key',dkeyRaw); fd.append('form',dform); fd.append('rid',drid);
+        fd.append('label',labelVal(o)); fd.append('data',JSON.stringify(o));
+        if(beacon && navigator.sendBeacon) navigator.sendBeacon('<?= url('draft_sync.php') ?>',fd);
+        else fetch('<?= url('draft_sync.php') ?>',{method:'POST',body:fd}).catch(function(){});
+      }catch(e){}
+    }
+    function serverDelete(){ try{ var fd=new FormData(); fd.append('_csrf',CSRF); fd.append('action','delete'); fd.append('key',dkeyRaw);
+      if(navigator.sendBeacon) navigator.sendBeacon('<?= url('draft_sync.php') ?>',fd); else fetch('<?= url('draft_sync.php') ?>',{method:'POST',body:fd}).catch(function(){}); }catch(e){} }
+
+    // ---- open a draft the admin (or the valuer) picked from the dashboard ----
+    if(window.__loadDraft){ try{
+      var o0=window.__loadDraft;
+      fields().forEach(function(el){ if(o0[el.name]!=null){ if(el.type==='radio'){el.checked=(el.value===o0[el.name]);} else el.value=o0[el.name]; } });
+      df.querySelectorAll('input.money').forEach(function(m){m.dispatchEvent(new Event('input'));});
+      var who=((window.__loadDraftMeta&&window.__loadDraftMeta.who)||'a valuer').toString().replace(/[<>&"]/g,'');
+      var bl=document.createElement('div'); bl.className='draft-bar';
+      bl.innerHTML='<span><i data-lucide="folder-open" style="width:15px;height:15px;vertical-align:-3px"></i> Opened '+who+'’s draft. You can review, edit and save it.</span>';
+      df.parentNode.insertBefore(bl,df); if(window.refreshIcons)refreshIcons();
+      note.textContent='Draft loaded';
+    }catch(e){} }
 
     // restore banner if a draft exists
     var saved=localStorage.getItem(key);
@@ -680,21 +716,25 @@ function form_assets(): void { ?>
       df.parentNode.insertBefore(bar, df); if(window.refreshIcons)refreshIcons();
       bar.querySelector('#dRestore').onclick=function(){var o=prev.d||prev;fields().forEach(function(el){if(o[el.name]!=null){if(el.type==='radio'){el.checked=(el.value===o[el.name]);}else el.value=o[el.name];}});
         df.querySelectorAll('input.money').forEach(function(m){m.dispatchEvent(new Event('input'));}); bar.remove(); note.textContent='Draft restored';};
-      bar.querySelector('#dDiscard').onclick=function(){localStorage.removeItem(key);bar.remove();};
+      bar.querySelector('#dDiscard').onclick=function(){localStorage.removeItem(key);serverDelete();bar.remove();};
     }catch(e){} }
 
-    function save(){
-      var reg=df.querySelector('[name="reg_no"]');
-      if(!reg || reg.value.trim()===''){ note.classList.remove('ok'); note.textContent='Autosave starts once you enter the Reg No'; return; }
-      var o={}; fields().forEach(function(el){ if(el.type==='radio'){ if(el.checked)o[el.name]=el.value; } else o[el.name]=el.value; });
+    function collect(){ var o={}; fields().forEach(function(el){ if(el.type==='radio'){ if(el.checked)o[el.name]=el.value; } else o[el.name]=el.value; }); return o; }
+    function save(beacon){
+      var reg=regEl();
+      if(!reg || reg.value.trim()===''){ note.classList.remove('ok'); note.textContent='Autosave starts once you enter the Reg / Machine'; return; }
+      var o=collect();
       try{ localStorage.setItem(key, JSON.stringify({t:Date.now(), d:o})); note.textContent='Draft saved '+clock(new Date()); note.classList.add('ok'); }catch(e){}
+      var now=Date.now();
+      if(beacon){ serverSave(o,true); }
+      else if(now-lastPush>4000){ lastPush=now; serverSave(o,false); }
     }
     var t;
     df.addEventListener('input', function(){ clearTimeout(t); t=setTimeout(save, 400); });
     df.addEventListener('change', save);            // selects, radios
-    document.addEventListener('visibilitychange', function(){ if(document.hidden) save(); });
-    window.addEventListener('pagehide', save);      // closing / navigating away
-    df.addEventListener('submit', function(){ try{localStorage.removeItem(key);}catch(e){} });
+    document.addEventListener('visibilitychange', function(){ if(document.hidden) save(true); });
+    window.addEventListener('pagehide', function(){ save(true); });   // closing / navigating away
+    df.addEventListener('submit', function(){ try{localStorage.removeItem(key);}catch(e){} serverDelete(); });
   }
 
   // ---------- online-activity heartbeat: report the reg being worked on ----------

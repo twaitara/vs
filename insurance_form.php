@@ -53,6 +53,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (is_admin() && !empty($_POST['valuer_id'])) $extra['created_by'] = (int)$_POST['valuer_id'];
         $newId = save_row('valuations', $COLUMNS, $_POST, $id, $extra);
         request_touch_progress('valuations', (int)$newId);
+        delete_form_draft('ins' . ($id ? (int)$id : 'new'));
         if (($_POST['status'] ?? '') === 'complete') request_complete_for('valuations', [(int)$newId]);
         audit($id ? 'update' : 'create', 'valuation', $newId, $_POST['reg_no'] ?? '');
         flash($id ? 'Insurance valuation updated.' : 'Valuation added successfully.');

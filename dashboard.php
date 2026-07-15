@@ -74,6 +74,20 @@ try {
     }
 } catch (Throwable $e) {}
 
+// Drafts valuers are currently working on (admins/coordinators see all; a valuer sees own).
+$drafts = [];
+if (table_exists('form_drafts')) {
+    try {
+        if (is_admin() || can_assign()) {
+            $drafts = db()->query("SELECT fd.*, us.name AS uname FROM form_drafts fd LEFT JOIN users us ON us.id=fd.user_id ORDER BY fd.updated_at DESC LIMIT 20")->fetchAll();
+        } elseif (user_role() === 'valuer') {
+            $st = db()->prepare("SELECT fd.*, ? AS uname FROM form_drafts fd WHERE fd.user_id=? ORDER BY fd.updated_at DESC LIMIT 20");
+            $st->execute([current_user()['name'] ?? 'You', (int)(current_user()['id'] ?? 0)]);
+            $drafts = $st->fetchAll();
+        }
+    } catch (Throwable $e) {}
+}
+
 $cur = setting('currency', CURRENCY);
 $hour = (int)date('G');
 $greet = $hour < 12 ? 'Good morning' : ($hour < 17 ? 'Good afternoon' : 'Good evening');
@@ -136,6 +150,31 @@ layout_header('Dashboard', 'dashboard');
     </tbody>
   </table>
   <?php endif; ?>
+</div>
+<?php endif; ?>
+
+<?php if ($drafts): $draftPage = ['bank'=>'bank_form.php','insurance'=>'insurance_form.php','machine'=>'machine_form.php']; ?>
+<div class="panel reqpanel" style="border-color:#7a5c1c">
+  <div class="panel-h"><i data-lucide="file-pen" style="width:16px;height:16px;vertical-align:-2px;color:#f5b14a"></i>
+    Drafts in progress <span class="reqcount" style="background:#c98a1a"><?= count($drafts) ?></span>
+    <span class="muted" style="font-weight:400;font-size:12px;margin-left:6px"><?= (is_admin() || can_assign()) ? 'what valuers are working on now' : 'your unsaved work' ?></span>
+  </div>
+  <table class="list">
+    <thead><tr><th>Reg / Machine</th><th>Type</th><th>Valuer</th><th>Last edited</th><th></th></tr></thead>
+    <tbody>
+    <?php foreach ($drafts as $d):
+        $pg = $draftPage[$d['form'] ?? 'bank'] ?? 'bank_form.php';
+        $href = url($pg . ($d['record_id'] ? ('?id=' . (int)$d['record_id'] . '&draft=' . (int)$d['id']) : ('?draft=' . (int)$d['id']))); ?>
+      <tr>
+        <td><b><?= e($d['label'] ?: '—') ?></b></td>
+        <td><?= ucfirst($d['form'] ?? '') ?></td>
+        <td class="muted"><?= e($d['uname'] ?: '—') ?></td>
+        <td class="muted"><?= e(ddate($d['updated_at'])) ?></td>
+        <td class="actions"><a class="rbtn" href="<?= $href ?>"><i data-lucide="folder-open"></i>Open draft</a></td>
+      </tr>
+    <?php endforeach; ?>
+    </tbody>
+  </table>
 </div>
 <?php endif; ?>
 

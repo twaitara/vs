@@ -37,6 +37,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (is_admin() && !empty($_POST['valuer_id'])) $files['created_by'] = (int)$_POST['valuer_id'];
         $newId = save_row('bankvaluations', $COLUMNS, $_POST, $id, $files);
         request_touch_progress('bankvaluations', (int)$newId);
+        delete_form_draft('bank' . ($id ? (int)$id : 'new'));
         if (($_POST['status'] ?? '') === 'complete') request_complete_for('bankvaluations', [(int)$newId]);
         audit($id ? 'update' : 'create', 'bankvaluation', $newId, $_POST['reg_no'] ?? '');
         flash($id ? 'Bank valuation updated.' : 'Bank valuation saved.');

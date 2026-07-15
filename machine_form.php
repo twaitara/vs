@@ -35,6 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (is_admin() && !empty($_POST['valuer_id'])) $files['created_by'] = (int)$_POST['valuer_id'];
         $newId = save_row('machinevaluations', $COLUMNS, $_POST, $id, $files);
         request_touch_progress('machinevaluations', (int)$newId);
+        delete_form_draft('machine' . ($id ? (int)$id : 'new'));
         if (($_POST['status'] ?? '') === 'complete') request_complete_for('machinevaluations', [(int)$newId]);
         audit($id ? 'update' : 'create', 'machinevaluation', $newId, $_POST['machine_name'] ?? '');
         flash($id ? 'Machine valuation updated.' : 'Machine valuation saved.');

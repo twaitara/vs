@@ -1014,6 +1014,26 @@ function table_form(?string $t): string {
     return ['valuations' => 'insurance_form.php', 'machinevaluations' => 'machine_form.php'][$t] ?? 'bank_form.php';
 }
 
+/** Load a saved autosave draft for opening in a form. Admins/coordinators see any; valuers only their own. */
+function open_form_draft(int $id): ?array {
+    if (!$id || !table_exists('form_drafts')) return null;
+    $u = current_user(); if (!$u) return null;
+    try {
+        $st = db()->prepare("SELECT fd.*, us.name AS uname FROM form_drafts fd LEFT JOIN users us ON us.id=fd.user_id WHERE fd.id=?");
+        $st->execute([$id]);
+        $r = $st->fetch(); if (!$r) return null;
+        if (!sees_all_valuations() && (int)$r['user_id'] !== (int)$u['id']) return null;
+        $arr = json_decode((string)($r['payload'] ?? ''), true);
+        return ['payload' => is_array($arr) ? $arr : [], 'who' => $r['uname'] ?? 'a valuer'];
+    } catch (Throwable $e) { return null; }
+}
+/** Remove a server draft after the valuation is saved. */
+function delete_form_draft(string $key): void {
+    if ($key === '' || !table_exists('form_drafts')) return;
+    $u = current_user(); if (!$u) return;
+    try { db()->prepare("DELETE FROM form_drafts WHERE user_id=? AND draft_key=?")->execute([(int)$u['id'], $key]); } catch (Throwable $e) {}
+}
+
 /** Kennet officers (valuers) available to receive an assignment: id => "Name (INI)". */
 function officer_list(): array {
     $out = [];
