@@ -18,8 +18,10 @@ error_reporting(E_ALL);
 if (session_status() !== PHP_SESSION_ACTIVE) {
     $secure = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
         || (($_SERVER['SERVER_PORT'] ?? '') == 443);
+    $SESSION_TTL = 30 * 86400; // stay logged in for 30 days
+    @ini_set('session.gc_maxlifetime', (string)$SESSION_TTL);
     session_set_cookie_params([
-        'lifetime' => 0,
+        'lifetime' => $SESSION_TTL,   // persistent cookie so the browser keeps you signed in
         'path'     => '/',
         'secure'   => $secure,
         'httponly' => true,
@@ -28,9 +30,9 @@ if (session_status() !== PHP_SESSION_ACTIVE) {
     session_name('KENNETSESS');
     session_start();
 }
-// Idle timeout: 8 hours on desktop only — mobile sessions are not auto-logged-out.
-$IDLE = 8 * 3600;
-if (device_class() === 'desktop' && !empty($_SESSION['last_activity']) && (time() - $_SESSION['last_activity'] > $IDLE)) {
+// Only log out after 30 days of NO use (applies to every device).
+$IDLE = 30 * 86400;
+if (!empty($_SESSION['last_activity']) && (time() - $_SESSION['last_activity'] > $IDLE)) {
     $_SESSION = []; session_destroy(); session_start();
 }
 $_SESSION['last_activity'] = time();
@@ -218,34 +220,45 @@ function device_class(): string {
     $ua = $_SERVER['HTTP_USER_AGENT'] ?? '';
     return preg_match('/Mobi|Android|iPhone|iPod|IEMobile|BlackBerry|Opera Mini|Windows Phone/i', $ua) ? 'mobile' : 'desktop';
 }
-/** Record this login as the single active session for the user's device class (evicts the old one). */
+/** Max devices a user may be signed in on at once. */
+if (!defined('MAX_SESSIONS')) define('MAX_SESSIONS', 2);
+/** Record this login as one of the user's active sessions; keeps only the newest MAX_SESSIONS. */
 function register_session(int $uid): void {
     if (!$uid || !table_exists('user_sessions')) return;
-    $device = device_class();
-    $token  = bin2hex(random_bytes(16));
+    $token = bin2hex(random_bytes(16));
     $_SESSION['sess_token'] = $token;
-    $_SESSION['sess_device'] = $device;
     try {
-        db()->prepare("INSERT INTO user_sessions (user_id, device, token, created_at, last_seen) VALUES (?,?,?,NOW(),NOW())
-                       ON DUPLICATE KEY UPDATE token=VALUES(token), created_at=NOW(), last_seen=NOW()")
-            ->execute([$uid, $device, $token]);
+        db()->prepare("INSERT INTO user_sessions (user_id, token, device, created_at, last_seen) VALUES (?,?,?,NOW(),NOW())")
+            ->execute([$uid, $token, device_class()]);
+        // Keep only the newest MAX_SESSIONS for this user; a 3rd device evicts the oldest.
+        db()->prepare("DELETE FROM user_sessions WHERE user_id=? AND id NOT IN
+                       (SELECT id FROM (SELECT id FROM user_sessions WHERE user_id=? ORDER BY id DESC LIMIT " . (int)MAX_SESSIONS . ") t)")
+            ->execute([$uid, $uid]);
     } catch (Throwable $e) {}
 }
-/** True if this session is still the active one for its device class (not replaced by a newer login). */
+/** True if this session is still one of the user's active sessions (not evicted by newer logins). */
 function session_is_current(): bool {
     if (!table_exists('user_sessions')) return true;      // pre-migration
     $u = current_user(); if (!$u) return false;
     $tok = $_SESSION['sess_token'] ?? '';
     if ($tok === '') return true;                          // session predates this feature
-    $dev = $_SESSION['sess_device'] ?? device_class();
     try {
-        $st = db()->prepare("SELECT token FROM user_sessions WHERE user_id=? AND device=?");
-        $st->execute([(int)$u['id'], $dev]);
-        $row = $st->fetchColumn();
-        if ($row === false || !hash_equals((string)$row, $tok)) return false;
-        db()->prepare("UPDATE user_sessions SET last_seen=NOW() WHERE user_id=? AND device=?")->execute([(int)$u['id'], $dev]);
+        $st = db()->prepare("SELECT id FROM user_sessions WHERE user_id=? AND token=? LIMIT 1");
+        $st->execute([(int)$u['id'], $tok]);
+        if ($st->fetchColumn() === false) return false;   // evicted (3rd device pushed this one out)
+        db()->prepare("UPDATE user_sessions SET last_seen=NOW() WHERE token=?")->execute([$tok]);
         return true;
     } catch (Throwable $e) { return true; }
+}
+/** Mark a user/portal-user as recently active (drives the 30-day clock). Throttled to ~2×/day. */
+function bump_last_seen(string $table, int $id): void {
+    if (!$id) return;
+    $flag = 'lastseen_' . $table;
+    if (!empty($_SESSION[$flag]) && (time() - $_SESSION[$flag] < 43200)) return;
+    $_SESSION[$flag] = time();
+    if (column_exists($table, 'last_login_at')) {
+        try { db()->prepare("UPDATE `$table` SET last_login_at=NOW() WHERE id=?")->execute([$id]); } catch (Throwable $e) {}
+    }
 }
 /** The single super-admin (system owner) identified by email. */
 function is_superadmin(): bool {
@@ -624,6 +637,7 @@ function require_login(): void {
     if (!current_user()) redirect('login.php');
     if (!session_is_current()) { logout(); redirect('login.php?e=other'); }
     if (system_locked() && !is_superadmin()) { logout(); deny_unavailable(); }
+    bump_last_seen('users', (int)(current_user()['id'] ?? 0));
     touch_activity();
 }
 
@@ -718,8 +732,8 @@ function logout(): void {
     if ($u = current_user()) {
         audit('logout', 'user', $u['id']);
         try { db()->prepare('DELETE FROM user_activity WHERE user_id=?')->execute([$u['id']]); } catch (Throwable $e) {}
-        if (table_exists('user_sessions') && !empty($_SESSION['sess_device'])) {
-            try { db()->prepare('DELETE FROM user_sessions WHERE user_id=? AND device=?')->execute([(int)$u['id'], $_SESSION['sess_device']]); } catch (Throwable $e) {}
+        if (table_exists('user_sessions') && !empty($_SESSION['sess_token'])) {
+            try { db()->prepare('DELETE FROM user_sessions WHERE token=?')->execute([$_SESSION['sess_token']]); } catch (Throwable $e) {}
         }
     }
     $_SESSION = []; session_destroy();
@@ -731,6 +745,7 @@ function require_client(): void {
     if (!module_enabled('portal')) { if (current_client()) client_logout(); http_response_code(403); exit('The client portal is currently unavailable.'); }
     if (!current_client()) redirect('portal_login.php');
     if (system_locked()) { client_logout(); deny_unavailable(); }
+    bump_last_seen('client_users', (int)(current_client()['id'] ?? 0));
 }
 
 function attempt_client_login(string $email, string $password) {
