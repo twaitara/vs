@@ -85,32 +85,31 @@ function render_bank_report(array $val): string {
 <meta charset="UTF-8">
 <title>Vehicle Valuation Report</title>
 <style>
-    @page { margin: 6px 20px 6px 8px; }
+    @page { margin: 10px 40px 10px 0px; }
     #watermark { opacity:0.1; position:fixed; transform:rotate(45deg); bottom:13cm; left:5.5cm; width:8cm; height:8cm; z-index:-1000; }
-    body { font-family:Arial, sans-serif; font-size:9px; line-height:1.1; color:#333; margin:0; padding:4px; }
-    .container { width:100%; max-width:1000px; margin:0 auto; border:1px solid #ddd; padding:4px; box-sizing:border-box; }
+    body { font-family:Arial, sans-serif; font-size:12px; line-height:1.4; color:#333; margin:0; padding:20px; }
+    .container { width:100%; max-width:1000px; margin:0 auto; border:1px solid #ddd; padding:10px; box-sizing:border-box; }
     .header { display:flex; align-items:center; justify-content:center; }
-    .header_image { max-width:26%; float:left; }
+    .header_image { max-width:35%; float:left; }
     .header_text { text-align:center; color:red; }
-    .header .header_text h1 { margin:0; font-size:14px; color:red; }
+    .header .header_text h1 { margin:0; font-size:18px; color:red; }
     .company-info { border-bottom:1px solid #ddd; }
-    .company-info p { margin:1px 0; }
     .company-info p span { color:#d41d1dff; }
-    table { width:100%; border-collapse:collapse; margin-bottom:3px; font-weight:bold; }
-    th, td { border:1px solid #ddd; padding:2px 4px; text-align:left; vertical-align:top; }
-    td p { margin:1px 0; }
+    table { width:100%; border-collapse:collapse; margin-bottom:20px; font-weight:bold; }
+    th, td { border:1px solid #ddd; padding:8px; text-align:left; }
     th, td span { color:#080bc0ff; }
     th { background-color:#d5d2d282; font-weight:bold; color:#080bc0ff; }
-    .card { border:1px solid #ddd; margin-bottom:3px; border-radius:4px; page-break-inside:avoid; }
-    .card-header { background-color:#d5d2d282; padding:3px 6px; font-weight:bold; border-bottom:1px solid #ddd; }
-    .card-body { padding:4px 6px; }
-    .value-highlight { font-weight:bold; color:#9d9d9d; font-size:13px; margin:1px 0; }
-    .signature-area { margin-top:6px; padding-top:5px; border-top:1px dashed #ccc; page-break-inside:avoid; }
-    .footer { margin-top:10px; padding-top:6px; border-top:1px solid #ddd; text-align:center; font-size:9px; color:#666; }
-    .note { font-style:italic; color:#666; font-size:9px; margin:1px 0; }
+    .card { border:1px solid #ddd; margin-bottom:15px; border-radius:4px; }
+    .card-header { background-color:#d5d2d282; padding:8px 12px; font-weight:bold; border-bottom:1px solid #ddd; }
+    .card-body { padding:12px; }
+    .value-highlight { font-weight:bold; color:#9d9d9d; font-size:18px; }
+    /* keep the signature block together and compact so it never spills onto a new page */
+    .signature-area { margin-top:16px; padding-top:12px; border-top:1px dashed #ccc; page-break-inside:avoid; }
+    .footer { margin-top:30px; padding-top:15px; border-top:1px solid #ddd; text-align:center; font-size:11px; color:#666; }
+    .note { font-style:italic; color:#666; font-size:11px; }
     .text-center { text-align:center; }
-    .mb-0 { margin-bottom:0; } .mt-20 { margin-top:5px; }
-    .disclaimer p { color:#21490eff; margin:2px 0; }
+    .mb-0 { margin-bottom:0; } .mt-20 { margin-top:20px; }
+    .disclaimer p { color:#21490eff; }
 </style>
 </head>
 <?php if ($logo): ?><div id="watermark"><img src="<?= $logo ?>" height="120%" width="200%"></div><?php endif; ?>
@@ -174,6 +173,8 @@ function render_bank_report(array $val): string {
         <tr><td><?= $g('tyres') ?></td><td><?= $g('headlight_type') ?></td><td><?= $g('anti_theft') ?></td></tr>
     </table>
 
+    <div style="page-break-before: always;"></div>
+
     <table>
         <tr><th width="33%" class="text-center">Market Value</th><th width="33%" class="text-center">Forced Value</th><th width="34%" class="text-center">Note Value</th></tr>
         <tr>
@@ -221,11 +222,11 @@ function render_bank_report(array $val): string {
         <table>
             <tr>
                 <td width="50%"><p><span>Authorizing Signature:</span></p>
-                    <div style="height:42px; border-bottom:1px solid #ccc; text-align:center;"><?php if ($sig): ?><img src="<?= $sig ?>" style="max-height:42px; max-width:260px;"><?php endif; ?></div>
-                    <p class="note"><?php if ($signed): ?><strong style="color:#080bc0ff;font-size:12px;"><?= e($signatoryName) ?></strong><br><?php endif; ?>Name & Stamp</p>
-                    <?php if ($stamp): ?><img src="<?= $stamp ?>" style="max-height:55px;max-width:150px;"><?php endif; ?></td>
+                    <div style="height:55px; border-bottom:1px solid #ccc; text-align:center;"><?php if ($sig): ?><img src="<?= $sig ?>" style="max-height:54px; max-width:280px;"><?php endif; ?></div>
+                    <p class="note"><?php if ($signed): ?><strong style="color:#080bc0ff;font-size:13px;"><?= e($signatoryName) ?></strong><br><?php endif; ?>Name & Stamp</p>
+                    <?php if ($stamp): ?><img src="<?= $stamp ?>" style="max-height:62px;max-width:160px;"><?php endif; ?></td>
                 <td width="50%"><p><span>Date:</span></p>
-                    <div style="height:38px; border-bottom:1px solid #ccc; font-weight:bold; color:#080bc0ff;"><?= e($signedDate) ?></div></td>
+                    <div style="height:50px; border-bottom:1px solid #ccc; font-weight:bold; color:#080bc0ff;"><?= e($signedDate) ?></div></td>
             </tr>
         </table>
     </div>
