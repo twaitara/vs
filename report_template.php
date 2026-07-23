@@ -37,13 +37,9 @@ function report_words($number): string {
     return implode(' ', $words) . ' Shillings';
 }
 
-/** The date shown by the signature/stamp: the inspection date (falls back to the sign date). */
+/** The date shown by the signature/stamp: the date the report was signed. */
 function report_sign_date(array $val): string {
     if (empty($val['signed_at'])) return '';
-    foreach (['inspection_date', 'assesment_date'] as $fld) { // insurance uses inspection_date; bank/machine use assesment_date
-        $d = trim((string)($val[$fld] ?? ''));
-        if ($d !== '' && $d !== '0000-00-00') return date('d M Y', strtotime($d));
-    }
     return date('d M Y', strtotime((string)$val['signed_at']));
 }
 
