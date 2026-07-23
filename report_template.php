@@ -85,32 +85,32 @@ function render_bank_report(array $val): string {
 <meta charset="UTF-8">
 <title>Vehicle Valuation Report</title>
 <style>
-    @page { margin: 8px 26px 8px 8px; }
+    @page { margin: 6px 20px 6px 8px; }
     #watermark { opacity:0.1; position:fixed; transform:rotate(45deg); bottom:13cm; left:5.5cm; width:8cm; height:8cm; z-index:-1000; }
-    body { font-family:Arial, sans-serif; font-size:10px; line-height:1.18; color:#333; margin:0; padding:6px; }
-    .container { width:100%; max-width:1000px; margin:0 auto; border:1px solid #ddd; padding:6px; box-sizing:border-box; }
+    body { font-family:Arial, sans-serif; font-size:9px; line-height:1.1; color:#333; margin:0; padding:4px; }
+    .container { width:100%; max-width:1000px; margin:0 auto; border:1px solid #ddd; padding:4px; box-sizing:border-box; }
     .header { display:flex; align-items:center; justify-content:center; }
-    .header_image { max-width:32%; float:left; }
+    .header_image { max-width:26%; float:left; }
     .header_text { text-align:center; color:red; }
-    .header .header_text h1 { margin:0; font-size:16px; color:red; }
+    .header .header_text h1 { margin:0; font-size:14px; color:red; }
     .company-info { border-bottom:1px solid #ddd; }
-    .company-info p { margin:3px 0; }
+    .company-info p { margin:1px 0; }
     .company-info p span { color:#d41d1dff; }
-    table { width:100%; border-collapse:collapse; margin-bottom:5px; font-weight:bold; }
-    th, td { border:1px solid #ddd; padding:3px 5px; text-align:left; }
-    td p { margin:2px 0; }
+    table { width:100%; border-collapse:collapse; margin-bottom:3px; font-weight:bold; }
+    th, td { border:1px solid #ddd; padding:2px 4px; text-align:left; vertical-align:top; }
+    td p { margin:1px 0; }
     th, td span { color:#080bc0ff; }
     th { background-color:#d5d2d282; font-weight:bold; color:#080bc0ff; }
-    .card { border:1px solid #ddd; margin-bottom:5px; border-radius:4px; page-break-inside:avoid; }
-    .card-header { background-color:#d5d2d282; padding:4px 8px; font-weight:bold; border-bottom:1px solid #ddd; }
-    .card-body { padding:6px 8px; }
-    .value-highlight { font-weight:bold; color:#9d9d9d; font-size:15px; margin:2px 0; }
-    .signature-area { margin-top:10px; padding-top:6px; border-top:1px dashed #ccc; page-break-inside:avoid; }
-    .footer { margin-top:14px; padding-top:8px; border-top:1px solid #ddd; text-align:center; font-size:10px; color:#666; }
-    .note { font-style:italic; color:#666; font-size:10px; margin:2px 0; }
+    .card { border:1px solid #ddd; margin-bottom:3px; border-radius:4px; page-break-inside:avoid; }
+    .card-header { background-color:#d5d2d282; padding:3px 6px; font-weight:bold; border-bottom:1px solid #ddd; }
+    .card-body { padding:4px 6px; }
+    .value-highlight { font-weight:bold; color:#9d9d9d; font-size:13px; margin:1px 0; }
+    .signature-area { margin-top:6px; padding-top:5px; border-top:1px dashed #ccc; page-break-inside:avoid; }
+    .footer { margin-top:10px; padding-top:6px; border-top:1px solid #ddd; text-align:center; font-size:9px; color:#666; }
+    .note { font-style:italic; color:#666; font-size:9px; margin:1px 0; }
     .text-center { text-align:center; }
-    .mb-0 { margin-bottom:0; } .mt-20 { margin-top:8px; }
-    .disclaimer p { color:#21490eff; }
+    .mb-0 { margin-bottom:0; } .mt-20 { margin-top:5px; }
+    .disclaimer p { color:#21490eff; margin:2px 0; }
 </style>
 </head>
 <?php if ($logo): ?><div id="watermark"><img src="<?= $logo ?>" height="120%" width="200%"></div><?php endif; ?>
