@@ -5,6 +5,7 @@
  * viewer's own company, and only when the token matches.
  */
 require_once __DIR__ . '/report_template.php'; // pulls lib.php + the load_* helpers
+require_once __DIR__ . '/portal_layout.php';   // portal_header/portal_footer + require_client
 require_client(); // portal (bank) users only
 
 $type = $_GET['t'] ?? 'bank';
