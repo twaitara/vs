@@ -988,6 +988,43 @@ function table_type(?string $t): string {
 function type_table(?string $t): string {
     return ['insurance' => 'valuations', 'machine' => 'machinevaluations'][$t] ?? 'bankvaluations';
 }
+
+// ---------------- QR code + report verification ----------------
+/** Render text as a QR-code PNG data URI (bundled pure-PHP encoder + GD). */
+function qr_png_data_uri(string $text, int $scale = 4, int $margin = 4): string {
+    require_once __DIR__ . '/lib_qr/qrcode.php';
+    try {
+        $qr = QRCode::getMinimumQRCode($text, QR_ERROR_CORRECT_LEVEL_M);
+        $n = $qr->getModuleCount();
+        $size = ($n + 2 * $margin) * $scale;
+        $im = imagecreatetruecolor($size, $size);
+        $w = imagecolorallocate($im, 255, 255, 255);
+        $b = imagecolorallocate($im, 0, 0, 0);
+        imagefilledrectangle($im, 0, 0, $size, $size, $w);
+        for ($r = 0; $r < $n; $r++) for ($c = 0; $c < $n; $c++) if ($qr->isDark($r, $c)) {
+            $x = ($c + $margin) * $scale; $y = ($r + $margin) * $scale;
+            imagefilledrectangle($im, $x, $y, $x + $scale - 1, $y + $scale - 1, $b);
+        }
+        ob_start(); imagepng($im); $png = ob_get_clean(); imagedestroy($im);
+        return 'data:image/png;base64,' . base64_encode($png);
+    } catch (Throwable $e) { return ''; }
+}
+/** Stable secret for signing verification tokens (auto-created once, stored in settings). */
+function verify_secret(): string {
+    $s = setting('verify_secret', '');
+    if ($s === '') { $s = bin2hex(random_bytes(16)); set_setting('verify_secret', $s); }
+    return $s;
+}
+/** Tamper-proof token for a report so the QR link can't be forged or enumerated. */
+function verify_token(string $type, int $id): string {
+    return substr(hash_hmac('sha256', $type . ':' . $id, verify_secret()), 0, 20);
+}
+/** Absolute verify URL encoded into the report QR code. */
+function verify_url(string $type, int $id): string {
+    $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+    $host = $_SERVER['HTTP_HOST'] ?? $_SERVER['SERVER_NAME'] ?? 'nineonetwo.online';
+    return $scheme . '://' . $host . BASE_URL . '/verify.php?t=' . $type . '&id=' . $id . '&k=' . verify_token($type, $id);
+}
 /** The column holding the client-side officer who requested the valuation, per table. */
 function requesting_officer_field(string $table): string {
     return ['bankvaluations' => 'bank_officer', 'valuations' => 'insurance_officer', 'machinevaluations' => 'officer'][$table] ?? 'officer';

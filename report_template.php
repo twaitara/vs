@@ -43,6 +43,42 @@ function report_sign_date(array $val): string {
     return date('d M Y', strtotime((string)$val['signed_at']));
 }
 
+/**
+ * Faint diagonal watermark tiled across every page, carrying the key figures
+ * (registration/name, market value, forced value, date) so a scanned/printed
+ * page cannot be altered without the tampering showing.
+ * $forced may be null (insurance) to omit the forced value.
+ */
+function report_value_watermark(string $label, $primary, string $primaryLabel, $forced, string $date): string {
+    $cur   = setting('currency', CURRENCY);
+    $parts = [];
+    if (trim($label) !== '') $parts[] = strtoupper(trim($label));
+    $parts[] = $primaryLabel . ' ' . number_format((float)$primary) . ' ' . $cur;
+    if ($forced !== null && (float)$forced > 0) $parts[] = 'FV ' . number_format((float)$forced) . ' ' . $cur;
+    if (trim($date) !== '') $parts[] = $date;
+    $line = implode('   &middot;   ', array_map('e', $parts)); // escape parts, keep middot separators
+    $out  = '<div class="vwm">';
+    for ($i = 0; $i < 8; $i++) $out .= '<div class="vwm-line">' . $line . '</div>';
+    return $out . '</div>';
+}
+
+/** Small QR block that links to the bank-portal verification page (signed reports only). */
+function report_qr_block(?string $qrDataUri): string {
+    if (!$qrDataUri) return '';
+    return '<div style="text-align:center">'
+         . '<img src="' . $qrDataUri . '" style="width:104px;height:104px">'
+         . '<div class="note" style="margin-top:2px;font-size:10px">Scan to verify<br>(bank portal)</div>'
+         . '</div>';
+}
+
+/** CSS for the value watermark (shared by all report types). */
+function report_watermark_css(): string {
+    return '.vwm{position:fixed;top:2cm;left:-3cm;width:26cm;z-index:-900;opacity:0.06;'
+         . 'transform:rotate(-30deg);text-align:center;pointer-events:none;}'
+         . '.vwm-line{font-size:24px;font-weight:bold;color:#d41d1d;white-space:nowrap;'
+         . 'margin:40px 0;letter-spacing:1px;}';
+}
+
 /** Read an image file and return a data URI, or null if missing. */
 function report_img_data(string $absPath): ?string {
     if (!is_file($absPath)) return null;
@@ -78,6 +114,10 @@ function render_bank_report(array $val): string {
     $stampFile  = __DIR__ . '/' . ltrim(setting('stamp_image', 'storage/stamp.png'), '/');
     $stamp      = ($signed && is_file($stampFile)) ? report_img_data($stampFile) : null;
 
+    $wmDate = $signedDate ?: (string)($val['assesment_date'] ?? '');
+    $vwm = report_value_watermark($val['reg_no'] ?? '', $val['market_value'] ?? 0, 'MV', $val['forced_value'] ?? 0, $wmDate);
+    $qr  = $signed ? qr_png_data_uri(verify_url('bank', (int)($val['id'] ?? 0)), 3, 2) : '';
+
     ob_start(); ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -87,6 +127,7 @@ function render_bank_report(array $val): string {
 <style>
     @page { margin: 10px 40px 10px 0px; }
     #watermark { opacity:0.1; position:fixed; transform:rotate(45deg); bottom:13cm; left:5.5cm; width:8cm; height:8cm; z-index:-1000; }
+    <?= report_watermark_css() ?>
     body { font-family:Arial, sans-serif; font-size:12px; line-height:1.4; color:#333; margin:0; padding:20px; }
     .container { width:100%; max-width:1000px; margin:0 auto; border:1px solid #ddd; padding:10px; box-sizing:border-box; }
     .header { display:flex; align-items:center; justify-content:center; }
@@ -113,6 +154,7 @@ function render_bank_report(array $val): string {
 </style>
 </head>
 <?php if ($logo): ?><div id="watermark"><img src="<?= $logo ?>" height="120%" width="200%"></div><?php endif; ?>
+<?= $vwm ?>
 <body>
 <div class="container">
     <div class="header">
@@ -225,8 +267,9 @@ function render_bank_report(array $val): string {
                     <div style="height:55px; border-bottom:1px solid #ccc; text-align:center;"><?php if ($sig): ?><img src="<?= $sig ?>" style="max-height:54px; max-width:280px;"><?php endif; ?></div>
                     <p class="note"><?php if ($signed): ?><strong style="color:#080bc0ff;font-size:13px;"><?= e($signatoryName) ?></strong><br><?php endif; ?>Name & Stamp</p>
                     <?php if ($stamp): ?><img src="<?= $stamp ?>" style="max-height:62px;max-width:160px;"><?php endif; ?></td>
-                <td width="50%"><p><span>Date:</span></p>
+                <td width="<?= $qr ? '32%' : '50%' ?>"><p><span>Date:</span></p>
                     <div style="height:50px; border-bottom:1px solid #ccc; font-weight:bold; color:#080bc0ff;"><?= e($signedDate) ?></div></td>
+                <?php if ($qr): ?><td width="18%" style="text-align:center;vertical-align:top;"><?= report_qr_block($qr) ?></td><?php endif; ?>
             </tr>
         </table>
     </div>
@@ -311,11 +354,16 @@ function render_insurance_report(array $val): string {
         'Engine, Cooling & AC' => ['idling'=>'Starts & Idles OK','eng_mounts_damage'=>'Mountings/Belts Worn','oil_leaks'=>'Oil/Coolant Leaks','water_pump_ok'=>'Water Pump OK','radiator_damage'=>'Radiator Damage','air_con_damage'=>'AC Operates Well'],
     ];
 
+    $wmDate = $signedDate ?: (string)($val['inspection_date'] ?? '');
+    $vwm = report_value_watermark($val['reg_no'] ?? '', $val['assessed_value'] ?? 0, 'AV', null, $wmDate);
+    $qr  = $signed ? qr_png_data_uri(verify_url('insurance', (int)($val['id'] ?? 0)), 3, 2) : '';
+
     ob_start(); ?>
 <!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>Insurance Valuation Report</title>
 <style>
     @page { margin: 10px 40px 10px 0px; }
     #watermark { opacity:0.1; position:fixed; transform:rotate(45deg); bottom:13cm; left:5.5cm; width:8cm; height:8cm; z-index:-1000; }
+    <?= report_watermark_css() ?>
     body { font-family:Arial, sans-serif; font-size:12px; line-height:1.4; color:#333; margin:0; padding:20px; }
     .container { width:100%; max-width:1000px; margin:0 auto; border:1px solid #ddd; padding:10px; box-sizing:border-box; }
     .header { display:flex; align-items:center; justify-content:center; }
@@ -339,6 +387,7 @@ function render_insurance_report(array $val): string {
     .text-center{text-align:center;}
 </style></head>
 <?php if ($logo): ?><div id="watermark"><img src="<?= $logo ?>" height="120%" width="200%"></div><?php endif; ?>
+<?= $vwm ?>
 <body><div class="container">
     <div class="header">
         <div class="header_image"><?php if ($logo2): ?><img src="<?= $logo2 ?>" height="80" width="210"><?php endif; ?></div>
@@ -395,7 +444,8 @@ function render_insurance_report(array $val): string {
 
     <table><tr>
         <td width="50%"><p><span>Authorizing Signature:</span></p><div style="height:70px;border-bottom:1px solid #ccc;text-align:center;"><?php if ($sig): ?><img src="<?= $sig ?>" style="max-height:68px;max-width:300px;"><?php endif; ?></div><p class="note"><?php if ($signed): ?><strong style="color:#080bc0ff;font-size:13px;"><?= e($signatoryName) ?></strong><br><?php endif; ?>Name & Stamp</p><?php if ($stamp): ?><img src="<?= $stamp ?>" style="max-height:85px;max-width:170px;"><?php endif; ?></td>
-        <td width="50%"><p><span>Date:</span></p><div style="height:50px;border-bottom:1px solid #ccc;font-weight:bold;color:#080bc0ff;"><?= e($signedDate) ?></div></td>
+        <td width="<?= $qr ? '32%' : '50%' ?>"><p><span>Date:</span></p><div style="height:50px;border-bottom:1px solid #ccc;font-weight:bold;color:#080bc0ff;"><?= e($signedDate) ?></div></td>
+        <?php if ($qr): ?><td width="18%" style="text-align:center;vertical-align:top;"><?= report_qr_block($qr) ?></td><?php endif; ?>
     </tr></table>
 
     <div class="footer"><p><?= e($coFooter) ?></p></div>
@@ -436,12 +486,17 @@ function render_machine_report(array $val): string {
     $stampFile  = __DIR__ . '/' . ltrim(setting('stamp_image', 'storage/stamp.png'), '/');
     $stamp      = ($signed && is_file($stampFile)) ? report_img_data($stampFile) : null;
 
+    $wmDate = $signedDate ?: (string)($val['assesment_date'] ?? '');
+    $vwm = report_value_watermark($val['machine_name'] ?? '', $val['market_value'] ?? 0, 'MV', $val['forced_value'] ?? 0, $wmDate);
+    $qr  = $signed ? qr_png_data_uri(verify_url('machine', (int)($val['id'] ?? 0)), 3, 2) : '';
+
     ob_start(); ?>
 <!DOCTYPE html>
 <html lang="en"><head><meta charset="UTF-8"><title>Machine Valuation Report</title>
 <style>
     @page { margin: 10px 40px 10px 0px; }
     #watermark { opacity:0.1; position:fixed; transform:rotate(45deg); bottom:13cm; left:5.5cm; width:8cm; height:8cm; z-index:-1000; }
+    <?= report_watermark_css() ?>
     body { font-family:Arial, sans-serif; font-size:13px; line-height:1.5; color:#333; margin:0; padding:20px; }
     .container { width:100%; max-width:1000px; margin:0 auto; border:1px solid #ddd; padding:16px; box-sizing:border-box; }
     .header { display:flex; align-items:center; justify-content:center; }
@@ -461,6 +516,7 @@ function render_machine_report(array $val): string {
     table.photos td { padding:6px; text-align:center; }
 </style></head>
 <?php if ($logo): ?><div id="watermark"><img src="<?= $logo ?>" height="120%" width="200%"></div><?php endif; ?>
+<?= $vwm ?>
 <body>
 <div class="container">
     <div class="header">
@@ -499,8 +555,9 @@ function render_machine_report(array $val): string {
                 <?php if ($signed): ?><strong style="color:#080bc0ff;font-size:13px;"><?= e($signatoryName) ?></strong><br><?php endif; ?>
                 <?php if ($stamp): ?><img src="<?= $stamp ?>" style="max-height:90px;max-width:180px;"><?php endif; ?>
             </td>
-            <td style="width:45%;vertical-align:top"><span class="k">Date:</span>
+            <td style="width:<?= $qr ? '27%' : '45%' ?>;vertical-align:top"><span class="k">Date:</span>
                 <div style="height:40px; border-bottom:1px solid #ccc; font-weight:bold; color:#080bc0ff;"><?= e($signedDate) ?></div></td>
+            <?php if ($qr): ?><td style="width:18%;text-align:center;vertical-align:top"><?= report_qr_block($qr) ?></td><?php endif; ?>
         </tr></table>
     </div>
 

@@ -137,6 +137,7 @@ function portal_header(string $title, string $nav = ''): void {
       'valuations' => ['portal.php', 'folder', 'My Valuations'],
       'request'    => ['portal_request.php', 'plus-circle', 'Request Valuation'],
       'requests'   => ['portal_requests.php', 'list-checks', client_is_admin() ? 'Company Requests' : 'My Requests'],
+      'verify'     => ['verify_scan.php', 'qr-code', 'Verify'],
   ];
   if (client_is_admin()) $navItems['team'] = ['portal_team.php', 'users', 'My Team'];
   ?>
