@@ -216,6 +216,7 @@ function render_bank_report(array $val): string {
     </table>
 
     <div style="page-break-before: always;"></div>
+    <div class="keep-together" style="page-break-inside:avoid;">
 
     <table>
         <tr><th width="33%" class="text-center">Market Value</th><th width="33%" class="text-center">Forced Value</th><th width="34%" class="text-center">Note Value</th></tr>
@@ -273,6 +274,7 @@ function render_bank_report(array $val): string {
             </tr>
         </table>
     </div>
+    </div><!-- /.keep-together -->
 
     <div style="page-break-before: always;"></div>
     <div class="photos-area">
@@ -423,6 +425,7 @@ function render_insurance_report(array $val): string {
       </table>
     <?php endforeach; ?>
 
+    <div class="keep-together" style="page-break-inside:avoid;">
     <table>
         <tr><th width="50%" class="text-center">Assessed Value</th><th width="50%">Notes</th></tr>
         <tr>
@@ -447,6 +450,7 @@ function render_insurance_report(array $val): string {
         <td width="<?= $qr ? '32%' : '50%' ?>"><p><span>Date:</span></p><div style="height:50px;border-bottom:1px solid #ccc;font-weight:bold;color:#080bc0ff;"><?= e($signedDate) ?></div></td>
         <?php if ($qr): ?><td width="18%" style="text-align:center;vertical-align:top;"><?= report_qr_block($qr) ?></td><?php endif; ?>
     </tr></table>
+    </div><!-- /.keep-together -->
 
     <div class="footer"><p><?= e($coFooter) ?></p></div>
 </div></body></html>
@@ -542,6 +546,7 @@ function render_machine_report(array $val): string {
     <?php if (trim((string)($val['manufacture_year'] ?? '')) !== ''): ?><div class="row"><span class="k">YEAR OF MANUFACTURE:</span> <?= $g('manufacture_year') ?></div><?php endif; ?>
     <div class="row"><span class="k">COLOUR:</span> <?= $g('colour') ?></div>
 
+    <div class="keep-together" style="page-break-inside:avoid;">
     <div class="row" style="margin-top:18px"><span class="k">MARKET VALUE:</span> <span class="value"><?= number_format((float)($val['market_value'] ?? 0)) ?>/-</span> &nbsp; <span class="words"><?= e($valWords) ?></span></div>
     <div class="row"><span class="k">FORCED VALUE:</span> <span class="value"><?= number_format((float)($val['forced_value'] ?? 0)) ?>/-</span> <?php if ((float)($val['forced_value'] ?? 0) > 0): ?>&nbsp; <span class="words"><?= e(report_words($val['forced_value'])) ?></span><?php endif; ?></div>
 
@@ -560,6 +565,7 @@ function render_machine_report(array $val): string {
             <?php if ($qr): ?><td style="width:18%;text-align:center;vertical-align:top"><?= report_qr_block($qr) ?></td><?php endif; ?>
         </tr></table>
     </div>
+    </div><!-- /.keep-together -->
 
     <div style="margin-top:20px" class="disclaimer">
         <div style="text-decoration:underline;font-weight:bold;color:#333">DISCLAIMER</div>
