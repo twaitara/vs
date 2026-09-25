@@ -35,8 +35,9 @@ if (isset($_GET['smtptest'])) {
     } else {
         $ok = mail_deliver($to, 'Kennet test email', "This is a test message from the Kennet valuation system.\n\n"
             . 'Sent via: ' . (smtp_configured() ? ('SMTP ' . setting('smtp_host')) : 'PHP mail()') . "\nTime: " . date('r'));
-        $msg = $ok ? ('Test email sent to ' . $to . '. Check the inbox (and spam).') : 'Test failed — check the SMTP host, port, security and credentials.';
-        set_setting('smtp_last_test', ($ok ? 'OK' : 'FAIL') . '|' . date('Y-m-d H:i') . '|Test email to ' . $to . ': ' . ($ok ? 'accepted for delivery' : 'rejected'));
+        $why = $ok ? '' : (' — ' . (smtp_last_error() ?: 'check the SMTP host, port, security and credentials'));
+        $msg = $ok ? ('Test email sent to ' . $to . '. Check the inbox (and spam).') : ('Test failed' . $why);
+        set_setting('smtp_last_test', ($ok ? 'OK' : 'FAIL') . '|' . date('Y-m-d H:i') . '|Test email to ' . $to . ': ' . ($ok ? 'accepted for delivery' : ('rejected' . $why)));
         flash(($ok ? '✓ ' : '✗ ') . $msg, $ok ? 'ok' : 'err');
     }
     redirect('settings_email.php');

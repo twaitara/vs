@@ -315,45 +315,73 @@ function mail_settings(): array {
         'pass'     => (string)setting('smtp_pass', ''),
         'from'     => trim(setting('mail_from', '')) ?: trim(setting('company_email', '')) ?: ('no-reply@' . ($_SERVER['HTTP_HOST'] ?? 'localhost')),
         'fromname' => trim(setting('mail_from_name', '')) ?: setting('company_name', 'Kennet Automobile Valuers'),
+        // Envelope sender (MAIL FROM): most servers require this to match the
+        // authenticated mailbox, so prefer the SMTP username when there is one.
+        'envfrom'  => trim(setting('smtp_user', '')) ?: (trim(setting('mail_from', '')) ?: trim(setting('company_email', ''))),
     ];
 }
 /** True when a customer SMTP server has been configured. */
 function smtp_configured(): bool { return mail_settings()['host'] !== ''; }
 
-/** Low-level SMTP delivery of a pre-built message. Returns true on a 250 after DATA. */
-function smtp_send(array $cfg, array $to, string $data): bool {
+/**
+ * Low-level SMTP delivery of a pre-built message. Returns true on a 250 after DATA.
+ * On failure, $err (if passed) is set to the exact step + server reply that failed,
+ * so the UI can show *why* an email did not go out.
+ */
+function smtp_send(array $cfg, array $to, string $data, ?string &$err = null): bool {
+    $err = null;
     $host = $cfg['host']; $port = $cfg['port'] ?: 587; $secure = $cfg['secure'];
     $timeout = 20;
     $remote = ($secure === 'ssl' ? 'ssl://' : '') . $host . ':' . $port;
     $ctx = stream_context_create(['ssl' => ['verify_peer' => false, 'verify_peer_name' => false, 'allow_self_signed' => true]]);
     $fp = @stream_socket_client($remote, $errno, $errstr, $timeout, STREAM_CLIENT_CONNECT, $ctx);
-    if (!$fp) return false;
+    if (!$fp) { $err = "Could not connect to $host:$port — " . ($errstr ?: 'no response') . " (#$errno)"; return false; }
     stream_set_timeout($fp, $timeout);
-    $read = function () use ($fp) { $d = ''; while (($line = fgets($fp, 515)) !== false) { $d .= $line; if (isset($line[3]) && $line[3] === ' ') break; } return $d; };
+    $read = function () use ($fp) {
+        $d = '';
+        while (($line = fgets($fp, 515)) !== false) {
+            $d .= $line;
+            if (strlen($line) < 4 || $line[3] === ' ') break; // last line of the reply
+        }
+        return $d;
+    };
     $cmd = function ($s) use ($fp, $read) { fwrite($fp, $s . "\r\n"); return $read(); };
-    $ok = fn($r, $code) => strpos($r, $code) === 0;
-    $read(); // greeting
+    $ok  = fn($r, $code) => strpos((string)$r, $code) === 0;
+    $bye = function () use ($fp) { @fwrite($fp, "QUIT\r\n"); @fclose($fp); };
+
+    $envfrom = $cfg['envfrom'] ?? $cfg['from'];
+
+    if (!$ok($read(), '220')) { $err = 'Server did not greet correctly.'; $bye(); return false; }
     $ehlo = 'EHLO ' . ($_SERVER['SERVER_NAME'] ?? 'localhost');
-    $cmd($ehlo);
+    if (!$ok($cmd($ehlo), '250')) { $err = 'Server refused EHLO (handshake).'; $bye(); return false; }
     if ($secure === 'tls') {
-        if (!$ok($cmd('STARTTLS'), '220')) { fclose($fp); return false; }
+        if (!$ok($cmd('STARTTLS'), '220')) { $err = 'Server refused STARTTLS — try SSL/TLS (465) or another port.'; $bye(); return false; }
         $crypto = STREAM_CRYPTO_METHOD_TLS_CLIENT;
         if (defined('STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT')) $crypto |= STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT | STREAM_CRYPTO_METHOD_TLSv1_1_CLIENT;
-        if (!@stream_socket_enable_crypto($fp, true, $crypto)) { fclose($fp); return false; }
+        if (!@stream_socket_enable_crypto($fp, true, $crypto)) { $err = 'TLS negotiation failed.'; $bye(); return false; }
         $cmd($ehlo);
     }
     if ($cfg['user'] !== '') {
         $cmd('AUTH LOGIN'); $cmd(base64_encode($cfg['user']));
-        if (!$ok($cmd(base64_encode($cfg['pass'])), '235')) { fclose($fp); return false; }
+        if (!$ok($cmd(base64_encode($cfg['pass'])), '235')) { $err = 'Authentication was rejected — check the username & password.'; $bye(); return false; }
     }
-    if (!$ok($cmd('MAIL FROM:<' . $cfg['from'] . '>'), '250')) { fclose($fp); return false; }
-    foreach ($to as $addr) $cmd('RCPT TO:<' . $addr . '>');
-    if (!$ok($cmd('DATA'), '354')) { fclose($fp); return false; }
+    $r = $cmd('MAIL FROM:<' . $envfrom . '>');
+    if (!$ok($r, '250')) { $err = 'Sender <' . $envfrom . '> was rejected (MAIL FROM): ' . trim($r) . ' — the From/username must usually be the same mailbox.'; $bye(); return false; }
+    $anyRcpt = false;
+    foreach ($to as $addr) {
+        $r = $cmd('RCPT TO:<' . $addr . '>');
+        if ($ok($r, '250') || $ok($r, '251')) $anyRcpt = true;
+        else $err = 'Recipient <' . $addr . '> was rejected (RCPT TO): ' . trim($r);
+    }
+    if (!$anyRcpt) { $err = $err ?: 'All recipients were rejected.'; $bye(); return false; }
+    $r = $cmd('DATA');
+    if (!$ok($r, '354')) { $err = 'Server refused DATA: ' . trim($r); $bye(); return false; }
     $data = preg_replace('/^\./m', '..', $data); // dot-stuffing
     fwrite($fp, $data . "\r\n.\r\n");
     $r = $read();
-    $cmd('QUIT'); fclose($fp);
-    return $ok($r, '250');
+    $bye();
+    if (!$ok($r, '250')) { $err = 'Message was rejected after DATA: ' . trim($r); return false; }
+    return true;
 }
 
 /** Max emails the system may send per rolling hour (super-admin editable). 0 = unlimited. */
@@ -491,8 +519,14 @@ function mail_deliver($to, string $subject, string $body, bool $html = false, ar
     }
     $data = $fromH . $eol . 'To: ' . implode(', ', $to) . $eol . 'Subject: ' . $subject . $eol
           . 'Date: ' . date('r') . $eol . $replyH . $eol . implode($eol, $headers) . $eol . $eol . $body;
-    return smtp_send($cfg, $to, $data);
+    $err = null;
+    $ok  = smtp_send($cfg, $to, $data, $err);
+    // Record the last delivery error so the UI can show why a send failed.
+    if (!$ok) { try { set_setting('smtp_last_error', date('Y-m-d H:i') . ' | ' . ($err ?: 'unknown error')); } catch (Throwable $e) {} }
+    return $ok;
 }
+/** The most recent SMTP delivery error, or '' if none recorded. */
+function smtp_last_error(): string { return (string)setting('smtp_last_error', ''); }
 
 // ---------------- Notifications (request workflow) ----------------
 /** Send a plain-text email (via customer SMTP if configured, else PHP mail()). */
