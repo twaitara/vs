@@ -509,8 +509,19 @@ function mail_deliver($to, string $subject, string $body, bool $html = false, ar
     } else {
         $headers[] = 'Content-Type: ' . $ctype;
     }
-    $fromH = 'From: ' . $cfg['fromname'] . ' <' . $cfg['from'] . '>';
-    $replyH = 'Reply-To: ' . $cfg['from'];
+    // Many mail servers only permit a From header equal to the authenticated
+    // mailbox ("550 From header is not permitted for your login ..."). When
+    // SMTP auth is in use, send AS the login and route replies to the business
+    // address via Reply-To, so delivery succeeds without losing the reply path.
+    $fromAddr = $cfg['from'];
+    $replyTo  = trim(setting('mail_from', '')) ?: trim(setting('company_email', '')) ?: $cfg['from'];
+    if (smtp_configured() && $cfg['user'] !== '') {
+        $fromAddr = $cfg['user'];
+    }
+    $fromH  = 'From: ' . $cfg['fromname'] . ' <' . $fromAddr . '>';
+    $replyH = 'Reply-To: ' . $replyTo;
+    $domain = (strpos($fromAddr, '@') !== false) ? substr(strrchr($fromAddr, '@'), 1) : ($_SERVER['HTTP_HOST'] ?? 'localhost');
+    $headers[] = 'Message-ID: <' . bin2hex(random_bytes(12)) . '@' . $domain . '>';
     if (!smtp_configured()) {
         $h = $fromH . $eol . $replyH . $eol . implode($eol, $headers) . $eol . 'X-Mailer: KennetVS';
         $ok = false;

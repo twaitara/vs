@@ -39,5 +39,6 @@ if ($ok) {
     audit('email_report', $type, $id, $to);
     echo json_encode(['ok' => true]);
 } else {
-    echo json_encode(['ok' => false, 'error' => 'Mail server rejected the message (SMTP may need setup)']);
+    $why = smtp_last_error();
+    echo json_encode(['ok' => false, 'error' => $why !== '' ? ('Email failed: ' . $why) : 'Mail server rejected the message (SMTP may need setup)']);
 }
